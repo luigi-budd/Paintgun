@@ -199,6 +199,9 @@ function Paint:doDodgeRoll(p)
 	
 	me.jumptime = 0
 	pt.spreadjump = 0
+	pt.spreadadd = 0
+	pt.anglefix = 0
+	
 	if not dd.count
 	and wep:get(pt,"turret_startsound") ~= nil
 		S_StartSound(me, wep:get(pt,"turret_startsound"))
