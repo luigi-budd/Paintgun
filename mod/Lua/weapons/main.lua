@@ -102,7 +102,8 @@ local weapon_meta = {
 	dodgedist = 190*FU,
 	dodgeendlag = 2, -- wait this many tics AFTER rolling to start firing
 	dodgegetup = 32, -- you can get up after this many tics
-	dodgeinkcost = 8*FU,
+	dodgeinkcost = 8*FU, -- use this much ink for dodge rolls
+	dodgeshotcost = nil,
 	turret_range = nil,
 	turret_firerate = nil,
 	turret_startsound = nil,
@@ -266,6 +267,8 @@ function Paint:fireWeapon(p, cur_weapon, angle, dospread)
 		pt.cooldown = (firerate * 2) + 1
 		pt.endlag = max($, cur_weapon.endlag)
 		pt.shotsfired = $ + 1
+		
+		Paint.HUD:lowInkWarning(p, pt.cooldown)
 		
 		local handoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon)}
 		pt.anglefix = pt.cooldown

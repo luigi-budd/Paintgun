@@ -366,6 +366,7 @@ addHook("PlayerThink",function(p)
 			dd.getup = max($-1, 1)
 			if ((pt.forwardmove ~= 0 or pt.sidemove ~= 0)
 			or not (p.cmd.buttons & BT_ATTACK))
+			or (pt.inktank < cur_weapon:get(pt,"inkcost"))
 				dd.leave = $ + 1
 			else
 				dd.leave = 0

@@ -194,6 +194,8 @@ function Paint:doDodgeRoll(p)
 
 	local dd = pt.dodgeroll
 	if dd.count >= wep:get(pt,"dodgerolls") then return end
+	if (pt.inktank < wep:get(pt,"dodgeinkcost")) then Paint.HUD:lowInkWarning(p); return end
+	pt.inktank = max($ - wep:get(pt,"dodgeinkcost"), 0)
 	
 	me.jumptime = 0
 	pt.spreadjump = 0

@@ -15,6 +15,8 @@ sfxinfo[sfx_pt_ow3].caption = "Shield lost!"
 for i = 0,8
 	sfxinfo[freeslot("sfx_pn_sp"..i)].caption = "Splatter"
 end
+sfxinfo[freeslot("sfx_pt_noi")].caption = "Low ink!"
+
 
 rawset(_G, "TR", TICRATE)
 rawset(_G,"Paint",{})
@@ -173,5 +175,5 @@ dofile("lib/lib.lua")
 dofile("weapons/main.lua")
 dofile("weapons/player.lua")
 dofile("hud/main.lua")
-dofile("aux.lua")
+dofile("auxiliary.lua")
 dofile("enemy.lua")

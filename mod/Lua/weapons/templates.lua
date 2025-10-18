@@ -10,6 +10,8 @@ function Paint.wtemplate_dualies(p,pt, weapon, key,value)
 		return 0
 	elseif (key == "neverspreadonground")
 		return P_RandomChance(FU/10)
+	elseif (key == "inkcost")
+		return weapon.dodgeshotcost ~= nil and weapon.dodgeshotcost or value
 	end
 end
 

@@ -13,4 +13,5 @@ dofiles({
 	"killconf.lua",
 	"hitmarker.lua",
 	"inv.lua",
+	"lowink.lua",
 })
