@@ -1,0 +1,6 @@
+dofile("weapons/def/basic.lua")
+dofile("weapons/def/aerospray.lua")
+dofile("weapons/def/charger.lua")
+dofile("weapons/def/blaster.lua")
+dofile("weapons/def/dualie.lua")
+dofile("weapons/def/SIGMA.lua")
