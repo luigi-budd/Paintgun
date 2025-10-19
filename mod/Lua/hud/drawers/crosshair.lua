@@ -206,9 +206,9 @@ addHook("PostThinkFrame",do
 	end
 end)
 
-local old_fov, old_spreadadd
+local old_fov, old_spreadadd, old_camdist, old_chase
 local cv_fov
-local cv_crosshair
+local cv_camdist
 local cross_x,cross_y = 0,0
 local interptag = 0
 local range_cache = {}
@@ -288,7 +288,9 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 	end
 	
 	--120 fov == 4 mult
-	if old_fov ~= cv_fov.value
+	if (old_fov ~= cv_fov.value)
+	or (old_camdist ~= cv_camdist.value)
+	or (old_chase ~= cam.chase)
 		range_cache = {}
 	end
 	if wep.guntype == WPT_SHOOTER
@@ -325,8 +327,9 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 			}
 			
 			-- yikes...
+			local cam_dist = (cam.chase) and -cv_camdist.value or 0
 			local override = {
-				angle = 0, aiming = 0, x = 0, y = 0, z = 0
+				angle = 0, aiming = 0, x = P_ReturnThrustX(nil,0,cam_dist), y = P_ReturnThrustY(nil,0,cam_dist), z = 0
 			}
 			local C_result = K_GetScreenCoords(v,p,cam, {x=C_point.x, y=C_point.y, z=0}, {dontclip = true, viewoverride = override})
 			local L_result = K_GetScreenCoords(v,p,cam, {x=L_point.x, y=L_point.y, z=0}, {dontclip = true, viewoverride = override})
@@ -356,6 +359,8 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 		
 		old_fov = cv_fov.value
 		old_spreadadd = pt.spreadadd
+		old_camdist = cv_camdist.value
+		old_chase = cam.chase
 		
 		local dual = wep.guntype == WPT_DUALIES
 		v.dointerp(5 + interptag)
@@ -434,8 +439,8 @@ addHook("HUD",function(v,p,cam)
 	if not cv_fov
 		cv_fov = CV_FindVar("fov")
 	end
-	if not cv_crosshair
-		cv_crosshair = CV_FindVar("crosshair")
+	if not cv_camdist
+		cv_camdist = CV_FindVar("cam_dist")
 	end
 	hud.disable("crosshair")
 	

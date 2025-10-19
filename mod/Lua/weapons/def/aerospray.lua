@@ -23,7 +23,7 @@ Paint:registerWeapon({
 	
 	firerate = 2,
 	h_spread = {13, 13},
-	v_spread = {4, 4},
+	v_spread = {8, 8},
 	
 	inkcost = FU/2,
 	inkdelay = TR / 4,
