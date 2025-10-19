@@ -20,6 +20,7 @@ Paint:registerWeapon({
 	damage = 24*FU,
 	falloffdamage = 12*FU,
 	fallofftime = 8,
+	shotscale = FU/2,
 	
 	firerate = 2,
 	h_spread = {13, 13},

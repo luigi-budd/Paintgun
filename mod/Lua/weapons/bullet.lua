@@ -1,11 +1,17 @@
 local CV = Paint.CV
 
-freeslot("MT_PAINT_SHOT", "S_PAINT_SHOT", "SPR_PAINT_SHOT")
+freeslot("MT_PAINT_SHOT", "S_PAINT_SHOT", "S_PAINT_SHOT_BIG", "SPR_PAINT_SHOT")
 states[S_PAINT_SHOT] = {
 	sprite = SPR_PAINT_SHOT,
 	frame = A,
 	tics = -1,
 	nextstate = S_PAINT_SHOT
+}
+states[S_PAINT_SHOT_BIG] = {
+	sprite = SPR_PAINT_SHOT,
+	frame = 5|FF_FULLBRIGHT,
+	tics = -1,
+	nextstate = S_PAINT_SHOT_BIG
 }
 mobjinfo[MT_PAINT_SHOT] = {
 	doomednum = -1,
@@ -295,6 +301,12 @@ addHook("MobjThinker",function(shot)
 	end
 	
 	shot.lifespan = $ + 1
+	if shot.lifespan == 1
+	and (shot.frame & FF_FRAMEMASK == 0)
+		--Fuck!
+		shot.spritexscale = $ * 5/2
+		shot.spriteyscale = shot.spritexscale
+	end
 	
 	if HandleFloorSplat(shot) then return end
 	

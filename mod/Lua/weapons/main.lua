@@ -39,8 +39,11 @@ local weapon_meta = {
 	
 	subtype = SUB_BOMB,
 	
-	guntype = WPT_SHOOTER,
 	shottype = MT_PAINT_SHOT,
+	shotscale = FU, -- visual scale
+	shotstate = nil, -- leave nil for mobjinfo[shottype].spawnstate
+	
+	guntype = WPT_SHOOTER,
 	handoffset = 16 * FU,
 	inkcost = FU,
 	inkdelay = 12,
@@ -327,6 +330,13 @@ function Paint:fireWeapon(p, cur_weapon, angle, dospread)
 	proj.powerful = false
 	proj.init = true
 	proj.progress = 0
+	proj.spritexscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
+	proj.spriteyscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
+	local new_state = cur_weapon:get(pt,"shotstate")
+	if (new_state ~= nil)
+		proj.state = new_state
+	end
+	
 	if (proj.type == MT_PAINT_SHOT) -- moves in quarter steps
 	and cur_weapon:get(pt,"quartersteps")
 		proj.momx = $ / 4

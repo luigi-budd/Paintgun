@@ -26,6 +26,7 @@ Paint:registerWeapon({
 	inertia = false,
 	falloff = {0,0},
 	neverspreadonground = true,
+	shotstate = S_PAINT_SHOT_BIG,
 	
 	inkcost = 10*FU,
 	inkdelay = 33,
