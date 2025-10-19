@@ -37,13 +37,13 @@ addHook("HUD",function(v,p,cam)
 
 		-- marquee
 		do
-			local clip_w = 72*FU
+			local clip_w = 72
 			local crop_w = 64*FU
 			local crop_h = 6*FU
 			local x = x + 2*FU
 			local y = y + 2*FU
 			v.drawCropped(x,y,FU,FU, v.cachePatch("PT_LOW_MARQ"), flags, clrmp,
-				(leveltime*FU) % clip_w, 0, crop_w,crop_h
+				abs((leveltime) % clip_w)*FU, 0, crop_w,crop_h
 			)
 		end
 		v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_OUT"), flags, clrmp)
