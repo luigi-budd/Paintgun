@@ -12,6 +12,7 @@ Paint:registerWeapon({
 	h_spread = {6, 6},
 	v_spread = {4, 4},
 	damage = 35*FU,
+	inkcost = FU * 92/100,
 	
 	weaponstate = S_PAINT_GUN_TEST,
 	weaponstate_scale = FU/2,
