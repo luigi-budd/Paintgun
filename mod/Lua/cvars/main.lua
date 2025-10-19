@@ -24,7 +24,7 @@ CV.paintguns = CV_RegisterVar({
 
 CV.paintnerfs = CV_RegisterVar({
 	name = "paint_nerfs",
-	defaultvalue = "No",
+	defaultvalue = "Yes",
 	flags = CV_SHOWMODIF|CV_NETVAR,
 	PossibleValue = CV_YesNo
 })

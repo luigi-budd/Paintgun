@@ -187,6 +187,7 @@ addHook("PlayerThink",function(p)
 	
 	if not P_IsObjectOnGround(me)
 	and (p.pflags & PF_JUMPED)
+	and not (cur_weapon.guntype == WPT_DUALIES and (pt.dodgeroll.tics or pt.dodgeroll.getup))
 		if not (me.jumptime)
 			pt.spreadjump = cur_weapon:get(pt,"spread_jump")
 		end
