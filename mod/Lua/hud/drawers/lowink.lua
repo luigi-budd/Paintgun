@@ -59,7 +59,6 @@ addHook("HUD",function(v,p,cam)
 		end
 		v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_OUT"), flags, clrmp)
 		
-		v.drawString(x,y, anim, V_ALLOWLOWERCASE|flags, "thin-fixed")
 		if not paused
 			tics = $ - 1
 		end
