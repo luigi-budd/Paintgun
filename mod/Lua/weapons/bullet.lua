@@ -172,7 +172,7 @@ local function splash_blockmap(ray, mo)
 	local dist = R_PointTo3DDist(ray.x, ray.y, ray.z, mo.x,mo.y,mo.z)
 	if dist > splashrad then return end
 	
-	if CanDamageEnemy(ray.target.player, mo)
+	if Paint_canHurtEnemy(ray.target.player, mo)
 	or mo.type == MT_TNTBARREL
 		local progress = FixedDiv(dist, splashrad)
 		local damage = wep.splashdamage[1] + FixedMul(wep.splashdamage[2] - wep.splashdamage[1], progress)
@@ -187,13 +187,13 @@ local function splash_blockmap(ray, mo)
 	
 	if mo.type == MT_PLAYER
 	and mo ~= me
-		if CanHurtPlayer(p, mo.player)
+		if Paint_canHurtPlayer(p, mo.player)
 			local progress = FixedDiv(dist, splashrad)
 			local damage = wep.splashdamage[1] + FixedMul(wep.splashdamage[2] - wep.splashdamage[1], progress)
 			Paint:damagePlayer(mo.player, ray, p, damage)
 			Paint:playHurtSound(mo.player)
 			Paint:doProjHitmarker(ray, mo, false)
-		elseif CanHurtPlayer(p, mo.player, true)
+		elseif Paint_canHurtPlayer(p, mo.player, true)
 		and not Paint:isFriendlyFire(p,mo.player)
 			Paint:doProjHitmarker(ray, mo, false, true)
 		end
@@ -445,7 +445,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 	shot.lasthit = mo
 	
 	local wep = Paint.weapons[shot.weapon_id]
-	if CanDamageEnemy(shot.target.player, mo)
+	if Paint_canHurtEnemy(shot.target.player, mo)
 	or mo.type == MT_TNTBARREL
 		P_DamageMobj(mo,shot,shot.target,shot.damage)
 		Paint:doProjHitmarker(shot, mo, true)
@@ -471,7 +471,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 			P_RemoveMobj(shot)
 		end
 		return
-	elseif CanDamageEnemy(shot.target.player, mo, nil,nil, true)
+	elseif Paint_canHurtEnemy(shot.target.player, mo, nil,nil, true)
 		Paint:doProjHitmarker(shot, mo, true, true)
 		P_RemoveMobj(shot)
 		return
@@ -483,7 +483,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 	
 	if mo.type == MT_PLAYER
 	and mo ~= me
-		if CanHurtPlayer(p, mo.player)
+		if Paint_canHurtPlayer(p, mo.player)
 			local play = mo.player
 			Paint:damagePlayer(play,shot,p, shot.damage)
 			Paint:playHurtSound(play)
@@ -505,7 +505,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 			else
 				P_RemoveMobj(shot)
 			end
-		elseif CanHurtPlayer(p, mo.player, true)
+		elseif Paint_canHurtPlayer(p, mo.player, true)
 		and not Paint:isFriendlyFire(p,mo.player)
 			Paint:doProjHitmarker(shot, mo, true, true)
 			P_RemoveMobj(shot)
@@ -713,7 +713,7 @@ local function inkDamage(splat,mo, play, pnt)
 	if not Paint:playerIsActive(play) then return nope; end
 	
 	if (p and p.valid)
-	and not CanHurtPlayer(p, play)
+	and not Paint_canHurtPlayer(p, play)
 		Paint:setPlayerInInk(p, Paint.ININK_FRIENDLY)
 		return nope;
 	end
@@ -760,7 +760,7 @@ addHook("MobjCollide",function(splat,mo)
 	local friendly = false
 	if splat.tracer_player == mo.tracer_player
 		friendly = true
-	elseif not CanHurtPlayer(splat.tracer_player,mo.tracer_player)
+	elseif not Paint_canHurtPlayer(splat.tracer_player,mo.tracer_player)
 	and splat.color == mo.color
 		friendly = true
 	end

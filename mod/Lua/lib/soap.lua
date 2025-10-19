@@ -1,4 +1,4 @@
-rawset(_G,"CanDamageEnemy",function(p, mobj,flags,exclude, nobs)
+rawset(_G,"Paint_canHurtEnemy",function(p, mobj,flags,exclude, nobs)
 	if (CanFlingThing ~= nil)
 		return CanFlingThing(p, mobj,flags,false,exclude)
 	end
@@ -61,7 +61,7 @@ rawset(_G,"CanDamageEnemy",function(p, mobj,flags,exclude, nobs)
 	return flingable
 end)
 
-rawset(_G, "CanHurtPlayer", function(p1,p2,nobs)
+rawset(_G, "Paint_canHurtPlayer", function(p1,p2,nobs)
 	if not (p1 and p1.valid)
 	or not (p2 and p2.valid)
 		return false
@@ -85,9 +85,11 @@ rawset(_G, "CanHurtPlayer", function(p1,p2,nobs)
 			return false
 		end
 		
+		/*
 		if not p1.mo.health
 			return false
 		end
+		*/
 		if not p2.mo.health
 			return false
 		end

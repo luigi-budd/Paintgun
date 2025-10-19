@@ -83,7 +83,7 @@ local function directhit_blockmap(ray, mo)
 	end
 	if not L_ZCollide(ray,mo) then return end
 	
-	if CanDamageEnemy(ray.target.player, mo)
+	if Paint_canHurtEnemy(ray.target.player, mo)
 	or mo.type == MT_TNTBARREL
 		ray.direct = true
 		ray.momx,ray.momy,ray.momz = 0,0,0
@@ -97,7 +97,7 @@ local function directhit_blockmap(ray, mo)
 	
 	if mo.type == MT_PLAYER
 	and mo ~= me
-	and CanHurtPlayer(p, mo.player)
+	and Paint_canHurtPlayer(p, mo.player)
 		ray.direct = true
 		ray.momx,ray.momy,ray.momz = 0,0,0
 		ray.fuse = 1
