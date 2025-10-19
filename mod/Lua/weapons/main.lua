@@ -110,6 +110,9 @@ local weapon_meta = {
 	turret_endsound = nil,
 	
 	weaponstate = S_PAINT_GUN,
+	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
+	weaponstate_frame = nil, -- frame constants, leave nil for state-defined frame
+	weaponstate_scale = FU,
 	
 	sounds = {
 		sfx_p_s0_0, sfx_p_s0_1, sfx_p_s0_2, sfx_p_s0_3, sfx_p_s0_4, sfx_p_s0_5, sfx_p_s0_6

@@ -95,7 +95,7 @@ function Paint:initPlayer(p)
 		
 		endlag = 0,
 		anglefix = 0,
-		anglestand = p.cmd.angleturn << 16,
+		anglestand = (p.realmo and p.realmo.valid) and (p.realmo.angle) or p.cmd.angleturn << 16,
 		lastslowdown = false,
 		
 		inktank = 100*FU,

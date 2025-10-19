@@ -1,7 +1,9 @@
 local CV = Paint.CV
 freeslot("SPR_PAINT_MISC")
 
-local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip)
+local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_interp)
+	local teleport = reset_interp and P_SetOrigin or P_MoveOrigin
+	
 	local wepmo = pt.weaponmobj
 	if dualieflip
 		wepmo = pt.weaponmobjdupe
@@ -19,9 +21,10 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip)
 			pt.weaponmobj = mo
 		end
 		wepmo = mo
+		teleport = P_SetOrigin
 	end
 	local handoffset = {Paint:getWeaponOffset(me,fireangle - ANGLE_90, cur_weapon, dualieflip)}
-	P_MoveOrigin(wepmo,
+	teleport(wepmo,
 		me.x + handoffset[1] + me.momx,
 		me.y + handoffset[2] + me.momy,
 		me.z + me.height / 2 + me.momz
@@ -39,9 +42,18 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip)
 	end
 	wepmo.dontdrawforviewmobj = me
 	wepmo.angle = fireangle
-	wepmo.spritexscale = FU + (wepmo.fireanim * FU/12)
+	local weapon_scale = cur_weapon:get(pt,"weaponstate_scale")
+	wepmo.spritexscale = FixedMul(FU + (wepmo.fireanim * FU/12), weapon_scale)
 	wepmo.spriteyscale = wepmo.spritexscale
-	wepmo.state = cur_weapon.weaponstate
+	if dualieflip
+	and cur_weapon:get(pt,"dualie_weaponstate") ~= nil
+		wepmo.state = cur_weapon:get(pt,"dualie_weaponstate")
+	else
+		wepmo.state = cur_weapon.weaponstate
+	end
+	if cur_weapon:get(pt,"weaponstate_frame") ~= nil
+		wepmo.frame = ($ &~FF_FRAMEMASK)|(cur_weapon:get(pt,"weaponstate_frame") & FF_FRAMEMASK)
+	end
 	wepmo.flags2 = $ &~MF2_DONTDRAW
 	wepmo.fireanim = max($-1, 0)
 end
@@ -131,6 +143,7 @@ addHook("PlayerThink",function(p)
 	pt.spreadadd = 0
 	
 	local fireangle = p.cmd.angleturn << 16
+	local old_weaponid = pt.weapon_id
 	do
 		local sel = 0
 		if (p.cmd.buttons & BT_WEAPONNEXT)
@@ -437,9 +450,10 @@ addHook("PlayerThink",function(p)
 	pt.lastslowdown = doslowdown
 	
 	do
-		doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false)
+		local reset_interp = pt.weapon_id ~= old_weaponid
+		doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
 		if (cur_weapon.guntype == WPT_DUALIES)
-			doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true)
+			doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
 		end
 	end
 	
