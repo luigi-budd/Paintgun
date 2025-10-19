@@ -23,6 +23,29 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 		wepmo = mo
 		teleport = P_SetOrigin
 	end
+	do
+		local slope = InvAngle(p.aiming)
+		wepmo.roll = FixedMul(slope, sin(p.drawangle))
+		wepmo.pitch = FixedMul(slope, cos(p.drawangle))
+	end
+	wepmo.dontdrawforviewmobj = me
+	wepmo.angle = fireangle
+	local weapon_scale = cur_weapon:get(pt,"weaponstate_scale")
+	wepmo.spritexscale = FixedMul(FU + (wepmo.fireanim * FU/12), weapon_scale)
+	wepmo.spriteyscale = wepmo.spritexscale
+	wepmo.color = Paint:getPlayerColor(p)
+	if dualieflip
+	and cur_weapon:get(pt,"dualie_weaponstate") ~= nil
+		wepmo.state = cur_weapon:get(pt,"dualie_weaponstate")
+	else
+		wepmo.state = cur_weapon.weaponstate
+	end
+	if cur_weapon:get(pt,"weaponstate_frame") ~= nil
+		wepmo.frame = ($ &~FF_FRAMEMASK)|(cur_weapon:get(pt,"weaponstate_frame") & FF_FRAMEMASK)
+	end
+	wepmo.flags2 = $ &~MF2_DONTDRAW
+	wepmo.fireanim = max($-1, 0)
+	
 	local handoffset = {Paint:getWeaponOffset(me,fireangle - ANGLE_90, cur_weapon, dualieflip)}
 	teleport(wepmo,
 		me.x + handoffset[1] + me.momx,
@@ -35,27 +58,6 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	else
 		wepmo.eflags = $ &~MFE_VERTICALFLIP
 	end
-	do
-		local slope = InvAngle(p.aiming)
-		wepmo.roll = FixedMul(slope, sin(p.mo.angle))
-		wepmo.pitch = FixedMul(slope, cos(p.mo.angle))
-	end
-	wepmo.dontdrawforviewmobj = me
-	wepmo.angle = fireangle
-	local weapon_scale = cur_weapon:get(pt,"weaponstate_scale")
-	wepmo.spritexscale = FixedMul(FU + (wepmo.fireanim * FU/12), weapon_scale)
-	wepmo.spriteyscale = wepmo.spritexscale
-	if dualieflip
-	and cur_weapon:get(pt,"dualie_weaponstate") ~= nil
-		wepmo.state = cur_weapon:get(pt,"dualie_weaponstate")
-	else
-		wepmo.state = cur_weapon.weaponstate
-	end
-	if cur_weapon:get(pt,"weaponstate_frame") ~= nil
-		wepmo.frame = ($ &~FF_FRAMEMASK)|(cur_weapon:get(pt,"weaponstate_frame") & FF_FRAMEMASK)
-	end
-	wepmo.flags2 = $ &~MF2_DONTDRAW
-	wepmo.fireanim = max($-1, 0)
 end
 
 -- takes about 11 seconds to fully refill passively with no ink-related abilities...
