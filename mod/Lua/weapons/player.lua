@@ -74,7 +74,11 @@ function Paint:killPlayer(p, shot, sorp, inf)
 		local drop = P_SpawnMobjFromMobj(shot,0,0,FU, MT_PAINT_SHOT)
 		if drop and drop.valid
 			drop.target = (sorp and sorp.valid) and sorp.mo or inf
-			drop.color = (sorp and sorp.valid) and self:getPlayerColor(sorp) or ColorOpposite(self:getPlayerColor(p))
+			if (pt.paintoverlay and pt.paintoverlay.valid and pt.paintoverlay.color ~= self:getPlayerColor(p))
+				drop.color = pt.paintoverlay.color
+			else
+				drop.color = (sorp and sorp.valid) and self:getPlayerColor(sorp) or ColorOpposite(self:getPlayerColor(p))
+			end
 			drop.angle = angle
 			drop.trail = true
 			drop.lifespan = 0
@@ -96,6 +100,10 @@ function Paint:damagePlayer(p, shot, sorp, damage, inf) -- mobj if no player
 	if (pt.paintoverlay and pt.paintoverlay.valid)
 	and (shot and shot.valid)
 		pt.paintoverlay.color = (shot.color ~= SKINCOLOR_NONE) and shot.color or ColorOpposite(self:getPlayerColor(p))
+		if (shot.color == SKINCOLOR_NONE)
+		and (inf and inf.valid and inf.color ~= SKINCOLOR_NONE)
+			pt.paintoverlay.color = inf.color
+		end
 	end
 	
 	if (sorp and sorp.valid)
