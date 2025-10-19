@@ -41,7 +41,7 @@ addHook("MobjDamage",function(me, inf,sor, damage)
 	if not (pt and pt.active) then return end
 	if not (sor and sor.valid) then return end
 	if not (inf and inf.valid) then return end
-	if not (sor.flags & (MF_ENEMY|MF_BOSS|MF_MISSILE)) then return end
+	if not (sor.flags & (MF_ENEMY|MF_BOSS|MF_MISSILE|MF_FIRE|MF_PAIN)) then return end
 	
 	if (inf.flags & MF_MISSILE)
 		damage = $ * 3

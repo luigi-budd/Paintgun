@@ -32,7 +32,7 @@ addHook("HUD",function(v,p,cam)
 		
 		fade = (10*$)/FU
 		fade = 10 - min($,9)
-		fade = min($, 9)
+		fade = min($, 7)
 		--print(fade, pulse)
 		
 		v.drawStretched(160*FU,100*FU,

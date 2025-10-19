@@ -14,7 +14,7 @@ addHook("HUD",function(v,p,cam)
 	local inv = pt.inventory
 	
 	local x = ((160 - ((6 + 2)*inv.slots)/2) + 4)*FU
-	local y = (200 - 10)*FU
+	local y = (200 - 6)*FU
 	local flags = V_SNAPTOBOTTOM
 	for i = 1,inv.slots
 		v.drawScaled(x,y,FU,

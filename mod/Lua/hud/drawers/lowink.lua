@@ -24,17 +24,28 @@ addHook("HUD",function(v,p,cam)
 	local flags = V_SNAPTOBOTTOM
 	local clrmp = v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p))
 	if tics
-		local anim = (leveltime - starttic) % MAXTICS
-		local fade = sin(FixedAngle(FixedMul(360*FU, FixedDiv((anim > HALFTICS) and (HALFTICS - anim) or anim, HALFTICS))))
+		local anim = (leveltime - starttic) % MAXTICS+1
+		local fade = sin(FixedAngle(FixedMul(180*FU, FixedDiv((anim > HALFTICS) and (HALFTICS - anim) or anim, HALFTICS))))
 		
-		v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_BG"), flags|V_50TRANS, clrmp)
-
+		-- bg
+		do
+			local clip_w = 128*2
+			local clip_h = 48*2
+			local crop_w = 64*FU
+			local crop_h = 23*FU
+			local x = x + 2*FU
+			local y = y + 2*FU
+			v.drawCropped(x,y,FU,FU, v.cachePatch("PT_LOW_BG"), flags|V_20TRANS, clrmp,
+				abs((leveltime) % clip_w)*FU/2, abs((leveltime) % clip_h)*FU/2, crop_w,crop_h
+			)
+		end
+		
 		v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_TXT"), flags)
 		v.drawScaled(x,y + fade/2, FU, v.cachePatch("PT_LOW_TNK"), flags)
 		v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_X"), flags|V_ADD|(
 			(FixedInt(10 * abs(fade)) & 10)<<V_ALPHASHIFT
 		))
-
+		
 		-- marquee
 		do
 			local clip_w = 72
@@ -47,7 +58,8 @@ addHook("HUD",function(v,p,cam)
 			)
 		end
 		v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_OUT"), flags, clrmp)
-
+		
+		v.drawString(x,y, anim, V_ALLOWLOWERCASE|flags, "thin-fixed")
 		if not paused
 			tics = $ - 1
 		end
