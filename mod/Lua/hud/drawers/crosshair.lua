@@ -13,7 +13,7 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip)
 		local angle = p.cmd.angleturn << 16
 		local ray = P_SpawnMobjFromMobj(me,
 			2*cos(angle), 2*sin(angle),
-			41*FixedDiv(p.mo.height,p.mo.scale)/48 - 8*FU,
+			41*FixedDiv(P_GetPlayerHeight(p),p.mo.scale)/48 - 8*FU,
 			MT_THOK
 		)
 		ray.flags = $ &~(MF_SLIDEME)
@@ -114,7 +114,7 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		local angle = p.cmd.angleturn << 16
 		local ray = P_SpawnMobjFromMobj(me,
 			2*cos(angle), 2*sin(angle),
-			41*FixedDiv(p.mo.height,p.mo.scale)/48 - 8*FU,
+			41*FixedDiv(P_GetPlayerHeight(p),p.mo.scale)/48 - 8*FU,
 			MT_THOK
 		)
 		ray.flags = $ &~(MF_NOCLIP|MF_NOCLIPTHING|MF_NOBLOCKMAP|MF_SLIDEME)

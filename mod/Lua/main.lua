@@ -17,6 +17,9 @@ for i = 0,8
 end
 sfxinfo[freeslot("sfx_pt_noi")].caption = "Low ink!"
 
+sfxinfo[freeslot("sfx_pt_toh")].caption = "/"
+sfxinfo[freeslot("sfx_pt_tos")].caption = "/"
+sfxinfo[freeslot("sfx_pt_swm")].caption = "Swimming"
 
 rawset(_G, "TR", TICRATE)
 rawset(_G,"Paint",{})
@@ -114,6 +117,10 @@ function Paint:initPlayer(p)
 		inktime = 0,
 		inkleveltime = 0, -- dont set inink multiple times a tic
 		
+		squidtime = 0,
+		squidanim = 0,
+		hidden = false,
+		
 		paintoverlay = nil,
 		teammates = nil,
 		
@@ -138,13 +145,16 @@ function Paint:resetPlayer(p)
 	pt.endlag = 0
 	p.cmd.buttons = $ &~BT_ATTACK
 	pt.endlag = 0
-	pt.anglestand = p.mo.angle
+	pt.anglestand = p.realmo.angle
 	
 	pt.turretmode = false
 	pt.dodgeroll.tics = 0
 	pt.dodgeroll.getup = 0
 	pt.dodgeroll.count = 0
 	pt.dodgeroll.leave = 0
+	
+	pt.squidtime = 0
+	pt.squidanim = 0
 	
 	pt.teammates = nil
 	Paint:setTeammates()

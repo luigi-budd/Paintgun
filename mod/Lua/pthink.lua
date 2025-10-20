@@ -43,7 +43,7 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	if cur_weapon:get(pt,"weaponstate_frame") ~= nil
 		wepmo.frame = ($ &~FF_FRAMEMASK)|(cur_weapon:get(pt,"weaponstate_frame") & FF_FRAMEMASK)
 	end
-	wepmo.flags2 = $ &~MF2_DONTDRAW
+	wepmo.flags2 = ($ &~MF2_DONTDRAW)|((pt.hidden) and MF2_DONTDRAW or 0)
 	wepmo.fireanim = max($-1, 0)
 	
 	local handoffset = {Paint:getWeaponOffset(me,fireangle - ANGLE_90, cur_weapon, dualieflip)}
@@ -234,11 +234,130 @@ addHook("PlayerThink",function(p)
 		pt.shotsfired = 0
 	end
 	
+	-- squid form
+	do
+		local maxprogress = 3
+		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
+		local easing = ease.inquad
+		pt.hidden = false
+		if (p.cmd.buttons & BT_SPIN)
+			if not (p.lastbuttons & BT_SPIN)
+				S_StartSound(me,sfx_pt_tos)
+			end
+			
+			pt.squidtime = min($ + 1, maxprogress)
+			local frac = (FU/maxprogress)*pt.squidtime
+			me.height = easing(frac, $, 4*me.scale)
+			me.spriteyscale = easing(frac, FU, maxsquish)
+			pt.fireheld = 0
+			p.cmd.buttons = $ &~BT_ATTACK
+		else
+			if (p.lastbuttons & BT_SPIN)
+				S_StartSound(me,sfx_pt_toh)
+			end
+			S_StopSoundByID(me,sfx_pt_swm)
+			
+			local frac = FU - (FU/maxprogress)*pt.squidtime
+			me.height = easing(frac, 4*me.scale, $)
+			me.spriteyscale = easing(frac, maxsquish, FU)
+			pt.squidtime = max($ - 1, 0)
+		end
+		
+		p.charflags = ($ &~SF_NOSKID)|(skins[p.skin].flags & SF_NOSKID)
+		p.normalspeed = skins[p.skin].normalspeed * 4/5
+		p.thrustfactor = skins[p.skin].thrustfactor
+		if (pt.squidtime >= maxprogress)
+			p.charflags = $|SF_NOSKID
+			if (pt.inink == Paint.ININK_FRIENDLY)
+				me.flags2 = $|MF2_DONTDRAW
+				pt.hidden = true
+				pt.squidanim = TR/2
+				
+				p.normalspeed = $*3/4
+				p.thrustfactor = $*6/4
+				me.friction = FixedMul($, FU*97/100)
+				if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
+					local fric = FU * 9/10
+					me.momx = FixedMul($, fric)
+					me.momy = FixedMul($, fric)
+				end
+			else
+				p.normalspeed = $/3
+			end
+			
+			if (FixedHypot(me.momx,me.momy) >= 8*me.scale)
+			and pt.hidden
+				if not S_SoundPlaying(me, sfx_pt_swm)
+					S_StartSoundAtVolume(me,sfx_pt_swm,255/2, p)
+				end
+				local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomRange(-25,25)*FU)
+				local blob = P_SpawnMobjFromMobj(me,0,0,0,MT_PARTICLE)
+				blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
+				P_SetOrigin(blob, me.x+me.momx, me.y+me.momy, blob.z)
+				P_SetMobjStateNF(blob, S_GOOP1)
+				blob.tics = -1
+				blob.fuse = TR*3/4
+				blob.colorized = true
+				blob.color = Paint:getPlayerColor(p)
+				P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
+				P_Thrust(blob,ang, -P_RandomRange(6,15)*me.scale)
+				blob.momx = $ + me.momx
+				blob.momy = $ + me.momy
+			else
+				S_StopSoundByID(me,sfx_pt_swm)
+			end
+		end
+		if me.last_hidden ~= pt.hidden
+		and me.last_hidden ~= nil
+			local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_SPLISH)
+			P_SetOrigin(splash, splash.x,splash.y, me.floorz)
+			splash.frame = $ &~FF_TRANSMASK
+			splash.colorized = true
+			splash.color = Paint:getPlayerColor(p)
+			P_SetScale(splash, splash.scale + P_RandomFixed()/2, true)
+			S_StartSound(me, sfx_splish)
+		end
+		me.last_hidden = pt.hidden
+		
+		if pt.inink == Paint.ININK_ENEMY
+			p.normalspeed = $ * 3/5
+		end
+		if (pt.squidanim)
+			me.colorized = true
+			pt.squidanim = $ - 1
+			if pt.squidanim == 0
+				local rad = FixedDiv(me.radius,me.scale)/FU
+				local hei = FixedDiv(me.height,me.scale)/FU
+				local clr = Paint:getPlayerColor(p)
+				for i = 0,15
+					local blob = P_SpawnMobjFromMobj(me,
+						P_RandomRange(-rad,rad)*FU,
+						P_RandomRange(-rad,rad)*FU,
+						P_RandomRange(0,hei)*FU,MT_PARTICLE
+					)
+					local ang = R_PointToAngle2(blob.x,blob.y, me.x,me.y)
+					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
+					P_SetMobjStateNF(blob, S_GOOP1)
+					blob.tics = -1
+					blob.fuse = TR
+					blob.destscale = 0
+					blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
+					blob.colorized = true
+					blob.color = clr
+					P_SetObjectMomZ(blob, P_RandomRange(2,6)*FU)
+					P_Thrust(blob,ang, -P_RandomRange(1,3)*me.scale)
+				end
+				me.colorized = false
+			end
+		end
+	end
+	
 	if pt.inkdelay
 		pt.inkdelay = $ - 1
 	elseif pt.inktank ~= 100*FU
 	and not pt.fireheld
 		if (pt.inink == Paint.ININK_FRIENDLY)
+		and pt.hidden
 		and (FixedHypot(me.momx,me.momy) < 5*me.scale)
 			pt.inktank = $ + fast_ink_refill_rate
 		else
@@ -447,18 +566,8 @@ addHook("PlayerThink",function(p)
 	
 	if doslowdown
 		p.normalspeed = FixedMul(skins[p.skin].normalspeed, cur_weapon.shootspeed)
-	elseif pt.lastslowdown
-		p.normalspeed = skins[p.skin].normalspeed
 	end
 	pt.lastslowdown = doslowdown
-	
-	do
-		local reset_interp = pt.weapon_id ~= old_weaponid
-		doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
-		if (cur_weapon.guntype == WPT_DUALIES)
-			doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
-		end
-	end
 	
 	do
 		if pt.hp ~= 100*FU
@@ -467,6 +576,7 @@ addHook("PlayerThink",function(p)
 				pt.hp = $ + FixedDiv(12*FU + FU/2, TR*FU)
 			elseif pt.inink == Paint.ININK_FRIENDLY
 			and (FixedHypot(me.momx,me.momy) < 5*me.scale)
+			and pt.hidden
 				pt.hp = $ + 8*FU
 			end
 			pt.hp = min($, 100*FU)
@@ -517,7 +627,6 @@ addHook("PlayerThink",function(p)
 			tn.dispoffset = 10
 			tn.radius = 2*me.scale
 			tn.height = 4*me.scale
-			tn.colorized = true
 			tn.dontdrawforviewmobj = me
 			tn.target = me
 			
@@ -541,7 +650,8 @@ addHook("PlayerThink",function(p)
 			P_RemoveMobj(tank)
 		end
 		if tank and tank.valid
-			tank.flags2 = ($ &~MF2_DONTDRAW)|(pt.inktank <= 0 and MF2_DONTDRAW or 0)
+			local hide = pt.hidden
+			tank.flags2 = ($ &~MF2_DONTDRAW)|((pt.inktank <= 0 or hide) and MF2_DONTDRAW or 0)
 			tank.angle = p.drawangle + ANGLE_180
 			tank.spriteyscale = FixedDiv(pt.inktank, 100*FU)
 			tank.color = Paint:getPlayerColor(p)
@@ -553,6 +663,7 @@ addHook("PlayerThink",function(p)
 			
 			local back = tank.tracer
 			back.angle = tank.angle
+			back.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
 			teleport(back,
 				me.x+me.momx + P_ReturnThrustX(nil, tank.angle, me.radius + 4*me.scale - (me.scale/32)),
 				me.y+me.momy + P_ReturnThrustY(nil, tank.angle, me.radius + 4*me.scale - (me.scale/32)),
@@ -565,6 +676,15 @@ addHook("PlayerThink",function(p)
 			back.pitch,back.roll = 0,0
 		end
 	end
+	
+	-- weapon mobjs
+	do
+		local reset_interp = pt.weapon_id ~= old_weaponid
+		doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
+		if (cur_weapon.guntype == WPT_DUALIES)
+			doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
+		end
+	end
 end)
 
 addHook("JumpSpecial",function(p)
@@ -573,7 +693,7 @@ addHook("JumpSpecial",function(p)
 	
 	local pt = p.paint
 	if not pt.active then return end
-	
+	if (pt.squidtime) then return end
 	if pt.firewait then return true; end
 	
 	local dd = pt.dodgeroll

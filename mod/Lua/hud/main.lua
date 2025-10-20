@@ -14,4 +14,5 @@ dofiles({
 	"hitmarker.lua",
 	"inv.lua",
 	"lowink.lua",
+	"inktank.lua",
 })

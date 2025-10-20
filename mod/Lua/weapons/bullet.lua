@@ -691,10 +691,12 @@ addHook("MobjThinker",function(splat)
 end,MT_PAINT_SPLATTER)
 
 addHook("MobjThinker",function(splat)
-	if splat.fuse > CV.splatter_lifetime.value * TR
-		splat.fuse = CV.splatter_lifetime.value * TR
+	local CV_VALUE = CV.splatter_lifetime.value * TR
+	
+	if splat.fuse > CV_VALUE
+		splat.fuse = CV_VALUE
 	elseif splat.fuse <= -1 and CV.splatter_lifetime.value ~= -1
-		splat.fuse = CV.splatter_lifetime.value * TR
+		splat.fuse = CV_VALUE
 	elseif CV.splatter_lifetime.value == 0
 		P_RemoveMobj(splat)
 		return
@@ -702,20 +704,23 @@ addHook("MobjThinker",function(splat)
 end,MT_PAINT_WALLSPLAT)
 
 --man fuck this retarded ass game bro
-local function nope(splat)
-	splat.health = splat.info.health
+local function nope(splat,mo)
+	splat.health = mobjinfo[splat.type].spawnhealth
 	splat.flags = $|MF_SPECIAL &~(MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT)
+	if (mo and mo.valid) and mo.player.paint.squidtime
+		splat.fuse = CV.splatter_lifetime.value * TR
+	end
 	return true
 end
 
 local function inkDamage(splat,mo, play, pnt)
 	local p = splat.tracer_player
-	if not Paint:playerIsActive(play) then return nope; end
+	if not Paint:playerIsActive(play) then return nope(splat,mo); end
 	
 	if (p and p.valid)
 	and not Paint_canHurtPlayer(p, play)
 		Paint:setPlayerInInk(p, Paint.ININK_FRIENDLY)
-		return nope;
+		return nope(splat,mo);
 	end
 	
 	if pnt.hp >= 40*FU
@@ -726,14 +731,15 @@ local function inkDamage(splat,mo, play, pnt)
 	Paint:setPlayerInInk(play, Paint.ININK_ENEMY)
 end
 addHook("TouchSpecial",function(splat,mo)
-	if not (splat and splat.valid) then return nope; end
-	if not (mo and mo.valid and mo.health) then return nope; end
-	if mo.type ~= MT_PLAYER then return nope; end
+	if not (splat and splat.valid) then return end
+	if not (mo and mo.valid and mo.health) then return nope(splat); end
+	if mo.type ~= MT_PLAYER then return nope(splat); end
 	
 	local play = mo.player
 	local pnt = play.paint
-	if not Paint:playerIsActive(play) then return nope; end
-	if (pnt.inkleveltime == leveltime) then return nope; end
+	if not Paint:playerIsActive(play) then return nope(splat,mo); end
+	if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) > (splat.radius*6/7) then return nope(splat,mo); end
+	if (pnt.inkleveltime == leveltime) then return nope(splat,mo); end
 	pnt.inkleveltime = leveltime
 	
 	local p = splat.tracer_player
@@ -743,11 +749,11 @@ addHook("TouchSpecial",function(splat,mo)
 				return true
 			end
 		end
-		return nope;
+		return nope(splat,mo);
 	end
 	if p == play
 		Paint:setPlayerInInk(p, Paint.ININK_FRIENDLY)
-		return nope;
+		return nope(splat,mo);
 	end
 	
 	if inkDamage(splat,mo, play, pnt)
