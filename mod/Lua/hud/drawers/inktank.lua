@@ -21,12 +21,20 @@ addHook("HUD",function(v,p,cam)
 		v.getSpritePatch(SPR_PAINT_MISC,3,0), 0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p))
 	)
 	*/
+	
 	local inkprogress = FixedDiv(pt.inktank,100*FU)
 	local patch = v.getSpritePatch(SPR_PAINT_MISC,3,0)
-	v.drawCropped(result.x,result.y + FixedMul(FixedMul(patch.height*FU, FU - inkprogress), result.scale), result.scale, result.scale,
+	local cropheight = FixedMul(patch.height*FU, FU - inkprogress)
+	local ypos = result.y + FixedMul(cropheight, result.scale)
+	v.drawCropped(result.x,ypos, result.scale, result.scale,
 		patch, 0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)),
-		0,FixedMul(patch.height*FU, FU - inkprogress), patch.width*FU, patch.height*FU
+		0,cropheight, patch.width*FU, patch.height*FU
 	)
-	
+	if (pt.inktank ~= 100*FU and FixedHypot(me.momx,me.momy) < 5*me.scale)
+		v.drawCropped(result.x,ypos, result.scale, result.scale,
+			patch, V_ADD|V_20TRANS, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)),
+			0,cropheight, patch.width*FU, patch.height*FU
+		)
+	end
 	v.dointerp(false)
 end,"game")
