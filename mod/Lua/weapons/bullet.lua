@@ -140,6 +140,7 @@ end
 local function HandleFloorSplat(shot)
 	if shot.z + shot.height >= shot.ceilingz
 	or shot.z <= shot.floorz
+	or (shot.eflags & MFE_JUSTSTEPPEDDOWN)
 		local ceil = shot.z+shot.height >= shot.ceilingz
 		
 		local bull_z = ceil and shot.ceilingz - 1 or shot.floorz + 1
