@@ -692,6 +692,7 @@ addHook("JumpSpecial",function(p)
 	if not (me and me.valid and me.health) return end
 	
 	local pt = p.paint
+	if not (pt) then return end
 	if not pt.active then return end
 	if (pt.squidtime) then return end
 	if pt.firewait then return true; end
