@@ -273,7 +273,7 @@ addHook("PlayerThink",function(p)
 				pt.hidden = true
 				pt.squidanim = TR/2
 				
-				p.normalspeed = $*3/4
+				p.normalspeed = skins[p.skin].normalspeed * 9/10
 				p.thrustfactor = $*6/4
 				me.friction = FixedMul($, FU*97/100)
 				if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)

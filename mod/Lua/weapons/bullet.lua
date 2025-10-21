@@ -41,9 +41,10 @@ states[S_PAINT_SPLATTER] = {
 	tics = -1,
 	nextstate = S_PAINT_SPLATTER
 }
+local REAL_SPLATRAD = 38*FU
 mobjinfo[MT_PAINT_SPLATTER] = {
 	doomednum = -1,
-	radius = 38*FU,
+	radius = 3*FU,
 	height = 2*FU,
 	flags = MF_SPECIAL,
 	spawnstate = S_PAINT_SPLATTER,
@@ -141,6 +142,7 @@ local function HandleFloorSplat(shot)
 			hole.spriteyscale = hole.spritexscale
 			hole.spriteyoffset = -4 * hole.spritexscale
 			hole.angle = shot.angle
+			hole.scale = $ * 5/4
 			if CV.splatter_lifetime.value == -1
 				hole.fuse = -1
 			else
@@ -637,21 +639,18 @@ local function SetSplatSkew(splat,slope,skew)
 	P_SetOrigin(splat, splat.x,splat.y,splat.z)
 end
 addHook("MobjThinker",function(splat)
-	splat.flags = $|MF_SPECIAL &~(MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT)
+	splat.flags = $|MF_SPECIAL
 	splat.health = splat.info.spawnhealth
-	if splat.fuse > CV.splatter_lifetime.value * TR
-		splat.fuse = CV.splatter_lifetime.value * TR
+	
+	local CV_VALUE = CV.splatter_lifetime.value * TR
+	if splat.fuse > CV_VALUE
+		splat.fuse = CV_VALUE
 	elseif splat.fuse <= -1 and CV.splatter_lifetime.value ~= -1
-		splat.fuse = CV.splatter_lifetime.value * TR
+		splat.fuse = CV_VALUE
 	elseif CV.splatter_lifetime.value == 0
 		P_RemoveMobj(splat)
 		return
 	end
-	
-	if splat.lifespan == nil
-		splat.lifespan = -1
-	end
-	splat.lifespan = $ + 1
 	
 	local slope = splat.standingslope
 	local skew = splat.floorspriteslope
@@ -659,35 +658,25 @@ addHook("MobjThinker",function(splat)
 		if not (skew and skew.valid)
 			P_CreateFloorSpriteSlope(splat); skew = splat.floorspriteslope
 		end
-		SetSplatSkew(splat, slope, skew)
-		pcall(function(mo,slope) P_GetZAt(slope, mo.x,mo.y);end, splat,slope)
+		if slope ~= splat.lastslope
+			SetSplatSkew(splat, slope, skew)
+		end
 	elseif (skew and skew.valid)
 		P_RemoveFloorSpriteSlope(splat)
 	end
-	
-	/*
-	local sec = splat.subsector.sector
-	if sec == nil then return end
-	if (sec.floorheight == sec.ceilingheight) then return end
-	
-	if sector_areas[sec] == nil
-		CalcAndCacheArea(sec)
+	splat.lastslope = slope
+	splat.z = P_FloorzAtPos(splat.x,splat.y,splat.z,splat.height)
+	if not (splat and splat.valid) then return end
+	if not (splat.extravalue1)
+		splat.extravalue1 = 1
+	elseif splat.extravalue1 == 1
+		splat.extravalue1 = 2
+		splat.flags = $|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIP
+		splat.radius = FixedMul(REAL_SPLATRAD, splat.scale)
 	end
-	local paintit = false
-	local coveredarea = splat.radius*2
-	local minarea = abs(FixedMul(sector_areas[sec], FU * 9/10))
-	for mo in sec.thinglist()
-		if mo == splat then continue end
-		if mo.type ~= splat.type then continue end
-		coveredarea = $ + mo.radius*2
-	end
-	coveredarea = $/4
-	paintit = coveredarea >= minarea
-	if not paintit then return end
-	print(string.format("covered: %f, area: %f, required: %f", coveredarea, sector_areas[sec], minarea))
-	sec.floorpic = string.format("~%.3d",skincolors[splat.color].ramp[2])
-	P_RemoveMobj(splat)
-	*/
+end,MT_PAINT_SPLATTER)
+addHook("MobjLineCollide",function(mo)
+	return false
 end,MT_PAINT_SPLATTER)
 
 addHook("MobjThinker",function(splat)
