@@ -126,13 +126,23 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 	*/
 end
 
+local function SetSplatSkew(splat,slope,skew)
+	skew.o = {
+		x = splat.x,
+		y = splat.y,
+		z = splat.floorz,
+	}
+	skew.xydirection = slope.xydirection
+	skew.zdelta = slope.zdelta
+	skew.zangle = slope.zangle
+	--P_SetOrigin(splat, splat.x,splat.y,splat.z)
+end
 local function HandleFloorSplat(shot)
 	if shot.z + shot.height >= shot.ceilingz
 	or shot.z <= shot.floorz
 		local ceil = shot.z+shot.height >= shot.ceilingz
 		
 		local bull_z = ceil and shot.ceilingz - 1 or shot.floorz + 1
-		local bull_frame = B
 		do
 			local hole = P_SpawnMobjFromMobj(shot, 0,0,0, MT_PAINT_SPLATTER)			
 			hole.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT
@@ -140,7 +150,6 @@ local function HandleFloorSplat(shot)
 			hole.mirrored = P_RandomChance(FU/2)
 			hole.spritexscale = ($ * 5/2) + P_RandomFixed()/5
 			hole.spriteyscale = hole.spritexscale
-			hole.spriteyoffset = -4 * hole.spritexscale
 			hole.angle = shot.angle
 			hole.scale = $ * 5/4
 			if CV.splatter_lifetime.value == -1
@@ -151,7 +160,8 @@ local function HandleFloorSplat(shot)
 			hole.target = shot.target
 			hole.tracer_player = shot.target.player
 			hole.weapon_id = shot.weapon_id
-			
+			hole.eflags = $|(ceil and MFE_VERTICALFLIP or 0)
+			hole.revgrav = hole.eflags & MFE_VERTICALFLIP
 			P_SetOrigin(hole, shot.x, shot.y, bull_z)
 		end
 		
@@ -577,67 +587,6 @@ addHook("MobjThinker",function(shot)
 	end
 end,MT_PAINT_GUN)
 
-/*
-local sector_areas = {}
-addHook("MapChange",do sector_areas = {}; end)
-addHook("NetVars",function(n) sector_areas = n($); end)
-local function CalcAndCacheArea(sector)
-	local leftmost
-	local rightmost
-	local bottommost
-	local topmost
-	for i = 0, #sector.lines - 1
-		local line = sector.lines[i]
-		local leftest_v = min(line.v1.x, line.v2.x)
-		local rightest_v = max(line.v1.x, line.v2.x)
-		local bottomest_v = min(line.v1.y, line.v2.y)
-		local topest_v = max(line.v1.y, line.v2.y)
-		
-		if leftmost == nil
-			leftmost = leftest_v
-		else
-			leftmost = min($, leftest_v)
-		end
-		if rightmost == nil
-			rightmost = rightest_v
-		else
-			rightmost = max($, rightest_v)
-		end
-		
-		if bottommost == nil
-			bottommost = bottomest_v
-		else
-			bottommost = min($, bottomest_v)
-		end
-		if topmost == nil
-			topmost = topest_v
-		else
-			topmost = max($, topest_v)
-		end
-	end
-	
-	--"rightmost" in this game SHOULD always be closer to
-	--positive infinity and vice versa
-	local top_len = (rightmost - leftmost)/4
-	--Ditto
-	local side_len = (topmost - bottommost)/4
-	print(rightmost,leftmost, topmost, bottommost,"",
-		top_len, side_len
-	)
-	sector_areas[sector] = abs(FixedMul(top_len , side_len))/4
-end
-*/
-local function SetSplatSkew(splat,slope,skew)
-	skew.o = {
-		x = splat.x,
-		y = splat.y,
-		z = splat.floorz,
-	}
-	skew.xydirection = slope.xydirection
-	skew.zdelta = slope.zdelta
-	skew.zangle = slope.zangle
-	P_SetOrigin(splat, splat.x,splat.y,splat.z)
-end
 addHook("MobjThinker",function(splat)
 	splat.flags = $|MF_SPECIAL
 	splat.health = splat.info.spawnhealth
@@ -652,6 +601,11 @@ addHook("MobjThinker",function(splat)
 		return
 	end
 	
+	if splat.lifespan == nil
+		splat.lifespan = -1
+	end
+	splat.lifespan = $ + 1
+	
 	local slope = splat.standingslope
 	local skew = splat.floorspriteslope
 	if (slope and slope.valid)
@@ -661,14 +615,25 @@ addHook("MobjThinker",function(splat)
 		if slope ~= splat.lastslope
 			SetSplatSkew(splat, slope, skew)
 		end
-	elseif (skew and skew.valid)
-		P_RemoveFloorSpriteSlope(splat)
+	--elseif (skew and skew.valid)
+	--	P_RemoveFloorSpriteSlope(splat)
 	end
-	splat.lastslope = slope
-	splat.z = P_FloorzAtPos(splat.x,splat.y,splat.z,splat.height)
 	if not (splat and splat.valid) then return end
+	
+	splat.lastslope = slope
+	
+	splat.eflags = $|splat.revgrav
+	if splat.revgrav
+		splat.z = P_CeilingzAtPos(splat.x,splat.y,splat.z,splat.height)
+	else
+		splat.z = P_FloorzAtPos(splat.x,splat.y,splat.z,splat.height)
+	end
+	if not (splat and splat.valid) then return end
+	
 	if not (splat.extravalue1)
 		splat.extravalue1 = 1
+		--P_TryMove(splat,splat.x,splat.y,true)
+		--P_CheckPosition(splat, splat.x,splat.y,splat.z)
 	elseif splat.extravalue1 == 1
 		splat.extravalue1 = 2
 		splat.flags = $|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIP
@@ -695,7 +660,7 @@ end,MT_PAINT_WALLSPLAT)
 --man fuck this retarded ass game bro
 local function nope(splat,mo)
 	splat.health = mobjinfo[splat.type].spawnhealth
-	splat.flags = $|MF_SPECIAL &~(MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT)
+	splat.flags = $|MF_SPECIAL
 	if (mo and mo.valid) and mo.player.paint.squidtime
 		splat.fuse = CV.splatter_lifetime.value * TR
 	end
@@ -751,6 +716,7 @@ addHook("TouchSpecial",function(splat,mo)
 end,MT_PAINT_SPLATTER)
 addHook("MobjCollide",function(splat,mo)
 	if mo.type ~= splat.type then return end
+	if (mo.revgrav ~= splat.revgrav) then return end
 	
 	local friendly = false
 	if splat.tracer_player == mo.tracer_player

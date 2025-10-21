@@ -12,7 +12,7 @@ addHook("HUD",function(v,p,cam)
 	if not result.onscreen then return end
 	result.scale = $ * 3/2
 	
-	result.x = $ + 25*result.scale
+	result.x = $ + 27*result.scale
 	
 	v.dointerp(true)
 	v.drawScaled(result.x,result.y, result.scale, v.getSpritePatch(SPR_PAINT_MISC,4,0), 0)
