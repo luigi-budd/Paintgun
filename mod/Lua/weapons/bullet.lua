@@ -669,50 +669,50 @@ local function nope(splat,mo)
 end
 
 local MIN_INK_HP = 40*FU
-local function inkDamage(splat,mo, play, pnt)
+local function inkDamage(splat,mo, targp, pnt)
 	local p = splat.tracer_player
-	if not Paint:playerIsActive(play) then return nope(splat,mo); end
+	if not Paint:playerIsActive(targp) then return nope(splat,mo); end
 	
 	if (p and p.valid)
-	and not Paint_canHurtPlayer(p, play)
-		Paint:setPlayerInInk(p, Paint.ININK_FRIENDLY)
+	and not Paint_canHurtPlayer(p, targp)
+		Paint:setPlayerInInk(targp, Paint.ININK_FRIENDLY)
 		return nope(splat,mo);
 	end
 	
 	if pnt.hp >= MIN_INK_HP
-		Paint:damagePlayer(play, splat, p, FixedDiv(18*FU, TR*FU))
+		Paint:damagePlayer(targp, splat, p, FixedDiv(18*FU, TR*FU))
 		pnt.hp = max($, MIN_INK_HP)
 	end
-	Paint:damagePlayer(play, splat, p, 0)
-	Paint:setPlayerInInk(play, Paint.ININK_ENEMY)
+	Paint:damagePlayer(targp, splat, p, 0)
+	Paint:setPlayerInInk(targp, Paint.ININK_ENEMY)
 end
 addHook("TouchSpecial",function(splat,mo)
 	if not (splat and splat.valid) then return end
 	if not (mo and mo.valid and mo.health) then return nope(splat); end
 	if mo.type ~= MT_PLAYER then return nope(splat); end
 	
-	local play = mo.player
-	local pnt = play.paint
-	if not Paint:playerIsActive(play) then return nope(splat,mo); end
+	local targp = mo.player
+	local pnt = targp.paint
+	if not Paint:playerIsActive(targp) then return nope(splat,mo); end
 	if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) > (splat.radius*6/7) then return nope(splat,mo); end
 	if (pnt.inkleveltime == leveltime) then return nope(splat,mo); end
 	pnt.inkleveltime = leveltime
 	
 	local p = splat.tracer_player
 	if not (p and p.valid) then
-		if (splat.color ~= Paint:getPlayerColor(mo.player))
-			if inkDamage(splat,mo, play, pnt)
+		if (splat.color ~= Paint:getPlayerColor(targp))
+			if inkDamage(splat,mo, targp, pnt)
 				return true
 			end
 		end
 		return nope(splat,mo);
 	end
-	if p == play
+	if p == targp
 		Paint:setPlayerInInk(p, Paint.ININK_FRIENDLY)
 		return nope(splat,mo);
 	end
 	
-	if inkDamage(splat,mo, play, pnt)
+	if inkDamage(splat,mo, targp, pnt)
 		return true
 	end
 end,MT_PAINT_SPLATTER)

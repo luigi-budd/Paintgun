@@ -145,7 +145,7 @@ function Paint:resetPlayer(p)
 	pt.endlag = 0
 	p.cmd.buttons = $ &~BT_ATTACK
 	pt.endlag = 0
-	pt.anglestand = p.realmo.angle
+	pt.anglestand = (p.realmo and p.realmo.valid) and p.realmo.angle or p.cmd.angleturn << 16
 	
 	pt.turretmode = false
 	pt.dodgeroll.tics = 0
