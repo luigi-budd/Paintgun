@@ -306,6 +306,23 @@ addHook("PlayerThink",function(p)
 			else
 				S_StopSoundByID(me,sfx_pt_swm)
 			end
+			if pt.hidden
+			and (pt.hp ~= 100*FU)
+				local rad = FixedDiv(me.radius,me.scale)/FU
+				local blob = P_SpawnMobjFromMobj(me,
+					P_RandomRange(-rad,rad)*FU,
+					P_RandomRange(-rad,rad)*FU,
+					0,MT_PARTICLE
+				)
+				P_SetMobjStateNF(blob, S_GOOP1)
+				blob.tics = -1
+				blob.fuse = TR/2
+				blob.scale = $/2
+				blob.destscale = me.scale
+				blob.scalespeed = FixedDiv(blob.destscale - blob.scale, blob.fuse*FU)
+				blob.colorized = true
+				blob.color = (pt.paintoverlay and pt.paintoverlay.valid) and pt.paintoverlay.color or ColorOpposite(Paint:getPlayerColor(p))
+			end
 		end
 		if me.last_hidden ~= pt.hidden
 		and me.last_hidden ~= nil
