@@ -18,38 +18,40 @@ addHook("HUD",function(v,p,cam)
 		local nudge = FU/2
 		
 		--local pulse = 0
-		local fade = FU - FixedDiv(hp, 100*FU)
+		local fadeprogress = ease.insine(FixedDiv(hp, 100*FU), FU, 0)
+		local fade = fadeprogress
 		local scale = FU + (FixedMul(FU/5, FU - fade))
+		local X_STR = FixedMul(FixedDiv(wid * FU, p_w * FU), scale) + FU/7
+		local Y_STR = FixedMul(FixedDiv(hei * FU, p_h * FU), scale)
 		
 		local color = ColorOpposite(Paint:getPlayerColor(p))
 		if pt.paintoverlay and pt.paintoverlay.valid
 			color = pt.paintoverlay.color
 		end
-		
-		--pulse = FixedMul(fade, max(abs(sin(FixedAngle(leveltime*FU*3))) - fudge, fudge))
-		--pulse = (10*$)/FU
-		--pulse = 10 - min($, 9)
+		local clrmp = v.getColormap(TC_RAINBOW,color)
 		
 		fade = (10*$)/FU
 		fade = 10 - min($,9)
 		fade = min($, 7)
-		--print(fade, pulse)
 		
-		v.drawStretched(160*FU,100*FU,
-			FixedMul(FixedDiv(wid * FU, p_w * FU), scale),
-			FixedMul(FixedDiv(hei * FU, p_h * FU), scale),
-			patch,
-			(fade << V_ALPHASHIFT)|V_ADD,
-			v.getColormap(TC_RAINBOW,color)
-		)
-		if fade < 5
-			v.drawStretched(160*FU,100*FU,
-				FixedMul(FixedDiv(wid * FU, p_w * FU), scale),
-				FixedMul(FixedDiv(hei * FU, p_h * FU), scale),
-				patch,
-				((fade*2) << V_ALPHASHIFT)|V_ADD,
-				v.getColormap(TC_RAINBOW,color)
+		local strength = 5*FixedMul(fadeprogress, scale)
+		local speed = 7*FU
+		for i = 0,p_h
+			local ifrac = i*FU
+			local shift = FixedMul(strength, cos(FixedAngle( speed * (leveltime+i) )) )
+			
+			v.drawCropped(160*FU + shift, 100*FU + FixedMul(ifrac,Y_STR),
+				X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp,
+				0, ifrac, p_w*FU, FU
 			)
+			if fade < 5
+			v.drawCropped(160*FU + shift, 100*FU + FixedMul(ifrac,Y_STR),
+				X_STR,Y_STR, patch, ((fade*2) << V_ALPHASHIFT)|V_ADD, clrmp,
+				0, ifrac, p_w*FU, FU
+			)
+			end
 		end
+		
+		--v.drawString(160,150, ("%.2f hp"):format(pt.hp), V_ALLOWLOWERCASE,"thin")
 	end
 end,"game")

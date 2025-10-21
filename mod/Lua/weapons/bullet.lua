@@ -667,6 +667,7 @@ local function nope(splat,mo)
 	return true
 end
 
+local MIN_INK_HP = 40*FU
 local function inkDamage(splat,mo, play, pnt)
 	local p = splat.tracer_player
 	if not Paint:playerIsActive(play) then return nope(splat,mo); end
@@ -677,9 +678,9 @@ local function inkDamage(splat,mo, play, pnt)
 		return nope(splat,mo);
 	end
 	
-	if pnt.hp >= 40*FU
+	if pnt.hp >= MIN_INK_HP
 		Paint:damagePlayer(play, splat, p, FixedDiv(18*FU, TR*FU))
-		pnt.hp = max($, 40*FU)
+		pnt.hp = max($, MIN_INK_HP)
 	end
 	Paint:damagePlayer(play, splat, p, 0)
 	Paint:setPlayerInInk(play, Paint.ININK_ENEMY)

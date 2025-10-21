@@ -766,7 +766,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 			ov.tics,ov.fuse = -1,-1
 			ov.dontdrawforviewmobj = me
 			ov.colorized = true
-			ov.blendmode = AST_ADD
+			ov.blendmode = AST_TRANSLUCENT
 			if Paint:getPlayerColor(p) ~= SKINCOLOR_NONE
 				ov.color = ColorOpposite(Paint:getPlayerColor(p))
 			else

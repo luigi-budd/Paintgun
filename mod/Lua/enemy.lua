@@ -90,7 +90,7 @@ addHook("ThinkFrame",do
 				ov.tics,ov.fuse = -1,-1
 				ov.dontdrawforviewmobj = mo
 				ov.colorized = true
-				ov.blendmode = AST_ADD
+				ov.blendmode = AST_TRANSLUCENT
 				ov.color = mo.paint_color
 				overlay = ov
 				mo.paint_overlay = ov
