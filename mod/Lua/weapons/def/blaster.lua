@@ -8,7 +8,7 @@ states[S_PAINT_GUN_BLASTER] = {
 for i = 0,3
 	sfxinfo[freeslot("sfx_p_s3_"..i)].caption = "Splatter"
 end
-sfxinfo[sfx_p_s3_2] = {
+sfxinfo[sfx_p_s3_0] = {
 	caption = "Paint fired",
 	flags = SF_X4AWAYSOUND,
 }
