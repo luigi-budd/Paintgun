@@ -247,7 +247,7 @@ addHook("PlayerThink",function(p)
 			
 			pt.squidtime = min($ + 1, maxprogress)
 			local frac = (FU/maxprogress)*pt.squidtime
-			me.height = easing(frac, $, 4*me.scale)
+			me.height = easing(frac, $, 22*me.scale)
 			me.spriteyscale = easing(frac, FU, maxsquish)
 			pt.fireheld = 0
 			p.cmd.buttons = $ &~BT_ATTACK
@@ -258,7 +258,7 @@ addHook("PlayerThink",function(p)
 			S_StopSoundByID(me,sfx_pt_swm)
 			
 			local frac = FU - (FU/maxprogress)*pt.squidtime
-			me.height = easing(frac, 4*me.scale, $)
+			me.height = easing(frac, 22*me.scale, $)
 			me.spriteyscale = easing(frac, maxsquish, FU)
 			pt.squidtime = max($ - 1, 0)
 		end
@@ -375,7 +375,6 @@ addHook("PlayerThink",function(p)
 	and not pt.fireheld
 		if (pt.inink == Paint.ININK_FRIENDLY)
 		and pt.hidden
-		and (FixedHypot(me.momx,me.momy) < 5*me.scale)
 			pt.inktank = $ + fast_ink_refill_rate
 		else
 			pt.inktank = $ + ink_refill_rate
@@ -841,3 +840,17 @@ addHook("PostThinkFrame",do for p in players.iterate
 		end
 	end
 end; end)
+
+addHook("SeenPlayer",function(p, p2)
+	if not (p.paint) then return end
+	if not (p2.paint) then return end
+	
+	if (gametyperules & GTR_TEAMS)
+		if p.ctfteam ~= p2.ctfteam
+		and p2.paint.hidden
+			return false
+		end
+	elseif p2.paint.hidden
+		return false
+	end
+end)

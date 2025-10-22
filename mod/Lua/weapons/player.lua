@@ -125,7 +125,7 @@ function Paint:damagePlayer(p, shot, sorp, damage, inf) -- mobj if no player
 		Paint:killPlayer(p, shot, sorp, inf)
 		return
 	end
-	pt.timetoheal = TR*3/2
+	pt.timetoheal = TR*5/4
 end
 
 function Paint:playHurtSound(p)
