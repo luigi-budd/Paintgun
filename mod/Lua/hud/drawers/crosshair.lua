@@ -334,18 +334,19 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 			local C_result = K_GetScreenCoords(v,p,cam, {x=C_point.x, y=C_point.y, z=0}, {dontclip = true, viewoverride = override})
 			local L_result = K_GetScreenCoords(v,p,cam, {x=L_point.x, y=L_point.y, z=0}, {dontclip = true, viewoverride = override})
 			local R_result = K_GetScreenCoords(v,p,cam, {x=R_point.x, y=R_point.y, z=0}, {dontclip = true, viewoverride = override})
-			local wdist = abs(R_result.x - L_result.x)
 			
 			L_result = K_GetScreenCoords(v,p,cam, {x=L_point.x, y=L_point.y, z=L_point.z}, {dontclip = true, viewoverride = override})
 			R_result = K_GetScreenCoords(v,p,cam, {x=R_point.x, y=R_point.y, z=R_point.z}, {dontclip = true, viewoverride = override})
+			local LEFT = abs(L_result.x - C_result.x)
+			local RIGHT = abs(R_result.x - C_result.x)
 			local TOP = abs(L_result.y - C_result.y)
 			local BOT = abs(R_result.y - C_result.y)
 			
 			-- Left and Right W2Ss are on opposing corners (top-left and bottom-right respectively)
 			range_cache[range] = {
 				[pt.spreadadd] = {
-					left = -wdist/2,
-					right = wdist/2,
+					left = -LEFT,
+					right = RIGHT,
 					top = TOP,
 					bottom = -BOT,
 					--scalefact = K_GetScreenCoords(v,p,cam, {x=C_point.x, y=C_point.y, z=C_point.z}, {dontclip = true, viewoverride = override}).scale
