@@ -343,20 +343,31 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 			local BOT = abs(R_result.y - C_result.y)
 			
 			-- Left and Right W2Ss are on opposing corners (top-left and bottom-right respectively)
-			range_cache[range] = {
-				[pt.spreadadd] = {
+			if range_cache[range] == nil
+				range_cache[range] = {
+					[pt.spreadadd] = {
+						left = -LEFT,
+						right = RIGHT,
+						top = TOP,
+						bottom = -BOT,
+						scalefact = C_result.scale
+					}
+				}
+			else
+				range_cache[range][pt.spreadadd] = {
 					left = -LEFT,
 					right = RIGHT,
 					top = TOP,
 					bottom = -BOT,
-					--scalefact = K_GetScreenCoords(v,p,cam, {x=C_point.x, y=C_point.y, z=C_point.z}, {dontclip = true, viewoverride = override}).scale
+					scalefact = C_result.scale
 				}
-			}
+			end
 		end
-		L_hspread = range_cache[range][pt.spreadadd].left
-		R_hspread = range_cache[range][pt.spreadadd].right
-		B_vspread = range_cache[range][pt.spreadadd].bottom
-		T_vspread = range_cache[range][pt.spreadadd].top
+		SCALE = FixedDiv($, range_cache[range][pt.spreadadd].scalefact)
+		L_hspread = FixedMul(range_cache[range][pt.spreadadd].left, SCALE)
+		R_hspread = FixedMul(range_cache[range][pt.spreadadd].right, SCALE)
+		B_vspread = FixedMul(range_cache[range][pt.spreadadd].bottom, SCALE)
+		T_vspread = FixedMul(range_cache[range][pt.spreadadd].top, SCALE)
 		
 		old_fov = cv_fov.value
 		old_spreadadd = pt.spreadadd
