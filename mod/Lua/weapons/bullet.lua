@@ -737,7 +737,7 @@ addHook("MobjCollide",function(splat,mo)
 			return false
 		elseif (mo.lifespan ~= nil and splat.lifespan ~= nil)
 		and mo.lifespan < splat.lifespan
-			P_RemoveMobj(mo)
+			P_RemoveMobj(splat)
 			return false
 		end
 	end
