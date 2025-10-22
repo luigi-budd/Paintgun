@@ -1,5 +1,6 @@
 local CV = Paint.CV
 freeslot("SPR_PAINT_MISC")
+local MAX_SQUIDTIME = 3
 
 local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_interp)
 	local teleport = reset_interp and P_SetOrigin or P_MoveOrigin
@@ -236,7 +237,6 @@ addHook("PlayerThink",function(p)
 	
 	-- squid form
 	do
-		local maxprogress = 3
 		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
 		local easing = ease.inquad
 		pt.hidden = false
@@ -245,8 +245,8 @@ addHook("PlayerThink",function(p)
 				S_StartSound(me,sfx_pt_tos)
 			end
 			
-			pt.squidtime = min($ + 1, maxprogress)
-			local frac = (FU/maxprogress)*pt.squidtime
+			pt.squidtime = min($ + 1, MAX_SQUIDTIME)
+			local frac = (FU/MAX_SQUIDTIME)*pt.squidtime
 			me.height = easing(frac, $, 22*me.scale)
 			me.spriteyscale = easing(frac, FU, maxsquish)
 			pt.fireheld = 0
@@ -257,7 +257,7 @@ addHook("PlayerThink",function(p)
 			end
 			S_StopSoundByID(me,sfx_pt_swm)
 			
-			local frac = FU - (FU/maxprogress)*pt.squidtime
+			local frac = FU - (FU/MAX_SQUIDTIME)*pt.squidtime
 			me.height = easing(frac, 22*me.scale, $)
 			me.spriteyscale = easing(frac, maxsquish, FU)
 			pt.squidtime = max($ - 1, 0)
@@ -266,12 +266,17 @@ addHook("PlayerThink",function(p)
 		p.charflags = ($ &~SF_NOSKID)|(skins[p.skin].flags & SF_NOSKID)
 		p.normalspeed = skins[p.skin].normalspeed * 4/5
 		p.thrustfactor = skins[p.skin].thrustfactor
-		if (pt.squidtime >= maxprogress)
+		if (pt.squidtime >= MAX_SQUIDTIME)
 			p.charflags = $|SF_NOSKID
 			if (pt.inink == Paint.ININK_FRIENDLY)
 				me.flags2 = $|MF2_DONTDRAW
 				pt.hidden = true
 				pt.squidanim = TR/2
+				p.pflags = $ &~PF_SPINNING
+				if (me.state == S_PLAY_ROLL)
+					me.state = S_PLAY_WALK
+					P_MovePlayer(p)
+				end
 				
 				p.normalspeed = skins[p.skin].normalspeed * 9/10
 				p.thrustfactor = $*6/4
@@ -852,5 +857,15 @@ addHook("SeenPlayer",function(p, p2)
 		end
 	elseif p2.paint.hidden
 		return false
+	end
+end)
+
+addHook("PlayerCanEnterSpinGaps",function(p)
+	if not (p.paint) then return end
+	local pt = p.paint
+	if not Paint:playerIsActive(p) then return end
+	
+	if pt.squidtime >= MAX_SQUIDTIME
+		return true
 	end
 end)
