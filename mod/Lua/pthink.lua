@@ -1,5 +1,4 @@
 local CV = Paint.CV
-freeslot("SPR_PAINT_MISC")
 local MAX_SQUIDTIME = 3
 
 local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_interp)
@@ -66,6 +65,23 @@ local ink_refill_rate = FixedDiv(100*FU, 11*TR*FU)
 -- ...and 3 seconds when submerged
 local fast_ink_refill_rate = FixedDiv(100*FU, 3*TR*FU)
 
+local function makeBlob(p,me,pt, rad,hei)
+	local blob = P_SpawnMobjFromMobj(me,
+		P_RandomRange(-rad,rad)*FU,
+		P_RandomRange(-rad,rad)*FU,
+		P_RandomRange(0,hei)*FU,
+		MT_PARTICLE
+	)
+	P_SetMobjStateNF(blob, S_GOOP1)
+	blob.sprite = SPR_PAINT_MISC
+	blob.frame = 15
+	
+	blob.tics = -1
+	blob.fuse = TR*3/4
+	
+	blob.color = Paint:getPlayerColor(p)
+	return blob
+end
 addHook("PlayerThink",function(p)
 	local me = p.mo
 	if p.playerstate == PST_REBORN
@@ -241,7 +257,9 @@ addHook("PlayerThink",function(p)
 		local easing = ease.inquad
 		pt.hidden = false
 		if (p.cmd.buttons & BT_SPIN)
-			if not (p.lastbuttons & BT_SPIN)
+		and not ((pt.endlag or pt.firewait or pt.cooldown)
+		or (pt.fireheld and pt.cooldown <= 0))
+			if not pt.wasinsquid
 				S_StartSound(me,sfx_pt_tos)
 			end
 			
@@ -251,8 +269,9 @@ addHook("PlayerThink",function(p)
 			me.spriteyscale = easing(frac, FU, maxsquish)
 			pt.fireheld = 0
 			p.cmd.buttons = $ &~BT_ATTACK
+			pt.wasinsquid = true
 		else
-			if (p.lastbuttons & BT_SPIN)
+			if pt.wasinsquid
 				S_StartSound(me,sfx_pt_toh)
 			end
 			S_StopSoundByID(me,sfx_pt_swm)
@@ -261,6 +280,7 @@ addHook("PlayerThink",function(p)
 			me.height = easing(frac, 22*me.scale, $)
 			me.spriteyscale = easing(frac, maxsquish, FU)
 			pt.squidtime = max($ - 1, 0)
+			pt.wasinsquid = false
 		end
 		
 		p.charflags = ($ &~SF_NOSKID)|(skins[p.skin].flags & SF_NOSKID)
@@ -296,14 +316,9 @@ addHook("PlayerThink",function(p)
 					S_StartSoundAtVolume(me,sfx_pt_swm,255/2, p)
 				end
 				local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomRange(-25,25)*FU)
-				local blob = P_SpawnMobjFromMobj(me,0,0,0,MT_PARTICLE)
+				local blob = makeBlob(p,me,pt, 0,0)
 				blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
 				P_SetOrigin(blob, me.x+me.momx, me.y+me.momy, blob.z)
-				P_SetMobjStateNF(blob, S_GOOP1)
-				blob.tics = -1
-				blob.fuse = TR*3/4
-				blob.colorized = true
-				blob.color = Paint:getPlayerColor(p)
 				P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
 				P_Thrust(blob,ang, -P_RandomRange(6,15)*me.scale)
 				blob.momx = $ + me.momx
@@ -314,27 +329,19 @@ addHook("PlayerThink",function(p)
 			if pt.hidden
 			and (pt.hp ~= 100*FU)
 				local rad = FixedDiv(me.radius,me.scale)/FU
-				local blob = P_SpawnMobjFromMobj(me,
-					P_RandomRange(-rad,rad)*FU,
-					P_RandomRange(-rad,rad)*FU,
-					0,MT_PARTICLE
-				)
-				P_SetMobjStateNF(blob, S_GOOP1)
-				blob.tics = -1
+				local blob = makeBlob(p,me,pt, rad,0)
 				blob.fuse = TR/2
 				blob.scale = $/2
 				blob.destscale = me.scale
 				blob.scalespeed = FixedDiv(blob.destscale - blob.scale, blob.fuse*FU)
-				blob.colorized = true
 				blob.color = (pt.paintoverlay and pt.paintoverlay.valid) and pt.paintoverlay.color or ColorOpposite(Paint:getPlayerColor(p))
 			end
 		end
 		if me.last_hidden ~= pt.hidden
 		and me.last_hidden ~= nil
-			local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_SPLISH)
+			local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
 			P_SetOrigin(splash, splash.x,splash.y, me.floorz)
-			splash.frame = $ &~FF_TRANSMASK
-			splash.colorized = true
+			splash.state = S_PAINT_SPLASH
 			splash.color = Paint:getPlayerColor(p)
 			P_SetScale(splash, splash.scale + P_RandomFixed()/2, true)
 			S_StartSound(me, sfx_splish)
@@ -350,22 +357,12 @@ addHook("PlayerThink",function(p)
 			if pt.squidanim == 0
 				local rad = FixedDiv(me.radius,me.scale)/FU
 				local hei = FixedDiv(me.height,me.scale)/FU
-				local clr = Paint:getPlayerColor(p)
 				for i = 0,15
-					local blob = P_SpawnMobjFromMobj(me,
-						P_RandomRange(-rad,rad)*FU,
-						P_RandomRange(-rad,rad)*FU,
-						P_RandomRange(0,hei)*FU,MT_PARTICLE
-					)
+					local blob = makeBlob(p,me,pt, rad,hei)
 					local ang = R_PointToAngle2(blob.x,blob.y, me.x,me.y)
 					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
-					P_SetMobjStateNF(blob, S_GOOP1)
-					blob.tics = -1
-					blob.fuse = TR
 					blob.destscale = 0
 					blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
-					blob.colorized = true
-					blob.color = clr
 					P_SetObjectMomZ(blob, P_RandomRange(2,6)*FU)
 					P_Thrust(blob,ang, -P_RandomRange(1,3)*me.scale)
 				end

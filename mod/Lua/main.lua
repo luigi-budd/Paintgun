@@ -120,6 +120,7 @@ function Paint:initPlayer(p)
 		squidtime = 0,
 		squidanim = 0,
 		hidden = false,
+		wasinsquid = 0,
 		
 		paintoverlay = nil,
 		teammates = nil,
