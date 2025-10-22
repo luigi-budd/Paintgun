@@ -637,7 +637,7 @@ addHook("MobjThinker",function(splat)
 		--P_CheckPosition(splat, splat.x,splat.y,splat.z)
 	elseif splat.extravalue1 == 1
 		splat.extravalue1 = 2
-		splat.flags = $|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIP
+		splat.flags = $|MF_NOCLIPHEIGHT|MF_NOGRAVITY
 		splat.radius = FixedMul(REAL_SPLATRAD, splat.scale)
 	end
 end,MT_PAINT_SPLATTER)

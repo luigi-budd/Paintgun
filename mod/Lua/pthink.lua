@@ -593,12 +593,12 @@ addHook("PlayerThink",function(p)
 	do
 		if pt.hp ~= 100*FU
 		and (pt.timetoheal <= 0)
-			if pt.inink == 0
-				pt.hp = $ + FixedDiv(12*FU + FU/2, TR*FU)
-			elseif pt.inink == Paint.ININK_FRIENDLY
+			if pt.inink == Paint.ININK_FRIENDLY
 			and (FixedHypot(me.momx,me.momy) < 5*me.scale)
 			and pt.hidden
 				pt.hp = $ + 8*FU
+			elseif pt.inink ~= Paint.ININK_ENEMY
+				pt.hp = $ + FixedDiv(12*FU + FU/2, TR*FU)
 			end
 			pt.hp = min($, 100*FU)
 		end
