@@ -161,18 +161,11 @@ function Paint:resetPlayer(p)
 	Paint:setTeammates()
 end
 
+Paint.modes = {
+	--[GT_GAMETYPE] = true
+}
 function Paint:isMode()
-	if not pcall(do return _G["GT_TURFWAR"] end)
-		if (Paint.CV.paintnerfs.value) then return true; end
-		return false
-	else
-		if gametype == GT_TURFWAR
-			return true
-		elseif (Paint.CV.paintnerfs.value)
-			return true
-		end
-		return false
-	end
+	return Paint.modes[gametype] == true
 end
 
 -- constants
@@ -188,3 +181,7 @@ dofile("weapons/player.lua")
 dofile("hud/main.lua")
 dofile("auxiliary.lua")
 dofile("enemy.lua")
+
+addHook("NetVars",function(n)
+	Paint.modes = n($)
+end)
