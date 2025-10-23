@@ -12,7 +12,7 @@ addHook("HUD",function(v,p,cam)
 		
 		local fadeprogress = ease.insine(FixedDiv(hp, 100*FU), FU, 0)
 		local fade = fadeprogress
-		local scale = FU + (FixedMul(FU/5, FU - fade))
+		local scale = FU --+ (FixedMul(FU/10, FU - fade))
 		local patch_progress = (FixedMul(8*FU, fadeprogress)/FU) + 1
 		patch_progress = clamp(1,$,8)
 		local patch = v.cachePatch("PAINT_OVERLAY" .. patch_progress )
@@ -33,8 +33,8 @@ addHook("HUD",function(v,p,cam)
 		local clrmp = v.getColormap(TC_RAINBOW,color)
 		
 		fade = (10*$)/FU
+		fade = max($, 2)
 		fade = 10 - min($,9)
-		--fade = min($, 7)
 		
 		local strength = 5*FixedMul(fadeprogress, scale)
 		local speed = 7*FU
