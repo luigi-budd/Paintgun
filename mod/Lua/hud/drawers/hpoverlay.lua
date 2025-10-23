@@ -37,23 +37,30 @@ addHook("HUD",function(v,p,cam)
 		fade = 10 - min($,9)
 		
 		local strength = 5*FixedMul(fadeprogress, scale)
+		local ystrength = FixedMul(fadeprogress, scale)/32
 		local speed = 7*FU
 		local YPOS = 100*FU + FixedMul( strength/3, sin(FixedAngle(speed *leveltime)) )
 		v.dointerp(100)
 		for i = 0,p_h
+			local my_ystr = Y_STR
 			local ifrac = i*FU
-			local shift = FixedMul(strength, cos(FixedAngle( speed * (leveltime+i) )) )
+			local angle = FixedAngle( speed * (leveltime+i) )
+			local shiftx = FixedMul(strength, cos(angle))
+			local shifty = FixedMul(ystrength, sin(angle))
+			--my_ystr = $ + shifty
+			print(("%d = %f"):format(i,shifty))
 			
-			v.drawCropped(160*FU + shift, YPOS + FixedMul(ifrac,Y_STR),
-				X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp,
+			v.drawCropped(160*FU + shiftx, YPOS + shifty,
+				X_STR,my_ystr, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp,
 				0, ifrac, p_w*FU, FU
 			)
 			if fade < 5
-				v.drawCropped(160*FU + shift, YPOS + FixedMul(ifrac,Y_STR),
-					X_STR,Y_STR, patch, ((fade*2) << V_ALPHASHIFT)|V_ADD, clrmp,
+				v.drawCropped(160*FU + shiftx, YPOS + shifty,
+					X_STR,my_ystr, patch, ((fade*2) << V_ALPHASHIFT)|V_ADD, clrmp,
 					0, ifrac, p_w*FU, FU
 				)
 			end
+			YPOS = $ + my_ystr
 		end
 		v.dointerp(false)
 		
