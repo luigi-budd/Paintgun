@@ -145,6 +145,7 @@ addHook("PlayerThink",function(p)
 	
 	--lol
 	if Paint:isMode()
+	or (Paint.CV.paintnerfs.value)
 		p.dashmode = 0
 		p.charflags = $ &~SF_DASHMODE
 		p.charability = CA_NONE
@@ -259,6 +260,7 @@ addHook("PlayerThink",function(p)
 		if (p.cmd.buttons & BT_SPIN)
 		and not ((pt.endlag or pt.firewait or pt.cooldown)
 		or (pt.fireheld and pt.cooldown <= 0))
+		and (p.charability2 == CA2_NONE)
 			if not pt.wasinsquid
 				S_StartSound(me,sfx_pt_tos)
 			end
@@ -467,6 +469,7 @@ addHook("PlayerThink",function(p)
 		Paint:chargerSightline(p)
 	end
 	--print("lag", pt.firewait, pt.endlag, pt.cooldown, "firerate = "..cur_weapon:get(pt,"firerate"))
+	
 	-- handle dodge rolls
 	if cur_weapon.guntype == WPT_DUALIES
 		local inpain = (P_PlayerInPain(p) or me.state == S_PLAY_PAIN or (not me.health))
@@ -551,6 +554,13 @@ addHook("PlayerThink",function(p)
 			dd.leave = 0
 			pt.turretmode = false
 		end
+		/*
+		print("dd = {")
+		for k,v in pairs(dd)
+			print("\t"..tostring(k) .. " = " .. tostring(v))
+		end
+		print("}")
+		*/
 	end
 	
 	if pt.cooldown

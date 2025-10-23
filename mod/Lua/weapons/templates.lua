@@ -12,6 +12,8 @@ function Paint.wtemplate_dualies(p,pt, weapon, key,value)
 		return P_RandomChance(FU/10)
 	elseif (key == "inkcost")
 		return weapon.dodgeshotcost ~= nil and weapon.dodgeshotcost or value
+	elseif (key == "endlag")
+		return weapon.realendlag or 0
 	end
 end
 

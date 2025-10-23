@@ -103,7 +103,7 @@ local weapon_meta = {
 	dodgeslide = false, -- dualie squelchers
 	dodgelength = 10,
 	dodgedist = 190*FU,
-	dodgeendlag = 2, -- wait this many tics AFTER rolling to start firing
+	dodgeendlag = 3, -- wait this many tics AFTER rolling to start firing
 	dodgegetup = 32, -- you can get up after this many tics
 	dodgeinkcost = 8*FU, -- use this much ink for dodge rolls
 	dodgeshotcost = nil,
@@ -226,6 +226,14 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 			h_spread = FixedDiv($, FU*5/2)
 			v_spread = FixedDiv($, FU*5/2)
 		end
+		-- 100% accurate for these (usually blasters)
+		if not dospread
+		and (weap:get(pt, "neverspreadonground")
+		and not me.jumptime)
+			h_spread = 0
+			v_spread = 0
+		end
+		
 		h_spread = $ + (pt.spreadadd * sign(h_spread))
 		h_spread = FixedAngle($)
 		

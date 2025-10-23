@@ -14,7 +14,6 @@ Paint:registerWeapon({
 	guntype = WPT_DUALIES,
 	lifespan = 4,
 	shootspeed = FU*78/100,
-	endlag = 15,
 	
 	inkcost = FU*6/5,
 	
