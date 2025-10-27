@@ -37,7 +37,7 @@ mobjinfo[MT_PAINT_GUN] = {
 freeslot("MT_PAINT_SPLATTER", "MT_PAINT_WALLSPLAT", "S_PAINT_SPLATTER")
 states[S_PAINT_SPLATTER] = {
 	sprite = SPR_PAINT_MISC,
-	frame = 11,
+	frame = 17,
 	tics = -1,
 	nextstate = S_PAINT_SPLATTER
 }
@@ -248,10 +248,10 @@ local function ExplodeShot(shot)
 		outline.fuse = 9
 		outline.radius = 40*shot.scale
 		outline.sprite = SPR_PAINT_MISC
-		outline.frame = ($ &~FF_FRAMEMASK)|12
+		outline.frame = ($ &~FF_FRAMEMASK)|18
 		outline.spritexscale = FixedDiv(splashrad, 80*FU) * 2
 		outline.spriteyscale = outline.spritexscale
-		outline.renderflags = $|rflags|RF_PAPERSPRITE
+		outline.renderflags = $|rflags|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
 		outline.blendmode = AST_ADD
 		outline.colorized = true
 		outline.color = shot.color
@@ -546,7 +546,7 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 	local bull_x = mo.x
 	local bull_y = mo.y
 	local bull_z = mo.z
-	local bull_frame = 10
+	local bull_frame = 16
 	if (line and line.valid)
 		bull_x,bull_y = P_ClosestPointOnLine(bull_x,bull_y, line)
 	end
