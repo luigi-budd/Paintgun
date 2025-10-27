@@ -19,7 +19,7 @@ Paint:registerWeapon({
 	
 	/*
 	firerate = 1,
-	inkcost = (FU * 92/100)/2,
+	inkcost = (FU * 92/100)/3,
 	callbacks = {
 		onfire = function(p,pt,wep, proj,mom_vec,angle,dospread)
 			local s = (pt.shotsfired % 2 == 0) and 1 or -1

@@ -33,7 +33,7 @@ addHook("HUD",function(v,p,cam)
 	local inkprogress = FixedDiv(pt.inktank,100*FU)
 	local patch = v.getSpritePatch(SPR_PAINT_MISC,pt.inktank ~= 100*FU and 3 or 4,0)
 	local cropheight = FixedMul(patch.height*FU, FU - inkprogress)
-	local ypos = result.y + FixedMul(cropheight, result.scale)
+	local ypos = result.y + FixedMul(cropheight, FixedMul(result.scale, animprogress))
 	v.drawCropped(result.x,ypos, result.scale, FixedMul(result.scale, animprogress),
 		patch, 0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)),
 		0,cropheight, patch.width*FU, patch.height*FU
