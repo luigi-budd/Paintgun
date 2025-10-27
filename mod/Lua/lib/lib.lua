@@ -1,3 +1,5 @@
+dofile("lib/quaternion.lua")
+
 rawset(_G,"SphereToCartesian",function(alpha, beta)
     local t = {}
 

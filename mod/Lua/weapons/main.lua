@@ -194,6 +194,16 @@ function Paint:getWeaponOffset(me, angle, cur_weapon, doflip)
 		   flipped
 end
 
+local function RandomPerpendicular(v)
+    local up = P_Vec3.New(0, 0, FU)
+
+    if abs(v:Dot(up)) > (99 * FU / 100) then
+        up = P_Vec3.New(FU, 0, 0)
+    end
+
+    return v:Cross(up):Normalize()
+end
+
 function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualieflip, crosshair)
 	local speed = R_PointToDist2(0,0, proj.momx,proj.momy)
 	if not speed then return end
@@ -241,11 +251,13 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		
 		h_spread = $ + (pt.spreadadd * sign(h_spread))
 		h_spread = FixedAngle($)
+		v_spread = FixedAngle($)
 		
-		angle = $ - h_spread
-		aiming = $ + FixedAngle(v_spread)
+		--angle = $ - h_spread
+		--aiming = $ + FixedAngle(v_spread)
 	end
-	local aimvec = SphereToCartesian(angle,aiming)
+	local aimvec = P_Vec3.SphereToCartesian(angle,aiming)
+	
 	local point = {
 		x = me.x + FixedMul(range, aimvec.x) + mom_vec.x + handoffset[1],
 		y = me.y + FixedMul(range, aimvec.y) + mom_vec.y + handoffset[2],
@@ -260,10 +272,19 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		if dospread
 			angle = $ - h_spread
 		end
+		aimvec = P_Vec3.SphereToCartesian(angle,aiming)
 	end
 	
+	local axis1 = RandomPerpendicular(aimvec)
+	local axis2 = aimvec:Cross(axis1):Normalize()
+	local q = P_Quat.AxisAngle(axis1, h_spread):Mul(P_Quat.AxisAngle(axis2, v_spread))
+	local mom = q:Rotate(aimvec)
+	proj.momx = FixedMul(speed, mom.x)
+	proj.momy = FixedMul(speed, mom.y)
+	proj.momz = FixedMul(speed, mom.z)
+	
 	proj.angle = R_PointToAngle2(proj.x,proj.y, point.x,point.y)
-	P_3DInstaThrust(proj, angle,aiming, speed)
+	--P_3DInstaThrust(proj, angle,aiming, speed)
 	
 	/*
 	P_SpawnMobj(point.x,point.y,point.z, MT_THOK).color = (dospread and SKINCOLOR_RED or SKINCOLOR_GREEN)
