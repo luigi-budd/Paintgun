@@ -1,15 +1,15 @@
 local CV = Paint.CV
 
-freeslot("MT_PAINT_SHOT", "S_PAINT_SHOT", "S_PAINT_SHOT_BIG", "SPR_PAINT_SHOT")
+freeslot("MT_PAINT_SHOT", "S_PAINT_SHOT", "S_PAINT_SHOT_BIG", "SPR_PAINT_SHOT", "SPR_PAINT_MISC")
 states[S_PAINT_SHOT] = {
 	sprite = SPR_PAINT_SHOT,
-	frame = A,
+	frame = 0,
 	tics = -1,
 	nextstate = S_PAINT_SHOT
 }
 states[S_PAINT_SHOT_BIG] = {
 	sprite = SPR_PAINT_SHOT,
-	frame = 5|FF_FULLBRIGHT,
+	frame = 1|FF_FULLBRIGHT,
 	tics = -1,
 	nextstate = S_PAINT_SHOT_BIG
 }
@@ -36,8 +36,8 @@ mobjinfo[MT_PAINT_GUN] = {
 }
 freeslot("MT_PAINT_SPLATTER", "MT_PAINT_WALLSPLAT", "S_PAINT_SPLATTER")
 states[S_PAINT_SPLATTER] = {
-	sprite = SPR_PAINT_SHOT,
-	frame = C,
+	sprite = SPR_PAINT_MISC,
+	frame = 11,
 	tics = -1,
 	nextstate = S_PAINT_SPLATTER
 }
@@ -247,8 +247,8 @@ local function ExplodeShot(shot)
 		outline.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
 		outline.fuse = 9
 		outline.radius = 40*shot.scale
-		outline.sprite = SPR_PAINT_SHOT
-		outline.frame = ($ &~FF_FRAMEMASK)|3
+		outline.sprite = SPR_PAINT_MISC
+		outline.frame = ($ &~FF_FRAMEMASK)|12
 		outline.spritexscale = FixedDiv(splashrad, 80*FU) * 2
 		outline.spriteyscale = outline.spritexscale
 		outline.renderflags = $|rflags|RF_PAPERSPRITE
@@ -295,7 +295,7 @@ local function CreateTrail(shot)
 		drop.trail = true
 		drop.lifespan = 0
 		drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
-		drop.frame = ($ &~FF_FRAMEMASK)|4
+		drop.frame = ($ &~FF_FRAMEMASK)|2
 		P_SetObjectMomZ(drop, -6*FU)
 	end
 	return drop
@@ -327,7 +327,7 @@ addHook("MobjThinker",function(shot)
     local mang = R_PointToAngle2(0,0, FixedHypot(shot.momx, shot.momy), shot.momz)
     mang = InvAngle($)
 	
-	if not (shot.trail and (shot.frame & FF_FRAMEMASK == 4))
+	if not (shot.trail and (shot.frame & FF_FRAMEMASK == 2))
 		shot.roll = FixedMul(mang, sin(angle))
 		shot.pitch = FixedMul(mang, cos(angle))
 	else
@@ -546,7 +546,7 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 	local bull_x = mo.x
 	local bull_y = mo.y
 	local bull_z = mo.z
-	local bull_frame = B
+	local bull_frame = 10
 	if (line and line.valid)
 		bull_x,bull_y = P_ClosestPointOnLine(bull_x,bull_y, line)
 	end
@@ -557,7 +557,7 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 		
 		hole.frame = FF_PAPERSPRITE|bull_frame
 		hole.color = mo.color
-		hole.sprite = SPR_PAINT_SHOT
+		hole.sprite = SPR_PAINT_MISC
 		hole.mirrored = P_RandomChance(FU/2)
 		hole.spritexscale = ($ * 5/2) + P_RandomFixed()/5
 		hole.spriteyscale = hole.spritexscale

@@ -5,7 +5,6 @@ function Paint:controlDir(p)
 	return (p.cmd.angleturn << 16) + R_PointToAngle2(0, 0, pt.forwardmove << 16, -pt.sidemove << 16)
 end
 
-freeslot("SPR_PAINT_MISC")
 freeslot("S_PAINT_SPLASH")
 states[S_PAINT_SPLASH] = {
 	sprite = SPR_PAINT_MISC,
