@@ -129,6 +129,11 @@ function Paint:initPlayer(p)
 		hittime = 0,
 		
 		active = true,
+		
+		-- Make sure these match weapon.callbacks
+		calledbacks = {
+			onfire = false,
+		},
 	}
 	Paint:setTeammates()
 end

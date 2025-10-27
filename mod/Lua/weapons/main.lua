@@ -124,6 +124,11 @@ local weapon_meta = {
 	-- function to override stats on the fly
 	-- (player_t player, table paint, weapon_t weapon, string key, any cur_value)
 	abilitywrap = nil,
+	
+	-- always get passed (player_t, paint_t, weapon_t) plus any misc values
+	callbacks = {
+		onfire = nil,
+	}
 }
 registerMetatable(weapon_meta)
 
@@ -395,6 +400,12 @@ function Paint:fireWeapon(p, cur_weapon, angle, dospread)
 		pt.weaponmobjdupe.fireanim = 4
 	end
 	
+	-- No recursion
+	if not pt.calledbacks.onfire
+	and (cur_weapon.callbacks and cur_weapon.callbacks.onfire ~= nil)
+		pt.calledbacks.onfire = true
+		cur_weapon.callbacks.onfire(p,pt,cur_weapon, proj, mom_vec, angle, dospread)
+	end
 	return proj
 end
 

@@ -249,6 +249,9 @@ addHook("PlayerThink",function(p)
 		end
 	else
 		pt.fireheld = 0
+	end
+	if not (p.cmd.buttons & BT_ATTACK or pt.fireheld)
+	and not (pt.cooldown or pt.firewait or pt.endlag)
 		pt.shotsfired = 0
 	end
 	
@@ -776,6 +779,11 @@ addHook("PostThinkFrame",do for p in players.iterate
 		if (overlay and overlay.valid)
 			P_RemoveMobj(overlay)
 		end
+	end
+	
+	do
+		local cb = pt.calledbacks
+		cb.onfire = false
 	end
 	
 	if not (me and me.valid and me.health)
