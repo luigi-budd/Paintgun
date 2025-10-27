@@ -604,6 +604,7 @@ addHook("MobjThinker",function(splat)
 	
 	if splat.lifespan == nil
 		splat.lifespan = -1
+		splat.collided = {}
 	end
 	splat.lifespan = $ + 1
 	
@@ -624,10 +625,12 @@ addHook("MobjThinker",function(splat)
 	splat.lastslope = slope
 	
 	splat.eflags = $|splat.revgrav
-	if splat.revgrav
-		splat.z = P_CeilingzAtPos(splat.x,splat.y,splat.z,splat.height)
-	else
-		splat.z = P_FloorzAtPos(splat.x,splat.y,splat.z,splat.height)
+	if splat.lifespan == 0
+		if splat.revgrav
+			splat.z = P_CeilingzAtPos(splat.x,splat.y,splat.z,splat.height)
+		else
+			splat.z = P_FloorzAtPos(splat.x,splat.y,splat.z,splat.height)
+		end
 	end
 	if not (splat and splat.valid) then return end
 	
@@ -719,6 +722,10 @@ end,MT_PAINT_SPLATTER)
 addHook("MobjCollide",function(splat,mo)
 	if mo.type ~= splat.type then return end
 	if (mo.revgrav ~= splat.revgrav) then return end
+	if (splat.collided == nil) then return end
+	if (splat.collided[mo] ~= nil) then return end
+	
+	local micro = getTimeMicros()
 	
 	local friendly = false
 	if splat.tracer_player == mo.tracer_player
@@ -741,4 +748,6 @@ addHook("MobjCollide",function(splat,mo)
 			return false
 		end
 	end
+	splat.collided[mo] = true
+	print(getTimeMicros() - micro)
 end,MT_PAINT_SPLATTER)
