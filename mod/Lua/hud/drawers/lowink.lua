@@ -19,6 +19,33 @@ addHook("HUD",function(v,p,cam)
 	if not Paint:playerIsActive(p) then return end
 	local pt = p.paint
 	
+	/*
+	-- proof-of-concept wavy "ink meter"
+	do
+		local patch = v.cachePatch("PT_LOW_BG")
+		local strength = FU
+		local speed = 14*FU
+		local clrmp = v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p))
+		
+		local clip_w = 128*2
+		local clip_h = 48*2
+		local crop_w = 64*FU
+		local crop_h = 23*FU
+		local force = FU/2
+		local sx = leveltime
+		local sy = leveltime
+		for i = 0, (crop_w + abs(16 * sin(FixedAngle(leveltime*FU*4))))/FU
+			local ifrac = i*FU
+			local shift = FixedMul(strength, cos(FixedAngle( speed * (leveltime+i) )) )
+			
+			v.drawCropped(160*FU + ifrac, 100*FU + shift,
+				FU,FU, patch, 0, clrmp,
+				abs((sx % clip_w)*force + ifrac), abs((sy % clip_h)*force), FU, crop_h - shift
+			)
+		end
+	end
+	*/
+	
 	local x = (160 - (68/2))*FU
 	local y = 150*FU
 	local flags = V_SNAPTOBOTTOM
