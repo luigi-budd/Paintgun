@@ -315,31 +315,41 @@ addHook("PlayerThink",function(p)
 				p.normalspeed = $/3
 			end
 			
-			if (FixedHypot(me.momx,me.momy) >= 8*me.scale)
-			and pt.hidden
-				if not S_SoundPlaying(me, sfx_pt_swm)
-					S_StartSoundAtVolume(me,sfx_pt_swm,255/2, p)
+			if pt.hidden
+				if (FixedHypot(me.momx,me.momy) >= 8*me.scale)
+					if not S_SoundPlaying(me, sfx_pt_swm)
+						S_StartSoundAtVolume(me,sfx_pt_swm,255/2, p)
+					end
+					local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomRange(-25,25)*FU)
+					local blob = makeBlob(p,me,pt, 0,0)
+					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
+					P_SetOrigin(blob, me.x+me.momx, me.y+me.momy, blob.z)
+					P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
+					P_Thrust(blob,ang, -P_RandomRange(6,15)*me.scale)
+					blob.momx = $ + me.momx
+					blob.momy = $ + me.momy
+				else
+					S_StopSoundByID(me,sfx_pt_swm)
 				end
-				local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomRange(-25,25)*FU)
-				local blob = makeBlob(p,me,pt, 0,0)
-				blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
-				P_SetOrigin(blob, me.x+me.momx, me.y+me.momy, blob.z)
-				P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
-				P_Thrust(blob,ang, -P_RandomRange(6,15)*me.scale)
-				blob.momx = $ + me.momx
-				blob.momy = $ + me.momy
+				
+				if (pt.hp ~= 100*FU)
+					local rad = FixedDiv(me.radius,me.scale)/FU
+					local blob = makeBlob(p,me,pt, rad,0)
+					blob.fuse = TR/2
+					blob.scale = $/2
+					blob.destscale = me.scale
+					blob.scalespeed = FixedDiv(blob.destscale - blob.scale, blob.fuse*FU)
+					blob.color = (pt.paintoverlay and pt.paintoverlay.valid) and pt.paintoverlay.color or ColorOpposite(Paint:getPlayerColor(p))
+				end
+				
+				local angle,thrust = Paint.slopeInfluence(me,p, {
+					allowstand = true, allowmult = true
+				})
+				if angle ~= nil
+					P_Thrust(me,angle,-thrust)
+				end
 			else
 				S_StopSoundByID(me,sfx_pt_swm)
-			end
-			if pt.hidden
-			and (pt.hp ~= 100*FU)
-				local rad = FixedDiv(me.radius,me.scale)/FU
-				local blob = makeBlob(p,me,pt, rad,0)
-				blob.fuse = TR/2
-				blob.scale = $/2
-				blob.destscale = me.scale
-				blob.scalespeed = FixedDiv(blob.destscale - blob.scale, blob.fuse*FU)
-				blob.color = (pt.paintoverlay and pt.paintoverlay.valid) and pt.paintoverlay.color or ColorOpposite(Paint:getPlayerColor(p))
 			end
 		end
 		if me.last_hidden ~= pt.hidden
