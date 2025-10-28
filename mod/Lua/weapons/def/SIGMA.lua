@@ -1,15 +1,20 @@
 Paint:registerWeapon({
 	name = "SIGMA",
-	handoffset = 6*FU,
+	handoffset = -16*FU,
 	h_spread = {25, 25},
 	v_spread = {0, 30},
 	damage = 2*FU,
 	firerate = 0,
 	range = 1000*FU,
 	bulletspershot = 5,
+	inkcost = 0,
+	shootspeed = 3*FU,
+	
+	lifespan = TR,
+	dropoffmul = 1,
 	
 	spread_base = (0), -- chance to spread, similar to accelstart
-	spread_pershot = (FU/2), -- add this much chance to spread per shot
+	spread_pershot = (FU/100), -- add this much chance to spread per shot
 	spread_max = (FU * 100), -- max chance to spread
 	spread_recovery = 105, -- how many tics to wait before recovering spread
 	spread_decay = (FU/2),

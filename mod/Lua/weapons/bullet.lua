@@ -429,7 +429,7 @@ addHook("MobjThinker",function(shot)
 		
 		local dropoff = ((dropoff - range) / wep.lifespan)
 		dropoff = FixedMul($, wep.dropoffmul)
-		shot.momz = ($ - max(dropoff, wep.mindropoffgrav) * P_MobjFlip(shot)) + P_GetMobjGravity(shot)
+		shot.momz = ($ - max(dropoff, wep.mindropoffgrav) * P_MobjFlip(shot)) --+ P_GetMobjGravity(shot)
 		
 		shot.damage = wep.falloffdamage + ease.linear(
 			min(
@@ -725,8 +725,6 @@ addHook("MobjCollide",function(splat,mo)
 	if (splat.collided == nil) then return end
 	if (splat.collided[mo] ~= nil) then return end
 	
-	local micro = getTimeMicros()
-	
 	local friendly = false
 	if splat.tracer_player == mo.tracer_player
 		friendly = true
@@ -749,5 +747,4 @@ addHook("MobjCollide",function(splat,mo)
 		end
 	end
 	splat.collided[mo] = true
-	print(getTimeMicros() - micro)
 end,MT_PAINT_SPLATTER)

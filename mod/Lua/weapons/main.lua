@@ -277,7 +277,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	
 	local axis1 = RandomPerpendicular(aimvec)
 	local axis2 = aimvec:Cross(axis1):Normalize()
-	local q = P_Quat.AxisAngle(axis1, h_spread):Mul(P_Quat.AxisAngle(axis2, v_spread))
+	local q = P_Quat.AxisAngle(axis1, v_spread):Mul(P_Quat.AxisAngle(axis2, h_spread))
 	local mom = q:Rotate(aimvec)
 	proj.momx = FixedMul(speed, mom.x)
 	proj.momy = FixedMul(speed, mom.y)
