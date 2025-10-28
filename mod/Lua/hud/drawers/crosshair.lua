@@ -1,3 +1,4 @@
+local CV = Paint.CV
 local MID_X = BASEVIDWIDTH*FU / 2
 local MID_Y = BASEVIDHEIGHT*FU / 2
 local SCALE = FU
@@ -189,6 +190,7 @@ addHook("PostThinkFrame",do
 	local p = displayplayer
 	if not (p and p.valid) then return end
 	if not (p.paint) then return end
+	if not (CV.paintguns.value) then return end
 	local pt = p.paint
 	local me = p.mo
 	if not (me and me.valid and me.health) then return end
