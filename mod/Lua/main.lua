@@ -116,6 +116,8 @@ function Paint:initPlayer(p)
 		inink = 0, -- 0 = not in ink, -1 = friendly ink, 1 = enemy ink
 		inktime = 0,
 		inkleveltime = 0, -- dont set inink multiple times a tic
+		wallink = 0, -- touching wall ink
+		wasclimbing = false,
 		
 		squidtime = 0,
 		squidanim = 0,

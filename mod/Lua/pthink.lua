@@ -294,6 +294,7 @@ addHook("PlayerThink",function(p)
 		if (pt.squidtime >= MAX_SQUIDTIME)
 			p.charflags = $|SF_NOSKID
 			if (pt.inink == Paint.ININK_FRIENDLY)
+			or (pt.wallink and p.powers[pw_pushing])
 				me.flags2 = $|MF2_DONTDRAW
 				pt.hidden = true
 				pt.squidanim = TR/2
@@ -315,19 +316,64 @@ addHook("PlayerThink",function(p)
 				p.normalspeed = $/3
 			end
 			
+			/*
+			local old_x,old_y = me.x,me.y
+			local trymove = P_TryMove(me,
+				me.x + (38 * cos(p.drawangle)),
+				me.y + (38 * sin(p.drawangle)),
+				true
+			)
+			if trymove
+				P_MoveOrigin(me, old_x,old_y,me.z)
+			end
+			print(trymove)
+			*/
+			if (pt.wallink and p.powers[pw_pushing])
+				if not (pt.wasclimbing) and me.last_speed
+					P_SetObjectMomZ(me,FixedDiv(me.last_speed,me.scale)/2,true)
+				end
+				
+				P_SetObjectMomZ(me, p.normalspeed/28, true)
+				if (pt.jumpheld == 1)
+					P_SetObjectMomZ(me, 3*FU, true)
+				end
+				
+				me.momz = FixedMul($, FU*98/100)
+				pt.wasclimbing = true
+			else
+				if pt.wasclimbing
+					me.momz = $/3
+				end
+				pt.wasclimbing = false
+			end
+			
 			if pt.hidden
-				if (FixedHypot(me.momx,me.momy) >= 8*me.scale)
+				if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 8*me.scale)
 					if not S_SoundPlaying(me, sfx_pt_swm)
 						S_StartSoundAtVolume(me,sfx_pt_swm,255/2, p)
 					end
-					local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomRange(-25,25)*FU)
 					local blob = makeBlob(p,me,pt, 0,0)
 					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
 					P_SetOrigin(blob, me.x+me.momx, me.y+me.momy, blob.z)
-					P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
-					P_Thrust(blob,ang, -P_RandomRange(6,15)*me.scale)
-					blob.momx = $ + me.momx
-					blob.momy = $ + me.momy
+					if (pt.wasclimbing)
+						local h_ang = Paint:controlDir(p)
+						local v_ang = FixedAngle(P_RandomFixedRange(-25,25))
+						local v_speed = P_RandomRange(5,10)*me.scale
+						P_Thrust(blob,h_ang, -P_RandomRange(1,3)*me.scale)
+						P_Thrust(blob,h_ang+ANGLE_90, FixedMul(v_speed, sin(v_ang)) )
+						
+						--blob.momz = $ + me.momz
+					else
+						local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomFixedRange(-25,25))
+						P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
+						P_Thrust(blob,ang, -P_RandomRange(6,15)*me.scale)
+						
+						blob.momx = $ + me.momx
+						blob.momy = $ + me.momy
+					end
+					
+					blob.destscale = 0
+					blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
 				else
 					S_StopSoundByID(me,sfx_pt_swm)
 				end
@@ -351,17 +397,28 @@ addHook("PlayerThink",function(p)
 			else
 				S_StopSoundByID(me,sfx_pt_swm)
 			end
+			pt.wallink = max($ - 1, 0)
+		else
+			pt.wallink = 0
+			
+			if pt.wasclimbing
+				me.momz = $/3
+			end
+			pt.wasclimbing = false
 		end
 		if me.last_hidden ~= pt.hidden
 		and me.last_hidden ~= nil
-			local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
-			P_SetOrigin(splash, splash.x,splash.y, me.floorz)
-			splash.state = S_PAINT_SPLASH
-			splash.color = Paint:getPlayerColor(p)
-			P_SetScale(splash, splash.scale + P_RandomFixed()/2, true)
+			if not pt.wasclimbing
+				local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
+				P_SetOrigin(splash, splash.x,splash.y, me.floorz)
+				splash.state = S_PAINT_SPLASH
+				splash.color = Paint:getPlayerColor(p)
+				P_SetScale(splash, splash.scale + P_RandomFixed()/2, true)
+			end
 			S_StartSound(me, sfx_splish)
 		end
 		me.last_hidden = pt.hidden
+		me.last_speed = FixedHypot(me.momx,me.momy)
 		
 		if pt.inink == Paint.ININK_ENEMY
 			p.normalspeed = $ * 3/5
@@ -375,11 +432,11 @@ addHook("PlayerThink",function(p)
 				for i = 0,15
 					local blob = makeBlob(p,me,pt, rad,hei)
 					local ang = R_PointToAngle2(blob.x,blob.y, me.x,me.y)
+					P_SetObjectMomZ(blob, P_RandomRange(2,6)*FU)
+					P_Thrust(blob,ang, -P_RandomRange(1,3)*me.scale)
 					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
 					blob.destscale = 0
 					blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
-					P_SetObjectMomZ(blob, P_RandomRange(2,6)*FU)
-					P_Thrust(blob,ang, -P_RandomRange(1,3)*me.scale)
 				end
 				me.colorized = false
 			end

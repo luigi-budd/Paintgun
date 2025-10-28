@@ -34,13 +34,20 @@ mobjinfo[MT_PAINT_GUN] = {
 	flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOCLIPTHING|MF_NOBLOCKMAP,
 	spawnstate = S_PAINT_GUN
 }
-freeslot("MT_PAINT_SPLATTER", "MT_PAINT_WALLSPLAT", "S_PAINT_SPLATTER")
+freeslot("MT_PAINT_SPLATTER", "MT_PAINT_WALLSPLAT", "S_PAINT_SPLATTER", "S_PAINT_WALLSPLATTER")
 states[S_PAINT_SPLATTER] = {
 	sprite = SPR_PAINT_MISC,
 	frame = 17,
 	tics = -1,
 	nextstate = S_PAINT_SPLATTER
 }
+states[S_PAINT_WALLSPLATTER] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 16|FF_PAPERSPRITE,
+	tics = -1,
+	nextstate = S_PAINT_WALLSPLATTER
+}
+
 local REAL_SPLATRAD = 38*FU
 mobjinfo[MT_PAINT_SPLATTER] = {
 	doomednum = -1,
@@ -53,12 +60,12 @@ mobjinfo[MT_PAINT_SPLATTER] = {
 }
 mobjinfo[MT_PAINT_WALLSPLAT] = {
 	doomednum = -1,
-	radius = 38*FU,
-	height = 2*FU,
-	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOCLIPTHING|MF_NOGRAVITY,
-	spawnstate = S_PAINT_SPLATTER,
+	radius = 32*FU,
+	height = 55*FU,
+	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_SPECIAL,
+	spawnstate = S_PAINT_WALLSPLATTER,
 	spawnhealth = 1,
-	deathstate = S_PAINT_SPLATTER,
+	deathstate = S_PAINT_WALLSPLATTER,
 }
 
 local function splattersound(shot)
@@ -546,22 +553,18 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 	local bull_x = mo.x
 	local bull_y = mo.y
 	local bull_z = mo.z
-	local bull_frame = 16
 	if (line and line.valid)
 		bull_x,bull_y = P_ClosestPointOnLine(bull_x,bull_y, line)
 	end
 	do
 		local hole = P_SpawnMobjFromMobj(mo, 0,0,0, MT_PAINT_WALLSPLAT)
-		hole.radius = mo.scale
-		hole.height = 2 * mo.scale
 		
-		hole.frame = FF_PAPERSPRITE|bull_frame
 		hole.color = mo.color
-		hole.sprite = SPR_PAINT_MISC
 		hole.mirrored = P_RandomChance(FU/2)
 		hole.spritexscale = ($ * 5/2) + P_RandomFixed()/5
 		hole.spriteyscale = hole.spritexscale
 		hole.angle = angle
+		hole.tracer_player = mo.target.player
 		if CV.splatter_lifetime.value == -1
 			hole.fuse = -1
 		else
@@ -649,8 +652,10 @@ addHook("MobjLineCollide",function(mo)
 end,MT_PAINT_SPLATTER)
 
 addHook("MobjThinker",function(splat)
-	local CV_VALUE = CV.splatter_lifetime.value * TR
+	splat.flags = $|MF_SPECIAL
+	splat.health = splat.info.spawnhealth
 	
+	local CV_VALUE = CV.splatter_lifetime.value * TR
 	if splat.fuse > CV_VALUE
 		splat.fuse = CV_VALUE
 	elseif splat.fuse <= -1 and CV.splatter_lifetime.value ~= -1
@@ -674,7 +679,6 @@ end
 local MIN_INK_HP = 40*FU
 local function inkDamage(splat,mo, targp, pnt)
 	local p = splat.tracer_player
-	if not Paint:playerIsActive(targp) then return nope(splat,mo); end
 	
 	if (p and p.valid)
 	and not Paint_canHurtPlayer(p, targp)
@@ -748,3 +752,26 @@ addHook("MobjCollide",function(splat,mo)
 	end
 	splat.collided[mo] = true
 end,MT_PAINT_SPLATTER)
+
+addHook("TouchSpecial",function(splat,mo)
+	if not (splat and splat.valid) then return end
+	if not (mo and mo.valid and mo.health) then return nope(splat); end
+	if mo.type ~= MT_PLAYER then return nope(splat); end
+	
+	local targp = mo.player
+	local pnt = targp.paint
+	if not Paint:playerIsActive(targp) then return nope(splat,mo); end
+	--if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) > (splat.radius*6/7) then return nope(splat,mo); end
+	--if (pnt.inkleveltime == leveltime) then return nope(splat,mo); end
+	
+	local p = splat.tracer_player
+	if not (p and p.valid)
+		if (splat.color ~= Paint:getPlayerColor(targp))
+			return nope(splat,mo);
+		end
+	elseif (not Paint_canHurtPlayer(p, targp))
+	or (p == targp)
+		Paint:setPlayerWallInk(p)
+		return nope(splat,mo);
+	end
+end,MT_PAINT_WALLSPLAT)

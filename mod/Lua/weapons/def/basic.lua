@@ -40,3 +40,27 @@ Paint:registerWeapon({
 	}
 	*/
 })
+
+-- nova
+/*
+Paint:registerWeapon({
+	name = "basic",
+	handoffset = 8*FU,
+	h_spread = {7, 7},
+	v_spread = {4, 4},
+	damage = 24*FU,
+	inkcost = FU * 96/100,
+	range = 570*FU,
+	
+	weaponstate = S_PAINT_GUN_TEST,
+	weaponstate_scale = FU/2,
+
+	spread_base = (FU * 10), -- chance to spread, similar to accelstart
+	spread_pershot = (FU * 3), -- add this much chance to spread per shot
+	spread_max = (FU * 25), -- max chance to spread
+	spread_decay = (FU * 2),
+	spread_jumpspread = 4*FU, -- how many degrees does jump inaccuracy add?
+	spread_jump = 56, -- how many tics until jump spread decays?
+	spread_jumpchance = (FU * 40), -- set spread chance to this when jumping
+})
+*/

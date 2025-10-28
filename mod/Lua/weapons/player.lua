@@ -191,6 +191,9 @@ function Paint:setPlayerInInk(p, type)
 	p.paint.inink = type
 	p.paint.inktime = 2
 end
+function Paint:setPlayerWallInk(p, type)
+	p.paint.wallink = 3
+end
 
 function Paint:doDodgeRoll(p)
 	local me = p.mo
