@@ -33,6 +33,8 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	local weapon_scale = cur_weapon:get(pt,"weaponstate_scale")
 	wepmo.spritexscale = FixedMul(FU + (wepmo.fireanim * FU/12), weapon_scale)
 	wepmo.spriteyscale = wepmo.spritexscale
+	wepmo.destscale = me.scale
+	wepmo.scalespeed = wepmo.destscale + 1
 	wepmo.color = Paint:getPlayerColor(p)
 	if dualieflip
 	and cur_weapon:get(pt,"dualie_weaponstate") ~= nil
@@ -362,7 +364,7 @@ addHook("PlayerThink",function(p)
 						P_Thrust(blob,h_ang, -P_RandomRange(1,3)*me.scale)
 						P_Thrust(blob,h_ang+ANGLE_90, FixedMul(v_speed, sin(v_ang)) )
 						
-						--blob.momz = $ + me.momz
+						blob.momz = $ + me.momz/2
 					else
 						local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomFixedRange(-25,25))
 						P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
@@ -712,7 +714,7 @@ addHook("PlayerThink",function(p)
 		end
 	end
 	
-	-- tank mobj
+	-- ink tank mobj
 	do
 		local tank = pt.tankmobj
 		local teleport = P_MoveOrigin
@@ -758,6 +760,8 @@ addHook("PlayerThink",function(p)
 				me.y+me.momy + P_ReturnThrustY(nil, tank.angle, me.radius + 4*me.scale),
 				me.z+me.momz + me.height*2/5
 			)
+			tank.destscale = me.scale
+			tank.scalespeed = tank.destscale + 1
 			
 			local back = tank.tracer
 			back.angle = tank.angle
@@ -769,6 +773,8 @@ addHook("PlayerThink",function(p)
 			)
 			tank.angle = $ - ANGLE_90
 			back.angle = $ - ANGLE_90
+			back.destscale = me.scale
+			back.scalespeed = back.destscale + 1
 			
 			tank.pitch,tank.roll = 0,0
 			back.pitch,back.roll = 0,0

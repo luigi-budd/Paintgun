@@ -189,6 +189,7 @@ addHook("PostThinkFrame",do
 	local p = displayplayer
 	if not (p and p.valid) then return end
 	if not (p.paint) then return end
+	if not Paint:playerIsActive(p) then return end
 	local pt = p.paint
 	local me = p.mo
 	if not (me and me.valid and me.health) then return end
@@ -206,7 +207,7 @@ addHook("PostThinkFrame",do
 	end
 end)
 
-local old_fov, old_spreadadd, old_camdist, old_chase
+local old_fov, old_spreadadd, old_camdist, old_chase, old_scale
 local cv_fov
 local cv_camdist
 local cross_x,cross_y = 0,0
@@ -291,6 +292,7 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 	if (old_fov ~= cv_fov.value)
 	or (old_camdist ~= cv_camdist.value)
 	or (old_chase ~= cam.chase)
+	or (old_scale ~= p.mo.scale)
 		range_cache = {}
 	end
 	if wep.guntype == WPT_SHOOTER
@@ -306,6 +308,11 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 			R_hspread = wep.h_spread[2]*FU + pt.spreadadd
 			B_vspread = -wep.v_spread[1]*FU
 			T_vspread = wep.v_spread[2]*FU
+			local scale = p.mo.scale
+			L_hspread = FixedMul($, scale)
+			R_hspread = FixedMul($, scale)
+			B_vspread = FixedMul($, scale)
+			T_vspread = FixedMul($, scale)
 			
 			-- Project a "point" out to the very tip of our range
 			local t_aim = FixedAngle(T_vspread)
@@ -373,6 +380,7 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 		old_spreadadd = pt.spreadadd
 		old_camdist = cv_camdist.value
 		old_chase = cam.chase
+		old_scale = p.mo.scale
 		
 		local dual = wep.guntype == WPT_DUALIES
 		v.dointerp(5 + interptag)
