@@ -14,7 +14,8 @@ Paint:registerWeapon({
 	guntype = WPT_DUALIES,
 	lifespan = 4,
 	shootspeed = FU*78/100,
-	
+	falloffdamage = 14*FU,
+	fallofftime = 6,
 	inkcost = FU*6/5,
 	
 	spread_base = (FU * 4), -- chance to spread, similar to accelstart

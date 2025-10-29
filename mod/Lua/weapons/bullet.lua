@@ -430,13 +430,25 @@ addHook("MobjThinker",function(shot)
 		end
 		
 		if (shot.flags & MF_NOGRAVITY)
+			/*
+			if shot.quartersteps
+				shot.momx = $ * 4
+				shot.momy = $ * 4
+				shot.momz = $ * 4
+			end
+			*/
 			shot.fallofftime = shot.lifespan
 		end
 		shot.flags = $ &~MF_NOGRAVITY
 		
-		local dropoff = ((dropoff - range) / wep.lifespan)
-		dropoff = FixedMul($, wep.dropoffmul)
-		shot.momz = ($ - max(dropoff, wep.mindropoffgrav) * P_MobjFlip(shot)) --+ P_GetMobjGravity(shot)
+		local dropoff_grav = ((dropoff - range) / wep.lifespan)
+		dropoff_grav = FixedMul($, wep.dropoffmul)
+		dropoff_grav = max($, wep.mindropoffgrav) * P_MobjFlip(shot)
+		dropoff_grav = $ + P_GetMobjGravity(shot)
+		if shot.quartersteps
+			dropoff_grav = $ / 4
+		end
+		shot.momz = $ + dropoff_grav
 		
 		shot.damage = wep.falloffdamage + ease.linear(
 			min(
