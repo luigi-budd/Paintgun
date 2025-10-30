@@ -11,8 +11,8 @@ end
 
 Paint:registerWeapon({
 	name = "rapid",
-	handoffset = 4*FU,
-	range = 118*FU,
+	handoffset = 6*FU,
+	range = 188*FU,
 	dropoff = 103*FU,
 	falloff = {3, 20},
 	dropoffmul = FU,
@@ -36,6 +36,7 @@ Paint:registerWeapon({
 	spread_jumpspread = 12*FU, -- how many degrees does jump inaccuracy add?
 	
 	weaponstate = S_PAINT_GUN_AERO,
+	weaponstate_scale = FU/2,
 	
 	sounds = {
 		sfx_p_s1_0, sfx_p_s1_1, sfx_p_s1_2, sfx_p_s1_3, sfx_p_s1_4, sfx_p_s1_5, sfx_p_s1_6

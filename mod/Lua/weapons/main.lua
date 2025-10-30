@@ -24,6 +24,7 @@ rawset(_G, "WPT_KATANA", 3)
 rawset(_G, "WPT_BRUSH", 4)
 rawset(_G, "WPT_BLASTER", 5)
 rawset(_G, "WPT_DUALIES", 6)
+rawset(_G, "WPT_BRELLA", 7)
 
 rawset(_G, "SUB_BOMB", 1)
 rawset(_G, "SUB_BURST", 2)
