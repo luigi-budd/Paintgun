@@ -48,11 +48,29 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	wepmo.flags2 = ($ &~MF2_DONTDRAW)|((pt.hidden) and MF2_DONTDRAW or 0)
 	wepmo.fireanim = max($-1, 0)
 	
-	local handoffset = {Paint:getWeaponOffset(me,fireangle - ANGLE_90, cur_weapon, dualieflip)}
+	local offx,offy = 0,0
+	if (cur_weapon.guntype == WPT_BRELLA)
+	and ((pt.endlag or pt.firewait) or (pt.fireheld or p.cmd.buttons & BT_ATTACK))
+	or pt.holsteranim
+		if ((pt.endlag or pt.firewait) or (pt.fireheld or p.cmd.buttons & BT_ATTACK))
+			pt.holsteranim = min($ + 1, Paint.MAX_HOLSTER)
+		else
+			pt.holsteranim = max($-1, 0)
+		end
+		local frac = FixedDiv(pt.holsteranim*FU, Paint.MAX_HOLSTER*FU)
+		
+		offx = P_ReturnThrustX(nil, fireangle, FixedMul(me.radius, frac))
+		offy = P_ReturnThrustY(nil, fireangle, FixedMul(me.radius, frac))
+		fireangle = $ + FixedAngle(90 * frac)
+	else
+		pt.holsteranim = max($-1, 0)
+	end
+	local handoffset = {Paint:getWeaponOffset(me,fireangle - ANGLE_90, cur_weapon, dualieflip, false)}
+	local zoffset = (41*me.height)/48 - (12 * me.scale)
 	teleport(wepmo,
-		me.x + handoffset[1] + me.momx,
-		me.y + handoffset[2] + me.momy,
-		me.z + me.height / 2 + me.momz
+		me.x + handoffset[1] + me.momx + offx,
+		me.y + handoffset[2] + me.momy + offy,
+		me.z + zoffset       + me.momz
 	)
 	if (P_MobjFlip(me) == -1)
 		wepmo.z = $ - wepmo.height
@@ -109,6 +127,7 @@ addHook("PlayerThink",function(p)
 		Paint:giveWeapon(p, "charger")
 		Paint:giveWeapon(p, "blaster")
 		Paint:giveWeapon(p, "dualies")
+		Paint:giveWeapon(p, "brella")
 		--Paint:giveWeapon(p, "SIGMA")
 	end
 	local pt = p.paint
@@ -266,6 +285,7 @@ addHook("PlayerThink",function(p)
 		and not ((pt.endlag or pt.firewait or pt.cooldown)
 		or (pt.fireheld and pt.cooldown <= 0))
 		and (p.charability2 == CA2_NONE)
+		and not (pt.dodgeroll.tics or pt.dodgeroll.getup)
 			if not pt.wasinsquid
 				S_StartSound(me,sfx_pt_tos)
 			end
@@ -462,7 +482,8 @@ addHook("PlayerThink",function(p)
 	
 	if (cur_weapon.guntype == WPT_SHOOTER
 	or cur_weapon.guntype == WPT_BLASTER
-	or cur_weapon.guntype == WPT_DUALIES)
+	or cur_weapon.guntype == WPT_DUALIES
+	or cur_weapon.guntype == WPT_BRELLA)
 		if ( ( (justpressedfire or pt.fireheld) and pt.cooldown <= 0)
 		/*or (pt.fireheld % cur_weapon:get(pt,"firerate") == 0)*/)
 		and (p.cmd.buttons & BT_ATTACK)
@@ -474,17 +495,18 @@ addHook("PlayerThink",function(p)
 			end
 			local spread = P_RandomChance(FixedDiv(chance, 100*FU))
 			
-			if cur_weapon:get(pt, "neverspreadonground")
-			and not me.jumptime
+			if (cur_weapon:get(pt, "neverspreadonground")
+			and not me.jumptime)
+			or (cur_weapon:get(pt, "neverspreadatall"))
 				spread = false
 			end
 			
-			Paint:fireWeapon(p, cur_weapon, fireangle, spread)
+			Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 			local bps = cur_weapon:get(pt,"bulletspershot")
 			if bps ~= 1
 			and bps > 1
 				for i = 1, bps - 1
-					Paint:fireWeapon(p, cur_weapon, fireangle, spread)
+					Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 				end
 			end
 			doslowdown = true
@@ -533,7 +555,7 @@ addHook("PlayerThink",function(p)
 		and (p.lastbuttons & BT_ATTACK)
 		and (pt.charge)
 			pt.charge = min($, cur_weapon.chargetime)
-			Paint:fireWeapon(p, cur_weapon, fireangle,  spread)
+			Paint:fireWeapon(p, cur_weapon, fireangle,  spread, true)
 			pt.charge = 0
 			S_StopSoundByID(me, charge_sound)
 			S_StopSoundByID(me, slow_charge_sound)
@@ -562,6 +584,15 @@ addHook("PlayerThink",function(p)
 			p.rmomy = dd.momy - p.cmomy
 			me.state = S_PLAY_ROLL
 			dd.tics = $ - 1
+			
+			local rad = FixedDiv(me.radius,me.scale)/FU
+			local hei = FixedDiv(me.height,me.scale)/FU
+			for i = 0,2
+				local b = makeBlob(p,me,pt, rad,hei)
+				b.destscale = 0
+				b.fuse = 10
+				b.scalespeed = FixedDiv(b.scale, b.fuse*FU)
+			end
 			
 			p.skidtime = 0
 			if dd.tics == 0

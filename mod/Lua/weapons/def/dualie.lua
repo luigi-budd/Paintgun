@@ -1,3 +1,18 @@
+freeslot("S_PAINT_GUN_DUAL_L")
+states[S_PAINT_GUN_DUAL_L] = {
+	sprite = SPR_PAINT_GUN,
+	frame = 5,
+	tics = -1,
+	nextstate = S_PAINT_GUN_DUAL_L
+}
+freeslot("S_PAINT_GUN_DUAL_R")
+states[S_PAINT_GUN_DUAL_R] = {
+	sprite = SPR_PAINT_GUN,
+	frame = 6,
+	tics = -1,
+	nextstate = S_PAINT_GUN_DUAL_R
+}
+
 for i = 0,5
 	sfxinfo[freeslot("sfx_p_s4_"..i)].caption = "Paint fired"
 end
@@ -31,6 +46,10 @@ Paint:registerWeapon({
 	
 	turret_startsound = sfx_p_s4_6,
 	turret_endsound = sfx_p_s4_7,
+	
+	weaponstate = S_PAINT_GUN_DUAL_R,
+	weaponstate_scale = FU*6/10,
+	dualie_weaponstate = S_PAINT_GUN_DUAL_L,
 	
 	abilitywrap = Paint.wtemplate_dualies,
 	sounds = {

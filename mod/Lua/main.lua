@@ -21,7 +21,13 @@ sfxinfo[freeslot("sfx_pt_toh")].caption = "/"
 sfxinfo[freeslot("sfx_pt_tos")].caption = "/"
 sfxinfo[freeslot("sfx_pt_swm")].caption = "Swimming"
 
+--srb2 edit flags
+rawset(_G, "MFE_NOPITCHROLLEASING", MFE_NOPITCHROLLEASING or (1<<14))
+rawset(_G, "RF_ALWAYSONTOP", RF_ALWAYSONTOP or 0x00010000)
+rawset(_G, "RF_HIDEINSKYBOX", RF_HIDEINSKYBOX or 0x00020000)
+rawset(_G, "RF_NOMODEL", RF_NOMODEL or 0x00040000)
 rawset(_G, "TR", TICRATE)
+
 rawset(_G,"Paint",{})
 
 function Paint:setTeammates()
@@ -100,6 +106,7 @@ function Paint:initPlayer(p)
 		anglefix = 0,
 		anglestand = (p.realmo and p.realmo.valid) and (p.realmo.angle) or p.cmd.angleturn << 16,
 		lastslowdown = false,
+		holsteranim = 0,
 		
 		inktank = 100*FU,
 		inkdelay = 0, -- delay before restoring ink
@@ -108,7 +115,7 @@ function Paint:initPlayer(p)
 		inventory = {
 			items = {},
 			curslot = 1,
-			slots = 5,
+			slots = 6,
 		},
 		
 		hp = 100*FU,
@@ -154,6 +161,12 @@ function Paint:resetPlayer(p)
 	p.cmd.buttons = $ &~BT_ATTACK
 	pt.endlag = 0
 	pt.anglestand = (p.realmo and p.realmo.valid) and p.realmo.angle or p.cmd.angleturn << 16
+	pt.holsteranim = 0
+	
+	pt.spread = 0
+	pt.spreadcooldown = 0
+	pt.spreadadd = 0
+	pt.spreadjump = 0
 	
 	pt.turretmode = false
 	pt.dodgeroll.tics = 0
@@ -178,6 +191,7 @@ end
 -- constants
 Paint.ININK_FRIENDLY = -1
 Paint.ININK_ENEMY = 1
+Paint.MAX_HOLSTER = 5
 
 rawset(_G, "RF_ALWAYSONTOP", RF_ALWAYSONTOP or 0x00010000)
 

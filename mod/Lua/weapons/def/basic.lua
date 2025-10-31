@@ -1,11 +1,3 @@
-freeslot("S_PAINT_GUN_TEST")
-states[S_PAINT_GUN_TEST] = {
-	sprite = SPR_PAINT_GUN,
-	frame = 5,
-	tics = -1,
-	nextstate = S_PAINT_GUN_TEST
-}
-
 Paint:registerWeapon({
 	name = "basic",
 	handoffset = 8*FU,
@@ -14,11 +6,10 @@ Paint:registerWeapon({
 	damage = 35*FU,
 	inkcost = FU * 92/100,
 	
-	weaponstate = S_PAINT_GUN_TEST,
+	weaponstate = S_PAINT_GUN,
 	weaponstate_scale = FU/2,
 	
 	/*
-	firerate = 2,
 	inkcost = (FU * 92/100)/6,
 	callbacks = {
 		onfire = function(p,pt,wep, proj,mom_vec,angle,dospread)
@@ -31,7 +22,7 @@ Paint:registerWeapon({
 			angle = $ - FixedMul(ANG10*s, adjustx)
 			local aim = p.aiming + FixedMul(ANG10*s, adjusty)
 			
-			local proj = Paint:fireWeapon(p,wep, angle, false)
+			local proj = Paint:fireWeapon(p,wep, angle, aim, false)
 			pt.shotsfired = $ - 1
 			if not proj then return end
 			

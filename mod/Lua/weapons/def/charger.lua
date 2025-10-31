@@ -15,6 +15,11 @@ Paint:registerWeapon({
 	shootspeed = FU/4,
 	
 	guntype = WPT_CHARGER,
+
+	neverspreadonground = true,
+	neverspreadatall = true,
+	h_spread = {0, 0},
+	v_spread = {0, 0},
 	
 	weaponstate = S_PAINT_GUN_CHARGER,
 	abilitywrap = Paint.wtemplate_charger,

@@ -72,6 +72,7 @@ local weapon_meta = {
 	dragmul = FU * 78/100,
 	quartersteps = true,
 	neverspreadonground = false, -- never apply shotspread if the player is grounded
+	neverspreadatall = false,
 	bulletspershot = 1, -- yes these DO factor into spread! yes, these DO change dualie order!
 	
 	--charger specific
@@ -99,7 +100,7 @@ local weapon_meta = {
 	explode_sounds = {}, -- hit geometry
 	
 	--dualie specific
-	shotoffset = 6*FU, -- how far from the center are we offset?
+	shotoffset = -2*FU, -- how far from the center are we offset?
 	dodgerolls = 2, -- use endlag variable
 	dodgeslide = false, -- dualie squelchers
 	dodgelength = 10,
@@ -112,6 +113,12 @@ local weapon_meta = {
 	turret_firerate = nil,
 	turret_startsound = nil,
 	turret_endsound = nil,
+	
+	--brella specific
+	pelletspread = 6*FU,
+	pelletnoise = FU*3/2,
+	-- charger "maxdamage" is also used for brella pellets,
+	-- damage is chosen from [wep.damage, wep.maxdamage]
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
@@ -183,15 +190,18 @@ end
 
 --returns x,y
 -- DONT FORGET to wrap the results, `{Paint:getWeaponOffset(me, me.angle - ANGLE_90, wep)}` for example
-function Paint:getWeaponOffset(me, angle, cur_weapon, doflip)
+-- aimit: use shotoffset for aimProjectile, handoffset otherwise
+function Paint:getWeaponOffset(me, angle, cur_weapon, doflip, aimit)
+	local pt = me.player.paint
 	local flipped = false
+	local offset = (cur_weapon.guntype == WPT_DUALIES and aimit) and cur_weapon:get(pt,"shotoffset") or cur_weapon:get(pt,"handoffset")
 	if ((cur_weapon.guntype == WPT_DUALIES) and (me.player.paint.shotsfired % 2) and (doflip == nil))
 	or doflip
 		angle = $ - ANGLE_180
 		flipped = true
 	end
-	return P_ReturnThrustX(nil, angle, (me.radius + FixedMul(cur_weapon.handoffset,me.scale))),
-		   P_ReturnThrustY(nil, angle, (me.radius + FixedMul(cur_weapon.handoffset,me.scale))),
+	return P_ReturnThrustX(nil, angle, (me.radius + FixedMul(offset,me.scale))),
+		   P_ReturnThrustY(nil, angle, (me.radius + FixedMul(offset,me.scale))),
 		   flipped
 end
 
@@ -206,18 +216,20 @@ local function RandomPerpendicular(v)
 end
 
 function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualieflip, crosshair)
-	local speed = R_PointToDist2(0,0, proj.momx,proj.momy)
-	if not speed then return end
-	mom_vec = $ or {x = 0,y = 0}
-	
 	local me = p.mo
 	local pt = p.paint
 	local weap = self.weapons[pt.weapon_id]
 	
-	local handoffset = {Paint:getWeaponOffset(me,angle - ANGLE_90, weap, dualieflip)}
+	local speed = FixedMul(FixedDiv(weap:get(pt,"range"), weap:get(pt,"lifespan") * FU), proj.scale)
+	mom_vec = $ or {x = 0,y = 0}
+	
+	local handoffset2 = {Paint:getWeaponOffset(me,angle - ANGLE_90, weap, dualieflip, false)}
+	local handoffset  = {Paint:getWeaponOffset(me,angle - ANGLE_90, weap, dualieflip, true)}
 	handoffset[4], handoffset[5] = handoffset[1], handoffset[2]
 	
 	local range = FixedMul(weap:get(pt,"range"), me.scale)
+	local aimvec = P_Vec3.SphereToCartesian(angle,aiming)
+	
 	-- Aim in the center (but offset)
 	if (weap.guntype == WPT_DUALIES)
 		local f_angle = angle - ANGLE_90
@@ -231,6 +243,9 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		if pt.turretmode
 			handoffset[1],handoffset[2] = 0,0
 		end
+	-- Aim in the center 
+	elseif (weap.guntype == WPT_BRELLA)
+		handoffset[1],handoffset[2] = 0,0
 	end
 	
 	local h_spread,v_spread = 0,0
@@ -244,8 +259,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		end
 		-- 100% accurate for these (usually blasters)
 		if not dospread
-		and (weap:get(pt, "neverspreadonground")
-		and not me.jumptime)
+		and ((weap:get(pt, "neverspreadonground") and not me.jumptime) or (weap:get(pt,"neverspreadatall")))
 			h_spread = 0
 			v_spread = 0
 		end
@@ -257,21 +271,25 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		--angle = $ - h_spread
 		--aiming = $ + FixedAngle(v_spread)
 	end
-	local aimvec = P_Vec3.SphereToCartesian(angle,aiming)
 	
 	local point = {
 		x = me.x + FixedMul(range, aimvec.x) + mom_vec.x + handoffset[1],
 		y = me.y + FixedMul(range, aimvec.y) + mom_vec.y + handoffset[2],
 		z = proj.z + FixedMul(range, aimvec.z)
 	}
-	if (weap.guntype == WPT_DUALIES and pt.turretmode)
-		angle = R_PointToAngle2(
-			me.x + mom_vec.x + handoffset[4],
-			me.y + mom_vec.y + handoffset[5],
-			point.x, point.y
-		)
-		if dospread
-			angle = $ - h_spread
+	if (weap.guntype == WPT_DUALIES)
+		if pt.turretmode
+			angle = R_PointToAngle2(
+				me.x + mom_vec.x + handoffset[4],
+				me.y + mom_vec.y + handoffset[5],
+				point.x, point.y
+			)
+		else
+			angle = R_PointToAngle2(
+				me.x + mom_vec.x + handoffset2[1],
+				me.y + mom_vec.y + handoffset2[2],
+				point.x, point.y
+			)
 		end
 		aimvec = P_Vec3.SphereToCartesian(angle,aiming)
 	end
@@ -285,7 +303,6 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	proj.momz = FixedMul(speed, mom.z)
 	
 	proj.angle = R_PointToAngle2(proj.x,proj.y, point.x,point.y)
-	--P_3DInstaThrust(proj, angle,aiming, speed)
 	
 	/*
 	P_SpawnMobj(point.x,point.y,point.z, MT_THOK).color = (dospread and SKINCOLOR_RED or SKINCOLOR_GREEN)
@@ -299,11 +316,12 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	return point
 end
 
-function Paint:fireWeapon(p, cur_weapon, angle, dospread)
+function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming)
 	local me = p.mo
 	local pt = p.paint
 	pt.inkdelay = max($, cur_weapon:get(pt,"inkdelay"))
 	if (pt.inktank < cur_weapon:get(pt,"inkcost") - 1)
+	and not pt.calledbacks.onfire
 		local firerate = cur_weapon:get(pt,"firerate")
 		pt.cooldown = (firerate * 2) + 1
 		pt.endlag = max($, cur_weapon.endlag)
@@ -311,7 +329,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, dospread)
 		
 		Paint.HUD:lowInkWarning(p, pt.cooldown)
 		
-		local handoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon)}
+		local handoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, nil, false)}
 		pt.anglefix = pt.cooldown
 		if (pt.weaponmobj and pt.weaponmobj.valid)
 		and not handoffset[3] -- flipped
@@ -326,7 +344,9 @@ function Paint:fireWeapon(p, cur_weapon, angle, dospread)
 		return
 	end
 	
-	pt.inktank = max($ - cur_weapon:get(pt,"inkcost"), 0)
+	if not pt.calledbacks.onfire
+		pt.inktank = max($ - cur_weapon:get(pt,"inkcost"), 0)
+	end
 	local doinertia = cur_weapon.inertia
 	local proj = P_SpawnMobjFromMobj(me,
 		2*cos(angle), 2*sin(angle),
@@ -339,7 +359,12 @@ function Paint:fireWeapon(p, cur_weapon, angle, dospread)
 	proj.lifespan = 0
 	proj.falloff = FixedMul(P_RandomFixedRange(-cur_weapon.falloff[1], cur_weapon.falloff[2]), proj.scale)
 	local mom_vec = {x = doinertia and me.momx or 0,y = doinertia and me.momy or 0}
-	local handoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon)}
+	local handoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, nil, false)}
+	-- fire from the center
+	if (cur_weapon.guntype == WPT_BRELLA)
+		handoffset[1] = 0
+		handoffset[2] = 0
+	end
 	P_SetOrigin(proj,
 		me.x + handoffset[1] + mom_vec.x,
 		me.y + handoffset[2] + mom_vec.y,
@@ -350,10 +375,11 @@ function Paint:fireWeapon(p, cur_weapon, angle, dospread)
 		mom_vec = {x = 0, y = 0}
 	end
 	
-	P_InstaThrust(proj, angle, FixedMul(FixedDiv(cur_weapon:get(pt,"range"), cur_weapon:get(pt,"lifespan") * FU), proj.scale))
 	proj.p_angle = angle
-	proj.p_aiming = p.aiming
-	Paint:aimProjectile(p,proj, angle, p.aiming, dospread, mom_vec)
+	proj.p_aiming = aiming
+	if doaiming
+		Paint:aimProjectile(p,proj, angle, aiming, dospread, mom_vec)
+	end
 	proj.origin = {x = me.x+mom_vec.x, y = me.y+mom_vec.y, z = proj.z}
 	if doinertia
 		proj.momx = $ + mom_vec.x
@@ -381,11 +407,13 @@ function Paint:fireWeapon(p, cur_weapon, angle, dospread)
 	end
 	
 	local firerate = cur_weapon:get(pt,"firerate")
-	pt.shotsfired = $ + 1
-	pt.cooldown = firerate + 1
-	pt.endlag = max($, cur_weapon.endlag)
-	pt.spread = min($ + cur_weapon:get(pt,"spread_pershot"), cur_weapon:get(pt,"spread_max") - cur_weapon:get(pt,"spread_base"))
-	pt.spreadcooldown = cur_weapon:get(pt,"spread_recovery")
+	if not pt.calledbacks.onfire
+		pt.shotsfired = $ + 1
+		pt.cooldown = firerate + 1
+		pt.endlag = max($, cur_weapon.endlag)
+		pt.spread = min($ + cur_weapon:get(pt,"spread_pershot"), cur_weapon:get(pt,"spread_max") - cur_weapon:get(pt,"spread_base"))
+		pt.spreadcooldown = cur_weapon:get(pt,"spread_recovery")
+	end
 	if cur_weapon.guntype == WPT_CHARGER
 		local sound
 		local chargeprogress = min(FixedDiv(pt.charge*FU, cur_weapon.chargetime*FU), FU)
@@ -408,8 +436,12 @@ function Paint:fireWeapon(p, cur_weapon, angle, dospread)
 		else
 			proj.damage = cur_weapon.damage + FixedMul(cur_weapon.partialdamage - cur_weapon.damage, ease.inexpo(chargeprogress,0,FU))
 		end
-	else
+	elseif not pt.calledbacks.onfire
 		S_StartSoundAtVolume(me, cur_weapon.sounds[P_RandomRange(1, #cur_weapon.sounds)], cur_weapon.soundvolume)
+	end
+	if cur_weapon.guntype == WPT_BRELLA
+		proj.damage = cur_weapon.damage + FixedMul(cur_weapon.maxdamage - cur_weapon.damage, P_RandomFixed())
+		proj.pellet = true
 	end
 	
 	pt.anglefix = pt.cooldown
@@ -426,7 +458,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, dospread)
 	if not pt.calledbacks.onfire
 	and (cur_weapon.callbacks and cur_weapon.callbacks.onfire ~= nil)
 		pt.calledbacks.onfire = true
-		cur_weapon.callbacks.onfire(p,pt,cur_weapon, proj, mom_vec, angle, dospread)
+		cur_weapon.callbacks.onfire(p,pt,cur_weapon, proj, mom_vec, angle, aiming, dospread, doaiming)
 	end
 	return proj
 end

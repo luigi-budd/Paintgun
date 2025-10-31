@@ -5,6 +5,7 @@ local CLASStoICON = {
 	[WPT_CHARGER] = "CHARGER",
 	[WPT_BLASTER] = "BLASTER",
 	[WPT_DUALIES] = "DUALIE",
+	[WPT_BRELLA]  = "BRELLA",
 }
 
 addHook("HUD",function(v,p,cam)

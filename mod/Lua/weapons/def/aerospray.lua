@@ -20,7 +20,7 @@ Paint:registerWeapon({
 	damage = 24*FU,
 	falloffdamage = 12*FU,
 	fallofftime = 8,
-	shotscale = FU/2,
+	shotscale = FU*3/4,
 	
 	firerate = 2,
 	h_spread = {20, 20},
@@ -33,7 +33,7 @@ Paint:registerWeapon({
 	spread_pershot = (FU * 3), -- add this much chance to spread per shot
 	spread_max = (FU * 50), -- max chance to spread
 	spread_decay = (FU),
-	spread_jumpspread = 12*FU, -- how many degrees does jump inaccuracy add?
+	spread_jumpspread = 2*FU, -- how many degrees does jump inaccuracy add?
 	
 	weaponstate = S_PAINT_GUN_AERO,
 	weaponstate_scale = FU/2,

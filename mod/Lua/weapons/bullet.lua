@@ -86,6 +86,7 @@ local function splattersound(shot)
 	end
 end
 
+local hitmark_tic = 0
 function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 	local hitmarker
 	if nullify
@@ -94,8 +95,11 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 		hitmarker = P_RandomRange(sfx_pnt_h0,sfx_pnt_h5)
 	end
 	
-	S_StartSound(nil, hitmarker, shot.target.player)
-	S_StartSoundAtVolume(nil, hitmarker, 255/2, shot.target.player) --Bruh
+	if hitmark_tic ~= leveltime
+		S_StartSound(nil, hitmarker, shot.target.player)
+		S_StartSoundAtVolume(nil, hitmarker, 255/2, shot.target.player) --Bruh
+	end
+	hitmark_tic = leveltime
 	
 	if nullify then return end
 	
@@ -110,7 +114,7 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 		z = shot.z + shot.height/2,
 	}
 	
-	Paint.HUD:hitMarker(shot.target.player, pos, FixedAngle(P_RandomRange(0,230)*FU), P_RandomRange(FU * 4/5, FU * 7/4), shot.powerful)
+	Paint.HUD:hitMarker(shot.target.player, pos, FixedAngle(P_RandomRange(0,230)*FU), (shot.pellet and FU/2 or FU), shot.powerful)
 	/*
 	local spr_scale = FU/4 + P_RandomFixedSigned() / 4
 	local tntstate = S_TNTBARREL_EXPL3
@@ -320,6 +324,7 @@ addHook("MobjThinker",function(shot)
 		P_RemoveMobj(shot); return
 	end
 	
+	shot.eflags = $|MFE_NOPITCHROLLEASING
 	shot.lifespan = $ + 1
 	if shot.lifespan == 1
 	and (shot.frame & FF_FRAMEMASK == 0)
@@ -622,6 +627,10 @@ addHook("MobjThinker",function(splat)
 		splat.collided = {}
 	end
 	splat.lifespan = $ + 1
+	
+	if (splat.lifespan % (3*TR)) == 0
+		splat.collided = {}
+	end
 	
 	local slope = splat.standingslope
 	local skew = splat.floorspriteslope

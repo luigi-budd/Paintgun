@@ -1,7 +1,7 @@
 local HUD = Paint.HUD
 
 freeslot("SPR_PAINT_HITMARKER")
-function HUD:hitMarker(p, pos, rotangle, sizemul, powerful)
+function HUD:hitMarker(p, pos, rotangle, sizemul, powerful, pellet)
 	if displayplayer ~= p then return end
 	
 	if HUD.memory.hitmarkers == nil
@@ -13,8 +13,9 @@ function HUD:hitMarker(p, pos, rotangle, sizemul, powerful)
 		tics = 4,
 		frame = A,
 		angle = rotangle or 0,
-		sizemul = sizemul,
+		sizemul = sizemul or FU,
 		powerful = powerful,
+		pellet = pellet,
 		interptag = leveltime
 	})
 end
@@ -24,9 +25,9 @@ local function Icon(v,p,cam, info)
 	if not result.onscreen then return end
 	
 	local patch = v.getSpritePatch(SPR_PAINT_HITMARKER, clamp(0,info.frame,3), 0, info.angle)
-	local scale = FixedMul(result.scale, info.sizemul)
+	local scale = FixedMul(FU/2, info.sizemul)
 	
-	v.drawScaled(result.x,result.y, FU/2, --scale,
+	v.drawScaled(result.x,result.y, scale, --scale,
 		patch,
 		0,
 		v.getColormap(nil, Paint:getPlayerColor(p))

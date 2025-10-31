@@ -157,7 +157,7 @@ function Paint:chargerSightline(p)
 		y = FixedMul(sin(me.angle), cos(p.aiming)),
 		z = sin(p.aiming)
 	}
-	local offsets = {Paint:getWeaponOffset(me, me.angle - ANGLE_90, wep)}
+	local offsets = {Paint:getWeaponOffset(me, me.angle - ANGLE_90, wep, false)}
 	local x,y,z =	me.x + offsets[1] + me.momx,
 					me.y + offsets[2] + me.momy,
 					me.z + (41*(me.height)/48 - 8*me.scale) + me.momz
@@ -195,6 +195,23 @@ function Paint:setPlayerWallInk(p, type)
 	p.paint.wallink = 3
 end
 
+local function makeBlob(p,me,pt, rad,hei)
+	local blob = P_SpawnMobjFromMobj(me,
+		P_RandomRange(-rad,rad)*FU,
+		P_RandomRange(-rad,rad)*FU,
+		P_RandomRange(0,hei)*FU,
+		MT_PARTICLE
+	)
+	P_SetMobjStateNF(blob, S_GOOP1)
+	blob.sprite = SPR_PAINT_MISC
+	blob.frame = 15
+	
+	blob.tics = -1
+	blob.fuse = TR*3/4
+	
+	blob.color = Paint:getPlayerColor(p)
+	return blob
+end
 function Paint:doDodgeRoll(p)
 	local me = p.mo
 	local pt = p.paint
@@ -220,6 +237,19 @@ function Paint:doDodgeRoll(p)
 	
 	local ang = Paint:controlDir(p)
 	local dist = FixedMul(wep:get(pt,"dodgedist"), me.scale)
+	
+	local rad = FixedDiv(me.radius,me.scale)/FU
+	local hei = FixedDiv(me.height,me.scale)/FU
+	for i = 0,15
+		local blob = makeBlob(p,me,pt, rad,hei)
+		local ang = R_PointToAngle2(blob.x,blob.y, me.x,me.y)
+		P_SetObjectMomZ(blob, P_RandomRange(2,6)*FU)
+		P_Thrust(blob,ang, -P_RandomRange(1,3)*me.scale)
+		blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
+		blob.destscale = 0
+		--blob.fuse = 12
+		blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
+	end
 	
 	dd.startx = me.x + me.momx
 	dd.starty = me.y + me.momy

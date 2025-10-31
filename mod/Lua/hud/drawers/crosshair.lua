@@ -2,6 +2,31 @@ local MID_X = BASEVIDWIDTH*FU / 2
 local MID_Y = BASEVIDHEIGHT*FU / 2
 local SCALE = FU
 local CRBASE_TRANS = V_10TRANS
+local CRTYPE_BASEONLY	= 0
+local CRTYPE_BLOCKED	= 1
+local CRTYPE_DIRECT		= 2
+local CRTYPE_STANDBY	= 3
+
+local function drawReticle(v,x,y, p, type)
+	local prefix = "PAINT_CR_"
+	/*
+	-- when brella-class loses its shield
+	if (true)
+		prefix = "PAINT_CROPEN_"
+	end
+	*/
+	if type == CRTYPE_BASEONLY
+		v.drawScaled(x,y, FU/4, v.cachePatch(prefix.."BASE"), CRBASE_TRANS)
+	elseif type == CRTYPE_BLOCKED
+		v.drawScaled(x,y, FU/4, v.cachePatch("PAINT_CR_RET"), 0)
+		v.drawScaled(x,y, FU/4, v.cachePatch(prefix.."BLOCKED"), 0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)))
+	elseif type == CRTYPE_DIRECT
+		v.drawScaled(x,y, FU/4, v.cachePatch("PAINT_CR_HIT"), 0, v.getColormap(nil,Paint:getPlayerColor(p)))		
+	elseif type == CRTYPE_STANDBY
+		v.drawScaled(x,y, FU/4, v.cachePatch("PAINT_CR_RET"))
+		v.drawScaled(x,y, FU/4, v.cachePatch(prefix.."BASE"), CRBASE_TRANS)
+	end
+end
 
 local d_raycast, r_raycast, dh_raycast, dh_raycast2 /*"Direct Hit"*/
 local function rangecaster(p,me,pt,cur_weapon, dualieflip)
@@ -20,7 +45,7 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip)
 		ray.target = me
 		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		ray.weapon_id = pt.weapon_id
-		local weaponoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, dualieflip)}
+		local weaponoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, dualieflip, false)}
 		if (pt.turretmode and (cur_weapon.guntype == WPT_DUALIES))
 			weaponoffset[1],weaponoffset[2] = 0,0
 		end
@@ -121,7 +146,7 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		ray.target = me
 		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		ray.weapon_id = pt.weapon_id
-		local weaponoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, dualieflip)}
+		local weaponoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, dualieflip, false)}
 		P_SetOrigin(ray,
 			me.x + weaponoffset[1],
 			me.y + weaponoffset[2],
@@ -207,7 +232,7 @@ addHook("PostThinkFrame",do
 	end
 end)
 
-local old_fov, old_spreadadd, old_camdist, old_chase, old_scale
+local old_fov, old_spreadadd, old_camdist, old_chase, old_scale, old_weapon
 local cv_fov
 local cv_camdist
 local cross_x,cross_y = 0,0
@@ -258,12 +283,14 @@ local function drawCrosshair(v,p,cam, y, dflip)
 	local result = K_GetScreenCoords(v,p,cam, workray, {dontclip = true})
 	if not result then return; end
 	
+	local pt = p.paint
 	cross_x,cross_y = result.x,result.y
 	drawCharger(v,p,cam);
 	v.dointerp(6 + interptag)
-	v.drawScaled(MID_X,y,FU/4,v.cachePatch("PAINT_CR_BASE"), CRBASE_TRANS)
-	v.drawScaled(result.x,result.y,FU/4, v.cachePatch("PAINT_CR_RET"), 0)
-	v.drawScaled(result.x,result.y,FU/4, v.cachePatch("PAINT_CR_BLOCKED"), 0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)))
+	
+	drawReticle(v, MID_X,y, p, CRTYPE_BASEONLY)
+	
+	drawReticle(v, result.x,result.y, p, CRTYPE_BLOCKED)
 	return true
 end
 local function crosshairdrawer(v,p,cam, pt, dflip)
@@ -293,11 +320,13 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 	or (old_camdist ~= cv_camdist.value)
 	or (old_chase ~= cam.chase)
 	or (old_scale ~= p.mo.scale)
+	or (old_weapon ~= pt.weapon_id)
 		range_cache = {}
 	end
-	if wep.guntype == WPT_SHOOTER
-	or wep.guntype == WPT_BLASTER
+	if (wep.guntype == WPT_SHOOTER)
+	or (wep.guntype == WPT_BLASTER)
 	or (wep.guntype == WPT_DUALIES)
+	or (wep.guntype == WPT_BRELLA)
 		--local fov_fact = FixedDiv(240*FU - cv_fov.value, 27*FU)
 		local fov_fact = 5*FU + (FU/2)
 		local range = wep:get(pt,"range")
@@ -381,23 +410,25 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 		old_camdist = cv_camdist.value
 		old_chase = cam.chase
 		old_scale = p.mo.scale
-		
+		old_weapon = pt.weapon_id
+
 		local dual = wep.guntype == WPT_DUALIES
 		v.dointerp(5 + interptag)
 		do
 			local suffix = (dh_workray.direct and "H" or (dh_workray.hit and "B" or "N"))
 			local clr = v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p))
+			local prefix = (wep.guntype == WPT_BRELLA) and "PAINT_CR_B_" or "PAINT_CR_S_"
 			if (not dual) or (dual and dflip)
 				v.drawScaled(
 					MID_X + L_hspread,
 					y - T_vspread,
-					FU/4, v.cachePatch("PAINT_CR_TOP_"..suffix), 0,
+					FU/4, v.cachePatch(prefix.."TOP_"..suffix), 0,
 					clr
 				)
 				v.drawScaled(
 					MID_X + L_hspread,
 					y - B_vspread,
-					FU/4, v.cachePatch("PAINT_CR_BOT_"..suffix), 0,
+					FU/4, v.cachePatch(prefix.."BOT_"..suffix), 0,
 					clr
 				)
 			end
@@ -405,13 +436,13 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 				v.drawScaled(
 					MID_X + R_hspread,
 					y - T_vspread,
-					FU/4, v.cachePatch("PAINT_CR_TOP_"..suffix), V_FLIP,
+					FU/4, v.cachePatch(prefix.."TOP_"..suffix), V_FLIP,
 					clr
 				)
 				v.drawScaled(
 					MID_X + R_hspread,
 					y - B_vspread,
-					FU/4, v.cachePatch("PAINT_CR_BOT_"..suffix), V_FLIP,
+					FU/4, v.cachePatch(prefix.."BOT_"..suffix), V_FLIP,
 					clr
 				)
 			end
@@ -424,13 +455,12 @@ local function crosshairdrawer(v,p,cam, pt, dflip)
 	if crosshair_result == -1 then return end
 	if not crosshair_result
 		v.dointerp(5 + interptag)
-		v.drawScaled(MID_X,y,FU/4,v.cachePatch("PAINT_CR_RET"))
-		v.drawScaled(MID_X,y,FU/4,v.cachePatch("PAINT_CR_BASE"), CRBASE_TRANS)
+		drawReticle(v,MID_X,y, p, CRTYPE_STANDBY)
 	end
 	
 	if (dh_workray and dh_workray.valid)
 	and dh_workray.direct
-		v.drawScaled(cross_x,cross_y,FU/2,v.cachePatch("PAINT_CR_HIT"), 0, v.getColormap(nil,Paint:getPlayerColor(p)))
+		drawReticle(v, cross_x,cross_y, p, CRTYPE_DIRECT)
 	end
 	/*
 	if not dflip
