@@ -69,20 +69,24 @@ mobjinfo[MT_PAINT_WALLSPLAT] = {
 }
 
 local function splattersound(shot)
+	local wep = Paint.weapons[shot.weapon_id]
+	
 	local sfx = P_SpawnGhostMobj(shot)
 	sfx.flags2 = $|MF2_DONTDRAW
 	sfx.fuse = 2 * TR; sfx.tics = sfx.fuse
+	
 	local sound = P_RandomRange(sfx_pn_sp0,sfx_pn_sp8)
-	S_StartSound(sfx, sound)
+	local volume = wep and wep.splatvolume or 255
+	S_StartSoundAtVolume(sfx, sound, volume)
 	if not shot.trail
-		S_StartSound(sfx, sound)
+		S_StartSoundAtVolume(sfx, sound, volume)
 	end
 	
-	local wep = Paint.weapons[shot.weapon_id]
-	if wep == WPT_BLASTER
+	if not wep then return end
+	if wep.guntype == WPT_BLASTER
 		local sound = wep.explode_sounds[P_RandomRange(1,#wep.explode_sounds)]
-		S_StartSound(sfx, sound)
-		S_StartSound(sfx, sound)
+		S_StartSoundAtVolume(sfx, sound, volume)
+		S_StartSoundAtVolume(sfx, sound, volume)
 	end
 end
 
@@ -307,6 +311,7 @@ local function CreateTrail(shot)
 		drop.lifespan = 0
 		drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
 		drop.frame = ($ &~FF_FRAMEMASK)|2
+		drop.weapon_id = shot.weapon_id
 		P_SetObjectMomZ(drop, -6*FU)
 	end
 	return drop

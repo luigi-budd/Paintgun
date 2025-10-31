@@ -129,6 +129,8 @@ local weapon_meta = {
 		sfx_p_s0_0, sfx_p_s0_1, sfx_p_s0_2, sfx_p_s0_3, sfx_p_s0_4, sfx_p_s0_5, sfx_p_s0_6
 	},
 	soundvolume = 255 * 3/4,
+	splatvolume = 255, -- for ink splats
+	
 	-- function to override stats on the fly
 	-- (player_t player, table paint, weapon_t weapon, string key, any cur_value)
 	abilitywrap = nil,
@@ -215,11 +217,15 @@ local function RandomPerpendicular(v)
     return v:Cross(up):Normalize()
 end
 
-function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualieflip, crosshair)
+-- hsprd and vsprd arguments are offsets for spread values
+-- hsprd and vsprd are fixed_t
+function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualieflip, crosshair, hsprd, vsprd)
 	local me = p.mo
 	local pt = p.paint
 	local weap = self.weapons[pt.weapon_id]
 	
+	hsprd = $ or 0
+	vsprd = $ or 0
 	local speed = FixedMul(FixedDiv(weap:get(pt,"range"), weap:get(pt,"lifespan") * FU), proj.scale)
 	mom_vec = $ or {x = 0,y = 0}
 	
@@ -267,11 +273,13 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		h_spread = $ + (pt.spreadadd * sign(h_spread))
 		h_spread = FixedAngle($)
 		v_spread = FixedAngle($)
-		
+
 		--angle = $ - h_spread
 		--aiming = $ + FixedAngle(v_spread)
 	end
-	
+	h_spread = $ - FixedAngle(hsprd)
+	v_spread = $ + FixedAngle(vsprd)
+
 	local point = {
 		x = me.x + FixedMul(range, aimvec.x) + mom_vec.x + handoffset[1],
 		y = me.y + FixedMul(range, aimvec.y) + mom_vec.y + handoffset[2],
@@ -316,7 +324,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	return point
 end
 
-function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming)
+function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hsprd, vsprd)
 	local me = p.mo
 	local pt = p.paint
 	pt.inkdelay = max($, cur_weapon:get(pt,"inkdelay"))
@@ -378,7 +386,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming)
 	proj.p_angle = angle
 	proj.p_aiming = aiming
 	if doaiming
-		Paint:aimProjectile(p,proj, angle, aiming, dospread, mom_vec)
+		Paint:aimProjectile(p,proj, angle, aiming, dospread, mom_vec, nil,nil, hsprd, vsprd)
 	end
 	proj.origin = {x = me.x+mom_vec.x, y = me.y+mom_vec.y, z = proj.z}
 	if doinertia

@@ -43,6 +43,7 @@ Paint:registerWeapon({
 		sfx_p_s5_0, sfx_p_s5_1, sfx_p_s5_2, sfx_p_s5_3
 	},
 	soundvolume = 255 * 4/5,
+	splatvolume = 255/2,
 	
 	callbacks = {
 		onfire = function(p,pt,wep, proj, mom_vec, angle, aiming, dospread, doaiming)
@@ -51,9 +52,9 @@ Paint:registerWeapon({
 			for i = -2,2
 				if i == 0 then continue end
 				local frac = FixedDiv((i*FU), 2*FU)
-				local ang = angle - FixedAngle(FixedMul(spread,frac)) - FixedAngle(FixedMul(noise, P_RandomFixed()))
-				local aim = aiming + FixedAngle(FixedMul(noise, P_RandomFixed()))
-				local proj = Paint:fireWeapon(p,wep, ang, aim, false, true)
+				local ang = FixedMul(spread,frac) - FixedMul(noise, P_RandomFixed())
+				local aim = FixedMul(noise, P_RandomFixed())
+				local proj = Paint:fireWeapon(p,wep, angle, aiming, false, true, ang,aim)
 				if not proj then continue end
 				
 				--Paint:aimProjectile(p,proj, ang, aim, nil,mom_vec,false,false)
@@ -62,10 +63,10 @@ Paint:registerWeapon({
 				for j = -1,1,2
 					local h_frac = FixedDiv((i*FU), 2*FU)
 					local v_frac = FixedDiv((j*FU), 2*FU)
-					local ang = angle - FixedAngle(FixedMul(spread,h_frac)) - FixedAngle(FixedMul(noise, P_RandomFixed()))
-					local aim = aiming + FixedAngle(FixedMul(spread,v_frac)) + FixedAngle(FixedMul(noise, P_RandomFixed()))
+					local ang = FixedMul(spread,h_frac) - FixedMul(noise, P_RandomFixed())
+					local aim = FixedMul(spread,v_frac) + FixedMul(noise, P_RandomFixed())
 					
-					local proj = Paint:fireWeapon(p,wep, ang, aim, false, true)
+					local proj = Paint:fireWeapon(p,wep, angle, aiming, false, true, ang,aim)
 					if not proj then continue end
 					
 					--Paint:aimProjectile(p,proj, ang, aim, nil,mom_vec,false,false)

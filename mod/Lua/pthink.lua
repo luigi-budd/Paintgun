@@ -237,6 +237,7 @@ addHook("PlayerThink",function(p)
 		me.jumptime = 0
 	end
 	if pt.spreadjump
+	and cur_weapon:get(pt,"spread_jumpspread") ~= 0
 		local jumptime = cur_weapon:get(pt,"spread_jump")
 		pt.spreadadd = ease.incubic(FU - ((FU/jumptime) * pt.spreadjump), cur_weapon:get(pt,"spread_jumpspread"), 0)
 		pt.spreadjump = $ - 1
