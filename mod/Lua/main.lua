@@ -195,8 +195,6 @@ Paint.ININK_FRIENDLY = -1
 Paint.ININK_ENEMY = 1
 Paint.MAX_HOLSTER = 5
 
-rawset(_G, "RF_ALWAYSONTOP", RF_ALWAYSONTOP or 0x00010000)
-
 dofile("cvars/main.lua")
 dofile("lib/lib.lua")
 dofile("weapons/main.lua")
