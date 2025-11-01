@@ -35,6 +35,7 @@ local weapon_meta = {
 	damage = 24*FU,
 	startlag = 0,
 	endlag = 0,
+	squidlag = 0, -- wait this many frames before being able to swim
 	shootspeed = FU/2, --how much to slow down when shooting
 	inertia = false,
 	
@@ -76,7 +77,7 @@ local weapon_meta = {
 	bulletspershot = 1, -- yes these DO factor into spread! yes, these DO change dualie order!
 	
 	--charger specific
-	chargetime = TR * 3/4,
+	chargetime = TR,
 	minrange = 140*FU,
 	charge_sound = sfx_p_s2_0,
 	weak_sounds = {
@@ -91,7 +92,7 @@ local weapon_meta = {
 	maxdamage = 160*FU, -- fully charged
 	partialdamage = 80*FU, -- max partial charge damage (regular damage is minimum uncharged damage)
 	pierces = 3,
-	maxfirerate = TR, -- (firerate -> maxfirerate) * chargeprogress
+	maxfirerate = 4, -- (firerate -> maxfirerate) * chargeprogress
 	
 	--blaster specific
 	splashradius = 132*FU,
@@ -227,6 +228,9 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	hsprd = $ or 0
 	vsprd = $ or 0
 	local speed = FixedMul(FixedDiv(weap:get(pt,"range"), weap:get(pt,"lifespan") * FU), proj.scale)
+	if (weap.guntype == WPT_CHARGER)
+		speed = proj.radius * 2
+	end
 	mom_vec = $ or {x = 0,y = 0}
 	
 	local handoffset2 = {Paint:getWeaponOffset(me,angle - ANGLE_90, weap, dualieflip, false)}
@@ -334,6 +338,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		pt.cooldown = (firerate * 2) + 1
 		pt.endlag = max($, cur_weapon.endlag)
 		pt.shotsfired = $ + 1
+		pt.squidlag = max($, cur_weapon:get(pt,"squidlag"))
 		
 		Paint.HUD:lowInkWarning(p, pt.cooldown)
 		
@@ -354,6 +359,8 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	
 	if not pt.calledbacks.onfire
 		pt.inktank = max($ - cur_weapon:get(pt,"inkcost"), 0)
+		pt.squidlag = max($, cur_weapon:get(pt,"squidlag"))
+		pt.justfired = true
 	end
 	local doinertia = cur_weapon.inertia
 	local proj = P_SpawnMobjFromMobj(me,
@@ -408,6 +415,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	
 	if (proj.type == MT_PAINT_SHOT) -- moves in quarter steps
 	and cur_weapon:get(pt,"quartersteps")
+	and cur_weapon.guntype ~= WPT_CHARGER
 		proj.momx = $ / 4
 		proj.momy = $ / 4
 		proj.momz = $ / 4

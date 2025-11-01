@@ -282,11 +282,13 @@ addHook("PlayerThink",function(p)
 		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
 		local easing = ease.inquad
 		pt.hidden = false
+		
 		if (p.cmd.buttons & BT_SPIN)
-		and not ((pt.endlag or pt.firewait or pt.cooldown)
+		and not ((pt.endlag or pt.firewait or pt.cooldown or pt.justfired or (pt.charge ~= 0))
 		or (pt.fireheld and pt.cooldown <= 0))
 		and (p.charability2 == CA2_NONE)
 		and not (pt.dodgeroll.tics or pt.dodgeroll.getup)
+		and not (pt.squidlag)
 			if not pt.wasinsquid
 				S_StartSound(me,sfx_pt_tos)
 			end
@@ -310,6 +312,8 @@ addHook("PlayerThink",function(p)
 			pt.squidtime = max($ - 1, 0)
 			pt.wasinsquid = false
 		end
+		if pt.squidlag then pt.squidlag = $ - 1; end
+		pt.justfired = false
 		
 		p.charflags = ($ &~SF_NOSKID)|(skins[p.skin].flags & SF_NOSKID)
 		p.normalspeed = skins[p.skin].normalspeed * 4/5
@@ -431,7 +435,7 @@ addHook("PlayerThink",function(p)
 		end
 		if me.last_hidden ~= pt.hidden
 		and me.last_hidden ~= nil
-			if not pt.wasclimbing
+			if not (pt.wasclimbing or pt.wallink)
 				local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
 				P_SetOrigin(splash, splash.x,splash.y, me.floorz)
 				splash.state = S_PAINT_SPLASH
@@ -527,12 +531,13 @@ addHook("PlayerThink",function(p)
 			end
 			local docharge = true
 			if me.jumptime
+			or (pt.inktank <= 0)
 				S_StopSoundByID(me, charge_sound)
 				if (me.jumptime == 1 or not pt.charge)
 				and pt.charge < cur_weapon.chargetime
 					S_StartSound(me, slow_charge_sound)
 				end
-				if not (me.jumptime & 1)
+				if not (leveltime & 1)
 					docharge = false
 				end
 			elseif S_SoundPlaying(me, slow_charge_sound)
@@ -556,7 +561,7 @@ addHook("PlayerThink",function(p)
 		and (p.lastbuttons & BT_ATTACK)
 		and (pt.charge)
 			pt.charge = min($, cur_weapon.chargetime)
-			Paint:fireWeapon(p, cur_weapon, fireangle,  spread, true)
+			Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 			pt.charge = 0
 			S_StopSoundByID(me, charge_sound)
 			S_StopSoundByID(me, slow_charge_sound)

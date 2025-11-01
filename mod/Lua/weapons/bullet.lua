@@ -73,7 +73,7 @@ local function splattersound(shot)
 	
 	local sfx = P_SpawnGhostMobj(shot)
 	sfx.flags2 = $|MF2_DONTDRAW
-	sfx.fuse = 2 * TR; sfx.tics = sfx.fuse
+	sfx.fuse = TR; sfx.tics = sfx.fuse
 	
 	local sound = P_RandomRange(sfx_pn_sp0,sfx_pn_sp8)
 	local volume = wep and wep.splatvolume or 255
@@ -84,6 +84,7 @@ local function splattersound(shot)
 	
 	if not wep then return end
 	if wep.guntype == WPT_BLASTER
+	and not shot.trail
 		local sound = wep.explode_sounds[P_RandomRange(1,#wep.explode_sounds)]
 		S_StartSoundAtVolume(sfx, sound, volume)
 		S_StartSoundAtVolume(sfx, sound, volume)
@@ -378,12 +379,8 @@ addHook("MobjThinker",function(shot)
 	
 	if wep.guntype == WPT_CHARGER
 		local minrange = FixedMul(wep.minrange, shot.scale)
-		range = $ - shot.falloff
 		local chargeprogress = shot.progress
 		local disttocover = max(FixedMul(range, chargeprogress), minrange)
-		shot.momz = 0
-		P_InstaThrust(shot,shot.angle, shot.radius * 2)
-		Paint:aimProjectile(p, shot, shot.p_angle, shot.p_aiming)
 		shot.angle = shot.p_angle
 		shot.powerful = chargeprogress == FU
 		local count = 0
@@ -505,9 +502,10 @@ addHook("MobjMoveCollide",function(shot,mo)
 			end
 		end
 		
-		if (wep.guntype == WPT_CHARGER
+		if ((wep.guntype == WPT_CHARGER
 		and shot.pierces)
-		or (wep.pierces == -1)
+		or (wep.pierces == -1))
+		and shot.powerful
 			shot.pierces = $ - 1
 		else
 			P_RemoveMobj(shot)

@@ -78,6 +78,7 @@ function Paint:initPlayer(p)
 		jumpheld = 0,
 		fireheld = 0,
 		firewait = 0,
+		justfired = false,
 		cooldown = 0,
 		
 		-- percentage
@@ -128,6 +129,7 @@ function Paint:initPlayer(p)
 		
 		squidtime = 0,
 		squidanim = 0,
+		squidlag = 0,
 		hidden = false,
 		wasinsquid = 0,
 		
