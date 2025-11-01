@@ -129,6 +129,9 @@ function Paint:damagePlayer(p, shot, sorp, damage, inf) -- mobj if no player
 end
 
 function Paint:playHurtSound(p)
+	if (p.paint.hurttic == leveltime) then return end
+	p.paint.hurttic = leveltime
+	
 	local sfx = sfx_pt_ow0 --P_RandomRange(sfx_pt_ow0,sfx_pt_ow2)
 	S_StartSound(nil, sfx, p)
 	--S_StartSound(nil, sfx, p)

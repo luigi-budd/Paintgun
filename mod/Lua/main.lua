@@ -120,6 +120,7 @@ function Paint:initPlayer(p)
 		},
 		
 		hp = 100*FU,
+		hurttic = 0,
 		timetoheal = 0,
 		inink = 0, -- 0 = not in ink, -1 = friendly ink, 1 = enemy ink
 		inktime = 0,
