@@ -49,10 +49,11 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	wepmo.fireanim = max($-1, 0)
 	
 	local offx,offy = 0,0
+	--print(pt.shieldlag)
 	if (cur_weapon.guntype == WPT_BRELLA)
-	and ((pt.endlag or pt.firewait) or (pt.fireheld or p.cmd.buttons & BT_ATTACK))
+	and (pt.shieldlag or pt.deployshield)
 	or pt.holsteranim
-		if ((pt.endlag or pt.firewait) or (pt.fireheld or p.cmd.buttons & BT_ATTACK))
+		if (pt.shieldlag or pt.deployshield)
 			pt.holsteranim = min($ + 1, Paint.MAX_HOLSTER)
 		else
 			pt.holsteranim = max($-1, 0)
@@ -226,6 +227,103 @@ addHook("PlayerThink",function(p)
 		p.weapondelay = max($, 5)
 	end
 	
+	-- brella shield
+	pt.shieldwait = max($-1, 0)
+	pt.shieldlag = max($-1, 0)
+	
+	local shieldout = false
+	pt.deployshield = false
+	if (cur_weapon.guntype == WPT_BRELLA)
+		local sh = pt.shield
+		if not (sh and sh.valid)
+			local s = P_SpawnMobjFromMobj(me,0,0,0,MT_BRELLA_SHIELD)
+			s.tracer = me
+			s.paint_hp = 500*FU
+			s.paint_delay = 0
+			s.paint_shield = true
+			s.spriteyscale = FU/2
+			s.dontdrawforviewmobj = me
+			
+			s.paint_overlay = P_SpawnMobjFromMobj(s, 0,0,0, MT_OVERLAY)
+			s.paint_overlay.target = s
+			s.paint_overlay.tics, s.paint_overlay.fuse = -1,-1
+			s.paint_overlay.dontdrawforviewmobj = me
+			s.paint_overlay.colorized = true
+			
+			pt.shield = s
+			sh = s
+		end
+		local move = me.radius + 5*me.scale
+		P_MoveOrigin(sh,
+			me.x + P_ReturnThrustX(nil,fireangle,move) + me.momx,
+			me.y + P_ReturnThrustY(nil,fireangle,move) + me.momy,
+			me.z + me.momz
+		)
+		sh.angle = fireangle
+		
+		--print(("%s: %f"):format(p.name, sh.paint_hp))
+		if not (pt.shieldlag)
+		and not (pt.shieldwait)
+		and (pt.fireheld >= 5)
+			pt.deployshield = true
+		end
+		/*
+		print("brella",
+			pt.shieldwait,
+			pt.shieldlag
+		)
+		*/
+		
+		if not pt.deployshield
+		or (sh.paint_hp <= 0)
+			-- hidden
+			sh.flags2 = $|MF2_DONTDRAW
+			sh.flags = $|MF_NOCLIP|MF_NOCLIPTHING &~MF_SHOOTABLE
+			-- if the brella is destroyed/launched, wait however long it lasts launched to regen
+			if sh.paint_hp ~= 500*FU
+				sh.paint_hp = min($ + FixedDiv(150*FU, TR*FU), 500*FU)
+			else
+				sh.paint_color = nil
+			end
+		else
+			-- visible
+			sh.flags2 = $ &~MF2_DONTDRAW
+			sh.flags = $|MF_SHOOTABLE &~(MF_NOCLIP|MF_NOCLIPTHING)
+			if (pt.shotsfired >= 1)
+				shieldout = true
+			end
+		end
+		sh.health = sh.info.spawnhealth
+		
+		if (sh.paint_overlay and sh.paint_overlay.valid)
+			local ov = sh.paint_overlay
+			if (sh.paint_color == nil)
+				ov.color = SKINCOLOR_NONE
+			else
+				ov.color = sh.paint_color
+			end
+			ov.alpha = FU - FixedDiv(sh.paint_hp, 500*FU)
+			ov.sprite = sh.sprite
+			ov.frame = A
+			ov.frame = sh.frame
+			ov.angle = sh.angle
+			ov.spritexscale = sh.spritexscale
+			ov.spriteyscale = sh.spriteyscale
+			ov.spritexoffset = sh.spritexoffset
+			ov.spriteyoffset = sh.spriteyoffset
+			ov.pitch = 0
+			ov.roll = 0
+			ov.dispoffset = sh.dispoffset + 1
+			ov.flags2 = ($ &~MF2_DONTDRAW)|(sh.flags2 & MF2_DONTDRAW)
+		end
+	else
+		local sh = pt.shield
+		if (sh and sh.valid)
+			sh.flags2 = $|MF2_DONTDRAW
+			sh.flags = $|MF_NOCLIP|MF_NOCLIPTHING &~MF_SHOOTABLE
+		end
+	end
+	
 	if not P_IsObjectOnGround(me)
 	and (p.pflags & PF_JUMPED)
 	and not (cur_weapon.guntype == WPT_DUALIES and (pt.dodgeroll.tics or pt.dodgeroll.getup))
@@ -281,6 +379,7 @@ addHook("PlayerThink",function(p)
 	do
 		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
 		local easing = ease.inquad
+		local oldclimbing = (pt.hidden or pt.wallink)
 		pt.hidden = false
 		
 		if (p.cmd.buttons & BT_SPIN)
@@ -435,7 +534,7 @@ addHook("PlayerThink",function(p)
 		end
 		if me.last_hidden ~= pt.hidden
 		and me.last_hidden ~= nil
-			if not (pt.wasclimbing or pt.wallink)
+			if not ((pt.wasclimbing or pt.wallink) or oldclimbing)
 				local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
 				P_SetOrigin(splash, splash.x,splash.y, me.floorz)
 				splash.state = S_PAINT_SPLASH
@@ -506,13 +605,21 @@ addHook("PlayerThink",function(p)
 				spread = false
 			end
 			
-			Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
-			local bps = cur_weapon:get(pt,"bulletspershot")
-			if bps ~= 1
-			and bps > 1
-				for i = 1, bps - 1
-					Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+			if not shieldout
+				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+				local bps = cur_weapon:get(pt,"bulletspershot")
+				if bps ~= 1
+				and bps > 1
+					for i = 1, bps - 1
+						Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+					end
 				end
+			else
+				pt.cooldown = (cur_weapon:get(pt,"firerate")) + 1
+				pt.endlag = max($, cur_weapon.endlag)
+				pt.squidlag = max($, cur_weapon:get(pt,"squidlag"))
+				pt.justfired = true
+				pt.anglefix = pt.cooldown
 			end
 			doslowdown = true
 		end

@@ -39,7 +39,13 @@ rawset(_G,"Paint_canHurtEnemy",function(p, mobj,flags,exclude, nobs)
 	if (mobj.player and mobj.player.valid) then flingable = false end
 	
 	if (mobj.type == MT_EGGMAN_BOX or mobj.type == MT_EGGMAN_GOLDBOX) then flingable = false end
-
+	
+	if (mobj.type == MT_BRELLA_SHIELD)
+		if (p.mo == mobj.tracer)
+			return false
+		end
+	end
+	
 	/*
 		if true, force a hit
 		if false, force no hits

@@ -5,13 +5,19 @@ function Paint.wtemplate_dualies(p,pt, weapon, key,value)
 	if (key == "range")
 		return weapon.turret_range ~= nil and weapon.turret_range or value
 	elseif (key == "firerate")
-		return weapon.turret_firerate ~= nil and weapon.turret_firerate or value
+		if weapon.turret_firerate == nil
+			return value
+		end
+		return weapon.turret_firerate
 	elseif (key == "shotoffset")
 		return 0
 	elseif (key == "neverspreadonground")
 		return P_RandomChance(FU/10)
 	elseif (key == "inkcost")
-		return weapon.dodgeshotcost ~= nil and weapon.dodgeshotcost or value
+		if weapon.dodgeshotcost == nil
+			return value
+		end
+		return weapon.dodgeshotcost
 	elseif (key == "endlag")
 		return weapon.realendlag or 0
 	end

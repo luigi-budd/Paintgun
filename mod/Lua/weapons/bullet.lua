@@ -4,6 +4,9 @@ freeslot(
 	"MT_PAINT_SHOT",
 	"SPR_PAINT_SHOT",
 	
+	"MT_BRELLA_SHIELD",
+	"S_BRELLA_SHIELD",
+	
 	"S_PAINT_SHOT",
 	"S_PAINT_SHOT_BIG", 
 	"S_PAINT_SHOT_PELLET",
@@ -35,6 +38,24 @@ mobjinfo[MT_PAINT_SHOT] = {
 	flags = MF_NOGRAVITY,
 	spawnstate = S_PAINT_SHOT
 }
+
+states[S_BRELLA_SHIELD] = {
+	sprite = SPR_ESHI,
+	frame = 0,
+	tics = -1,
+	nextstate = S_BRELLA_SHIELD
+}
+mobjinfo[MT_BRELLA_SHIELD] = {
+	doomednum = -1,
+	radius = 24*FU,
+	height = 50*FU,
+	spawnhealth = 1,
+	flags = MF_NOGRAVITY|MF_NOCLIPHEIGHT|MF_SHOOTABLE,
+	spawnstate = S_BRELLA_SHIELD,
+	deathstate = S_BRELLA_SHIELD,
+	painstate = S_BRELLA_SHIELD,
+}
+
 freeslot("MT_PAINT_GUN", "S_PAINT_GUN", "SPR_PAINT_GUN")
 states[S_PAINT_GUN] = {
 	sprite = SPR_PAINT_GUN,
@@ -109,11 +130,14 @@ end
 local hitmark_tic = 0
 function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 	local hitmarker
-	if nullify
-		hitmarker = P_RandomRange(sfx_pnt_n0,sfx_pnt_n5)
-	else
-		hitmarker = P_RandomRange(sfx_pnt_h0,sfx_pnt_h5)
+	local startrange, endrange = sfx_pnt_h0, sfx_pnt_h5
+	if (mo.paint_shield)
+		startrange, endrange = sfx_pnt_s0, sfx_pnt_s5
 	end
+	if nullify
+		startrange, endrange = sfx_pnt_n0, sfx_pnt_n5
+	end
+	hitmarker = P_RandomRange(startrange, endrange)
 	
 	if hitmark_tic ~= leveltime
 		S_StartSound(nil, hitmarker, shot.target.player)
@@ -325,7 +349,7 @@ local function CreateTrail(shot)
 		drop.angle = shot.angle
 		drop.trail = true
 		drop.lifespan = 0
-		drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
+		drop.flags = $|MF_NOCLIPTHING &~(MF_NOGRAVITY|MF_NOCLIPHEIGHT|MF_NOCLIP)
 		drop.frame = ($ &~FF_FRAMEMASK)|2
 		drop.weapon_id = shot.weapon_id
 		P_SetObjectMomZ(drop, -6*FU)
@@ -502,7 +526,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 	local wep = Paint.weapons[shot.weapon_id]
 	if Paint_canHurtEnemy(shot.target.player, mo)
 	or mo.type == MT_TNTBARREL
-		P_DamageMobj(mo,shot,shot.target,shot.damage)
+		P_DamageMobj(mo,shot,shot.target, shot.damage)
 		Paint:doProjHitmarker(shot, mo, true)
 		
 		if (wep.guntype == WPT_CHARGER
@@ -571,28 +595,16 @@ end,MT_PAINT_SHOT)
 
 addHook("MobjMoveBlocked", function(mo, moagainst, line)
 	if not (mo and mo.valid) then return end
+	if not (line and line.valid) then return end
 	
-	if (line and line.valid)
-		--no puffs against thok barriers
-		if P_CheckSkyHit(mo,line) then return end
-	end
-	local angle = mo.angle + ANGLE_90
-	if (moagainst and moagainst.valid)
-		angle = R_PointToAngle2(
-			mo.x, mo.y,
-			moagainst.x, moagainst.y
-		) + ANGLE_90
-	elseif (line and line.valid)
-		angle = R_PointToAngle2(line.v1.x, line.v1.y, line.v2.x, line.v2.y)
-	end
+	--no puffs against thok barriers
+	if P_CheckSkyHit(mo,line) then P_RemoveMobj(mo); return end
 	
-	local bull_x = mo.x
-	local bull_y = mo.y
+	local angle = R_PointToAngle2(line.v1.x, line.v1.y, line.v2.x, line.v2.y)
+	
+	local bull_x,bull_y = P_ClosestPointOnLine(mo.x,mo.y, line)
 	local bull_z = mo.z
-	if (line and line.valid)
-		bull_x,bull_y = P_ClosestPointOnLine(bull_x,bull_y, line)
-	end
-	do
+	if not (line.flags & ML_NOCLIMB)
 		local hole = P_SpawnMobjFromMobj(mo, 0,0,0, MT_PAINT_WALLSPLAT)
 		
 		hole.color = mo.color
@@ -732,6 +744,10 @@ local function inkDamage(splat,mo, targp, pnt)
 	end
 	Paint:damagePlayer(targp, splat, p, 0)
 	Paint:setPlayerInInk(targp, Paint.ININK_ENEMY)
+	
+	-- if we dont do this, then people hiding in this
+	-- ink puddle would pop out because inink wouldnt be set for them
+	return nope(splat,mo);
 end
 addHook("TouchSpecial",function(splat,mo)
 	if not (splat and splat.valid) then return end
@@ -814,4 +830,15 @@ addHook("TouchSpecial",function(splat,mo)
 		Paint:setPlayerWallInk(p)
 		return nope(splat,mo);
 	end
+	return nope(splat,mo);
 end,MT_PAINT_WALLSPLAT)
+
+local function brella_pain(mo, inf,sor, damage)
+	mo.paint_healdelay = TR*3/2
+	mo.paint_color = inf.color
+	mo.paint_hp = max($ - damage, 0)
+	print(("DAMAGE: %f"):format(damage))
+	return false
+end
+
+addHook("ShouldDamage",brella_pain, MT_BRELLA_SHIELD)

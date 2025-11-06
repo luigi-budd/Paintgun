@@ -5,6 +5,10 @@ end
 for i = 0,5
 	sfxinfo[freeslot("sfx_pnt_n"..i)].caption = "/" -- N for Nullified
 end
+for i = 0,5
+	sfxinfo[freeslot("sfx_pnt_s"..i)].caption = "/" -- S for Shield hit
+end
+
 for i = 0,3
 	sfxinfo[freeslot("sfx_pt_ow"..i)].caption = "/"
 end
@@ -64,6 +68,21 @@ function Paint:setTeammates()
 	--Then, the displayplayer iterates through their teammates
 	--and spawns team markers
 end
+function Paint:countTeams()
+	local count = {alpha = 0, bravo = 0}
+	if not G_GametypeHasTeams() then return count; end
+
+	for play in players.iterate
+		if play.spectator then continue end
+		if not play.paint then continue end
+		if play.ctfteam == 1
+			count.alpha = $ + 1
+		else
+			count.bravo = $ + 1
+		end
+	end
+	return count
+end
 
 function Paint:initPlayer(p)
 	p.paint = {
@@ -92,10 +111,10 @@ function Paint:initPlayer(p)
 		shotsfired = 0, -- for dualies
 		turretmode = false, -- for dualies
 		dodgeroll = {
-			startx = 0, starty = 0,
-			destx = 0, desty = 0,
-			oldx = 0, oldy = 0,
-			momx = 0,momy = 0, -- for ending the dodge
+			startx = 0,	starty = 0,
+			destx = 0,	desty = 0,
+			oldx = 0,	oldy = 0,
+			momx = 0,	momy = 0, -- for ending the dodge
 			
 			tics = 0,
 			getup = 0,
@@ -108,6 +127,10 @@ function Paint:initPlayer(p)
 		anglestand = (p.realmo and p.realmo.valid) and (p.realmo.angle) or p.cmd.angleturn << 16,
 		lastslowdown = false,
 		holsteranim = 0,
+		
+		shield = nil, -- shield mobj for brellas
+		shieldwait = 0, -- dont deploy for this long
+		shieldlag = 0, -- keep deployed for this long
 		
 		inktank = 100*FU,
 		inkdelay = 0, -- delay before restoring ink

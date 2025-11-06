@@ -120,6 +120,8 @@ local weapon_meta = {
 	pelletnoise = FU*3/2,
 	-- charger "maxdamage" is also used for brella pellets,
 	-- damage is chosen from [wep.damage, wep.maxdamage]
+	deploywait = TR*4/5,
+	deployend = nil, -- use endlag if nil
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
@@ -432,6 +434,10 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		pt.endlag = max($, cur_weapon.endlag)
 		pt.spread = min($ + cur_weapon:get(pt,"spread_pershot"), cur_weapon:get(pt,"spread_max") - cur_weapon:get(pt,"spread_base"))
 		pt.spreadcooldown = cur_weapon:get(pt,"spread_recovery")
+		
+		if cur_weapon.guntype == WPT_BRELLA
+			pt.shieldwait = max($, cur_weapon:get(pt,"deploywait"))
+		end
 	end
 	if cur_weapon.guntype == WPT_CHARGER
 		local sound

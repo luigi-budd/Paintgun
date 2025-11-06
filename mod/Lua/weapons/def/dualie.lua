@@ -41,8 +41,8 @@ Paint:registerWeapon({
 	spread_jump = 56, -- how many tics until jump spread decays?
 	spread_jumpchance = (FU * 40), -- set spread chance to this when jumping
 	
-	turret_range = 500*FU,
-	turret_firerate = 1,
+	--turret_range = 500*FU,
+	--turret_firerate = 1,
 	
 	turret_startsound = sfx_p_s4_6,
 	turret_endsound = sfx_p_s4_7,
