@@ -16,7 +16,7 @@ sfxinfo[sfx_p_s3_0] = {
 Paint:registerWeapon({
 	name = "blaster",
 	handoffset = 10*FU,
-	range = 470*FU,
+	range = 400*FU,
 	damage = 125*FU,
 	firerate = 28,
 	shootspeed = tofixed("0.45"),

@@ -272,7 +272,11 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		end
 		-- 100% accurate for these (usually blasters)
 		if not dospread
-		and ((weap:get(pt, "neverspreadonground") and not me.jumptime) or (weap:get(pt,"neverspreadatall")))
+		and ((weap:get(pt, "neverspreadonground") and not me.jumptime)))
+			h_spread = 0
+			v_spread = 0
+		end
+		if (weap:get(pt,"neverspreadatall")
 			h_spread = 0
 			v_spread = 0
 		end
