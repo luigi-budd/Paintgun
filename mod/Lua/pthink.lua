@@ -1,6 +1,8 @@
 local CV = Paint.CV
 local MAX_SQUIDTIME = 3
 
+rawset(_G,"CA2_SQUIDFORM", 132)
+
 local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_interp)
 	local teleport = reset_interp and P_SetOrigin or P_MoveOrigin
 	
@@ -136,6 +138,7 @@ addHook("PlayerThink",function(p)
 		--Paint:giveWeapon(p, "SIGMA")
 	end
 	local pt = p.paint
+	local skin = skins[p.skin]
 	
 	if not Paint:isMode()
 	and not CV.paintguns.value
@@ -157,11 +160,11 @@ addHook("PlayerThink",function(p)
 			end
 			
 			Paint:resetPlayer(p)
-			local skin = skins[p.skin]
 			p.charflags = $|(skin.flags & SF_DASHMODE)
 			p.charability = skin.ability
 			p.charability2 = skin.ability2
 			p.normalspeed = skin.normalspeed
+			p.shieldscale = skin.shieldscale
 		end
 		
 		pt.active = false
@@ -173,12 +176,11 @@ addHook("PlayerThink",function(p)
 	if Paint:isMode()
 	or (Paint.CV.paintnerfs.value)
 		p.dashmode = 0
-		p.charflags = $ &~SF_DASHMODE
+		p.charflags = $|SF_NOSHIELDABILITY &~SF_DASHMODE
 		p.charability = CA_NONE
-		p.charability2 = CA2_NONE
+		p.charability2 = CA2_SQUIDFORM
 		p.wasmode = true
 	elseif p.wasmode
-		local skin = skins[p.skin]
 		p.charflags = $|(skin.flags & SF_DASHMODE)
 		p.charability = skin.ability
 		p.charability2 = skin.ability2
@@ -416,6 +418,8 @@ addHook("PlayerThink",function(p)
 	end
 	
 	-- squid form
+	p.shieldscale = skin.shieldscale
+	pt.squidtoggle = false
 	do
 		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
 		local easing = ease.inquad
@@ -425,16 +429,17 @@ addHook("PlayerThink",function(p)
 		if (p.cmd.buttons & BT_SPIN)
 		and not ((pt.endlag or pt.shieldlag or pt.firewait or pt.cooldown or pt.justfired or (pt.charge ~= 0))
 		or (pt.fireheld and pt.cooldown <= 0))
-		and (p.charability2 == CA2_NONE)
+		and (p.charability2 == CA2_SQUIDFORM)
 		and not (pt.dodgeroll.tics or pt.dodgeroll.getup)
 		and not (pt.squidlag)
 			if not pt.wasinsquid
 				S_StartSound(me,sfx_pt_tos)
 			end
 			
+			pt.squidtoggle = true
 			pt.squidtime = min($ + 1, MAX_SQUIDTIME)
 			local frac = (FU/MAX_SQUIDTIME)*pt.squidtime
-			me.height = easing(frac, $, 22*me.scale)
+			--me.height = easing(frac, $, 22*me.scale)
 			me.spriteyscale = easing(frac, FU, maxsquish)
 			pt.fireheld = 0
 			p.cmd.buttons = $ &~BT_ATTACK
@@ -446,7 +451,7 @@ addHook("PlayerThink",function(p)
 			S_StopSoundByID(me,sfx_pt_swm)
 			
 			local frac = FU - (FU/MAX_SQUIDTIME)*pt.squidtime
-			me.height = easing(frac, 22*me.scale, $)
+			--me.height = easing(frac, 22*me.scale, $)
 			me.spriteyscale = easing(frac, maxsquish, FU)
 			pt.squidtime = max($ - 1, 0)
 			pt.wasinsquid = false
@@ -463,6 +468,7 @@ addHook("PlayerThink",function(p)
 			or (pt.wallink and p.powers[pw_pushing])
 				me.flags2 = $|MF2_DONTDRAW
 				pt.hidden = true
+				p.shieldscale = 0
 				pt.squidanim = TR/2
 				p.pflags = $ &~PF_SPINNING
 				if (me.state == S_PLAY_ROLL)
@@ -1144,5 +1150,25 @@ addHook("PlayerCanEnterSpinGaps",function(p)
 	
 	if pt.squidtime >= MAX_SQUIDTIME
 		return true
+	end
+end)
+
+local easing = ease.inquad
+addHook("PlayerHeight",function(p)
+	local pt = p.paint
+	if not pt then return end
+	if not pt.active then return end
+	if not pt.squidtime then return end
+	local me = p.realmo
+	if not (me and me.valid) then return end
+	
+	local frac_step = (FU/MAX_SQUIDTIME)
+	local small_height = FixedMul(Paint.SQUID_HEIGHT, me.scale)
+	
+	if (pt.squidtoggle)
+		return easing(frac_step*pt.squidtime, P_GetPlayerHeight(p), small_height)
+	else
+		local frac = FU - (FU/MAX_SQUIDTIME)*pt.squidtime
+		return easing(FU - (frac_step*pt.squidtime), small_height, P_GetPlayerHeight(p))
 	end
 end)

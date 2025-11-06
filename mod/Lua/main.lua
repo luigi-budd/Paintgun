@@ -156,6 +156,7 @@ function Paint:initPlayer(p)
 		squidtime = 0,
 		squidanim = 0,
 		squidlag = 0,
+		squidtoggle = false,
 		hidden = false,
 		wasinsquid = 0,
 		
@@ -220,6 +221,7 @@ end
 Paint.ININK_FRIENDLY = -1
 Paint.ININK_ENEMY = 1
 Paint.MAX_HOLSTER = 5
+Paint.SQUID_HEIGHT = 22*FU
 
 dofile("cvars/main.lua")
 dofile("lib/lib.lua")
