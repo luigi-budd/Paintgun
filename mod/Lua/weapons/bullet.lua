@@ -836,7 +836,9 @@ end,MT_PAINT_WALLSPLAT)
 
 local function brella_pain(mo, inf,sor, damage)
 	mo.paint_healdelay = TR*3/2
-	mo.paint_color = inf.color
+	if not (inf.color == nil or inf.color == SKINCOLOR_NONE)
+		mo.paint_color = inf.color
+	end
 	mo.paint_hp = max($ - damage, 0)
 	if mo.paint_hp <= 0
 		mo.paint_destroyed = true
@@ -859,6 +861,8 @@ local function brella_pain(mo, inf,sor, damage)
 			)
 			dust.colorized = true
 			dust.color = Paint:getPlayerColor(mo.tracer.player)
+			P_Thrust(dust, FixedAngle(P_RandomFixedRange(0,360)), 5 * P_RandomFixed())
+			P_SetObjectMomZ(dust, 2 * P_RandomFixed())
 		end
 	end
 	--print(("DAMAGE: %f"):format(damage))
@@ -887,7 +891,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 	or mo.type == MT_TNTBARREL
 		if not sh.cooldown
 			P_DamageMobj(mo,sh,me, damage)
-			P_DamageMobj(sh,mo,mo, damage*4)
+			--P_DamageMobj(sh,mo,mo, damage*4) --debug
 			Paint:doProjHitmarker(sh, mo, true)
 			sh.cooldown = cooldown
 			Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)

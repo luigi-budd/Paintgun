@@ -10,8 +10,10 @@ local function isFriendlyFire(p1,p2)
 end
 Paint.isFriendlyFire = isFriendlyFire
 
+-- shot and sorp can be nil, but inf should NEVER be nil
 function Paint:killPlayer(p, shot, sorp, inf)
 	local pt = p.paint
+	local me = p.mo
 	if (p.gotflag)
 		P_PlayerFlagBurst(p,false)
 	end
@@ -25,7 +27,7 @@ function Paint:killPlayer(p, shot, sorp, inf)
 	
 	if (p.powers[pw_shield] ~= 0)
 		pt.hp = 100*FU
-		S_StartSound(p.mo, sfx_pt_ow3)
+		S_StartSound(me, sfx_pt_ow3)
 		p.powers[pw_shield] = 0
 		
 		if (p == displayplayer or p == secondarydisplayplayer)
@@ -35,7 +37,7 @@ function Paint:killPlayer(p, shot, sorp, inf)
 		return
 	end
 	
-	P_KillMobj(p.mo, shot, (sorp and sorp.valid) and sorp.mo or inf)
+	P_KillMobj(me, shot, (sorp and sorp.valid) and sorp.mo or inf)
 	if not self.isFriendlyFire(p,sorp)
 		--CONS_Printf(sorp, "\x82Killed "..p.name.."!")
 		if sorp and sorp.valid
@@ -69,26 +71,66 @@ function Paint:killPlayer(p, shot, sorp, inf)
 		p.pflags = $|PF_TAGIT
 	end
 	
+	local deathcolor
+	if (pt.paintoverlay and pt.paintoverlay.valid and pt.paintoverlay.color ~= self:getPlayerColor(p))
+		deathcolor = pt.paintoverlay.color
+	else
+		deathcolor = (sorp and sorp.valid) and self:getPlayerColor(sorp) or ColorOpposite(self:getPlayerColor(p))
+	end
 	for i = 0,P_RandomRange(15,20)
 		local angle = FixedAngle(P_RandomFixedRange(0,360))
-		local drop = P_SpawnMobjFromMobj(shot,0,0,FU, MT_PAINT_SHOT)
+		local drop = P_SpawnMobjFromMobj(me,0,0,FU, MT_PAINT_SHOT)
 		if drop and drop.valid
 			drop.target = (sorp and sorp.valid) and sorp.mo or inf
-			if (pt.paintoverlay and pt.paintoverlay.valid and pt.paintoverlay.color ~= self:getPlayerColor(p))
-				drop.color = pt.paintoverlay.color
-			else
-				drop.color = (sorp and sorp.valid) and self:getPlayerColor(sorp) or ColorOpposite(self:getPlayerColor(p))
-			end
 			drop.angle = angle
+			drop.color = deathcolor
 			drop.trail = true
 			drop.lifespan = 0
 			drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
-			P_SetObjectMomZ(drop, P_RandomRange(1,10)*FU)
-			P_Thrust(drop, angle, P_RandomFixedRange(1,10))
+			drop.tracer_player = sorp
+			P_SetObjectMomZ(drop, P_RandomFixedRange(1,13))
+			P_Thrust(drop, angle, P_RandomFixedRange(1,13))
 		end
-		S_StartSound(p.mo, sfx_pt_ow1)
-		S_StartSound(p.mo, sfx_pt_ow1)
+		S_StartSound(me, sfx_pt_ow1)
+		S_StartSound(me, sfx_pt_ow1)
 	end
+
+	local spr_scale = FU * 2
+	local tntstate = S_TNTBARREL_EXPL3
+	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
+	local bam = P_SpawnMobjFromMobj(me, 0,0,0, MT_THOK)
+	P_SetMobjStateNF(bam, tntstate)
+	bam.spritexscale = FixedMul($, spr_scale)
+	bam.spriteyscale = bam.spritexscale
+	bam.renderflags = $|rflags
+	bam.blendmode = AST_ADD
+	bam.colorized = true
+	bam.color = deathcolor
+	local t = P_SpawnMobjFromMobj(me,0,0,0,MT_THOK)
+	t.color = deathcolor
+	t.spritexscale = FU * 3
+	t.spriteyscale = t.spritexscale
+	
+	for i = 0,2
+		local outline = P_SpawnMobjFromMobj(me, 0,0,0, MT_PAINT_SHOT)
+		outline.visualfadestupidshit = true
+		outline.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
+		outline.fuse = 9
+		outline.radius = 40*me.scale
+		outline.sprite = SPR_PAINT_MISC
+		outline.frame = ($ &~FF_FRAMEMASK)|18
+		outline.spritexscale = FU * 3
+		outline.spriteyscale = outline.spritexscale
+		outline.renderflags = $|rflags|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
+		outline.blendmode = AST_ADD
+		outline.colorized = true
+		outline.color = deathcolor
+		outline.angle = me.angle + (ANGLE_90 * i)
+		if i == 2
+			outline.renderflags = $|RF_FLOORSPRITE &~RF_PAPERSPRITE
+		end
+	end
+	
 end
 
 function Paint:damagePlayer(p, shot, sorp, damage, inf) -- mobj if no player

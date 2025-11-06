@@ -336,7 +336,7 @@ addHook("PlayerThink",function(p)
 		if (sh.paint_overlay and sh.paint_overlay.valid)
 			local ov = sh.paint_overlay
 			if (sh.paint_color == nil)
-				ov.color = SKINCOLOR_NONE
+				ov.color = ColorOpposite(Paint:getPlayerColor(p))
 			else
 				ov.color = sh.paint_color
 			end
