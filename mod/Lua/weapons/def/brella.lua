@@ -15,7 +15,7 @@ Paint:registerWeapon({
 	dropoff = 310*FU,
 	h_spread = {8, 8},
 	v_spread = {6, 6},
-	falloff = {5,5},
+	falloff = {2,2},
 	maxdamage = 16*FU + (FU/5),
 	damage = MIN_DAMAGE,
 	guntype = WPT_BRELLA,
