@@ -50,7 +50,7 @@ addHook("MobjDamage",function(me, inf,sor, damage)
 		Paint:damagePlayer(p,inf,nil,damage*FU*15, sor)
 		Paint:playHurtSound(p)
 		
-		Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y,inf.x,inf.y), -32*inf.scale)
+		Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y,inf.x,inf.y), -16*inf.scale)
 	end
 	me.paint_hurttic = leveltime
 	return true

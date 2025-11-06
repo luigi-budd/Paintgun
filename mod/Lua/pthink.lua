@@ -49,11 +49,15 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	wepmo.fireanim = max($-1, 0)
 	
 	local offx,offy = 0,0
-	--print(pt.shieldlag)
+	local firing = false
+	if (pt.deployshield or pt.shieldlag)
+	or (pt.firewait or pt.fireheld or pt.endlag)
+		firing = true
+	end
+	
 	if (cur_weapon.guntype == WPT_BRELLA)
-	and (pt.shieldlag or pt.deployshield)
-	or pt.holsteranim
-		if (pt.shieldlag or pt.deployshield)
+	and (firing or pt.holsteranim)
+		if (firing)
 			pt.holsteranim = min($ + 1, Paint.MAX_HOLSTER)
 		else
 			pt.holsteranim = max($-1, 0)
@@ -184,6 +188,7 @@ addHook("PlayerThink",function(p)
 	me.jumptime = $ or 0
 	pt.spreadadd = 0
 	
+	local doslowdown = false
 	local fireangle = p.cmd.angleturn << 16
 	local old_weaponid = pt.weapon_id
 	do
@@ -197,7 +202,7 @@ addHook("PlayerThink",function(p)
 			sel = $ - 1
 		end
 		if sel ~= 0
-		and not (pt.endlag or pt.lastslowdown)
+		and not (pt.endlag or pt.shieldlag or pt.lastslowdown)
 			pt.inventory.curslot = $ + sel
 			if pt.inventory.curslot > pt.inventory.slots
 				pt.inventory.curslot = 1
@@ -229,7 +234,13 @@ addHook("PlayerThink",function(p)
 	
 	-- brella shield
 	pt.shieldwait = max($-1, 0)
-	pt.shieldlag = max($-1, 0)
+	if (pt.shieldlag)
+		pt.shieldlag = $ - 1
+		if pt.shieldlag == 0
+			S_StartSound(me, cur_weapon:get(pt,"stowsound") or sfx_none)
+		end
+		doslowdown = true
+	end
 	
 	local shieldout = false
 	pt.deployshield = false
@@ -238,9 +249,13 @@ addHook("PlayerThink",function(p)
 		if not (sh and sh.valid)
 			local s = P_SpawnMobjFromMobj(me,0,0,0,MT_BRELLA_SHIELD)
 			s.tracer = me
+			s.target = me --im a lazy bum
 			s.paint_hp = 500*FU
 			s.paint_delay = 0
 			s.paint_shield = true
+			s.paint_destroyed = false
+			s.cooldown = 0
+			s.weapon_id = pt.weapon_id
 			s.spriteyscale = FU/2
 			s.dontdrawforviewmobj = me
 			
@@ -260,40 +275,61 @@ addHook("PlayerThink",function(p)
 			me.z + me.momz
 		)
 		sh.angle = fireangle
+		sh.color = Paint:getPlayerColor(p)
 		
 		--print(("%s: %f"):format(p.name, sh.paint_hp))
-		if not (pt.shieldlag)
-		and not (pt.shieldwait)
-		and (pt.fireheld >= 5)
+		if not (pt.shieldwait)
+		and (pt.fireheld >= cur_weapon:get(pt,"deploydelay"))
+		and (pt.shotsfired)
+		and (sh.paint_hp > 0)
 			pt.deployshield = true
+			if not pt.wasdeployed
+				S_StartSound(me, cur_weapon:get(pt,"deploysound") or sfx_none)
+			end
 		end
-		/*
-		print("brella",
-			pt.shieldwait,
-			pt.shieldlag
-		)
-		*/
 		
 		if not pt.deployshield
-		or (sh.paint_hp <= 0)
-			-- hidden
-			sh.flags2 = $|MF2_DONTDRAW
-			sh.flags = $|MF_NOCLIP|MF_NOCLIPTHING &~MF_SHOOTABLE
-			-- if the brella is destroyed/launched, wait however long it lasts launched to regen
-			if sh.paint_hp ~= 500*FU
-				sh.paint_hp = min($ + FixedDiv(150*FU, TR*FU), 500*FU)
-			else
-				sh.paint_color = nil
+		and pt.wasdeployed
+			local dlag = cur_weapon:get(pt,"deployend")
+			if dlag == nil
+				dlag = cur_weapon:get(pt,"endlag")
 			end
-		else
+			pt.shieldlag = dlag
+			if not dlag
+				S_StartSound(me, cur_weapon:get(pt,"stowsound") or sfx_none)
+			end
+		end
+		if pt.shieldlag
+			pt.fireheld = 0
+			p.cmd.buttons = $ &~BT_ATTACK
+		end
+		
+		if (pt.deployshield or pt.shieldlag)
+		and (sh.paint_hp > 0)
 			-- visible
 			sh.flags2 = $ &~MF2_DONTDRAW
 			sh.flags = $|MF_SHOOTABLE &~(MF_NOCLIP|MF_NOCLIPTHING)
 			if (pt.shotsfired >= 1)
 				shieldout = true
 			end
+		else
+			-- hidden
+			sh.flags2 = $|MF2_DONTDRAW
+			sh.flags = $|MF_NOCLIP|MF_NOCLIPTHING &~MF_SHOOTABLE
+			if not sh.paint_destroyed
+				if sh.paint_hp ~= 500*FU
+					sh.paint_hp = min($ + FixedDiv(150*FU, TR*FU), 500*FU)
+				else
+					sh.paint_color = nil
+				end
+			-- if the brella is destroyed/launched, wait however long it lasts launched to regen
+			else
+			
+			end
 		end
 		sh.health = sh.info.spawnhealth
+		sh.lasthit = nil
+		sh.cooldown = max($ - 1, 0)
 		
 		if (sh.paint_overlay and sh.paint_overlay.valid)
 			local ov = sh.paint_overlay
@@ -323,6 +359,7 @@ addHook("PlayerThink",function(p)
 			sh.flags = $|MF_NOCLIP|MF_NOCLIPTHING &~MF_SHOOTABLE
 		end
 	end
+	pt.wasdeployed = pt.deployshield
 	
 	if not P_IsObjectOnGround(me)
 	and (p.pflags & PF_JUMPED)
@@ -350,6 +387,9 @@ addHook("PlayerThink",function(p)
 			if not pt.fireheld
 				justpressedfire = true
 				pt.firewait = cur_weapon.startlag
+				if (cur_weapon.guntype == WPT_BRELLA)
+					S_StartSound(me, cur_weapon:get(pt,"readysound") or sfx_none)
+				end
 			end
 			pt.fireheld = $ + 1
 			p.cmd.buttons = $|BT_ATTACK
@@ -371,7 +411,7 @@ addHook("PlayerThink",function(p)
 		pt.fireheld = 0
 	end
 	if not (p.cmd.buttons & BT_ATTACK or pt.fireheld)
-	and not (pt.cooldown or pt.firewait or pt.endlag)
+	and not (pt.cooldown or pt.firewait or pt.endlag or pt.shieldlag)
 		pt.shotsfired = 0
 	end
 	
@@ -383,7 +423,7 @@ addHook("PlayerThink",function(p)
 		pt.hidden = false
 		
 		if (p.cmd.buttons & BT_SPIN)
-		and not ((pt.endlag or pt.firewait or pt.cooldown or pt.justfired or (pt.charge ~= 0))
+		and not ((pt.endlag or pt.shieldlag or pt.firewait or pt.cooldown or pt.justfired or (pt.charge ~= 0))
 		or (pt.fireheld and pt.cooldown <= 0))
 		and (p.charability2 == CA2_NONE)
 		and not (pt.dodgeroll.tics or pt.dodgeroll.getup)
@@ -581,8 +621,6 @@ addHook("PlayerThink",function(p)
 		end
 		pt.inktank = min($, 100*FU)
 	end
-	
-	local doslowdown = false
 	
 	if (cur_weapon.guntype == WPT_SHOOTER
 	or cur_weapon.guntype == WPT_BLASTER
@@ -792,8 +830,11 @@ addHook("PlayerThink",function(p)
 		pt.endlag = $ - 1
 	end
 	if pt.anglefix
+	or (pt.firewait or pt.shieldlag)
 		p.drawangle = fireangle
-		pt.anglefix = $ - 1
+		if pt.anglefix
+			pt.anglefix = $ - 1
+		end
 		if pt.anglefix == 0
 			pt.anglestand = p.drawangle
 		end
@@ -809,7 +850,11 @@ addHook("PlayerThink",function(p)
 	end
 	
 	if doslowdown
-		p.normalspeed = FixedMul(skins[p.skin].normalspeed, cur_weapon.shootspeed)
+		local slowdown = cur_weapon:get(pt,"shootspeed")
+		if (pt.deployshield or pt.shieldlag)
+			slowdown = cur_weapon:get(pt,"shieldingspeed")
+		end
+		p.normalspeed = FixedMul(skins[p.skin].normalspeed, slowdown)
 	end
 	pt.lastslowdown = doslowdown
 	

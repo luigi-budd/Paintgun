@@ -47,8 +47,8 @@ states[S_BRELLA_SHIELD] = {
 }
 mobjinfo[MT_BRELLA_SHIELD] = {
 	doomednum = -1,
-	radius = 24*FU,
-	height = 50*FU,
+	radius = 30*FU,
+	height = 62*FU,
 	spawnhealth = 1,
 	flags = MF_NOGRAVITY|MF_NOCLIPHEIGHT|MF_SHOOTABLE,
 	spawnstate = S_BRELLA_SHIELD,
@@ -218,6 +218,7 @@ local function HandleFloorSplat(shot)
 			hole.weapon_id = shot.weapon_id
 			hole.eflags = $|(ceil and MFE_VERTICALFLIP or 0)
 			hole.revgrav = hole.eflags & MFE_VERTICALFLIP
+			hole.dispoffset = abs(leveltime*64)
 			P_SetOrigin(hole, shot.x, shot.y, bull_z)
 		end
 		
@@ -464,7 +465,7 @@ addHook("MobjThinker",function(shot)
 			P_SetObjectMomZ(d,-30*FU)
 		end
 	else
-		if (leveltime % 3 == 0)
+		if ((leveltime + shot.lifespan) % 3 == 0)
 		and P_RandomChance(FU/2)
 			CreateTrail(shot)
 		end
@@ -837,8 +838,84 @@ local function brella_pain(mo, inf,sor, damage)
 	mo.paint_healdelay = TR*3/2
 	mo.paint_color = inf.color
 	mo.paint_hp = max($ - damage, 0)
-	print(("DAMAGE: %f"):format(damage))
+	if mo.paint_hp <= 0
+		mo.paint_destroyed = true
+		local wep = Paint.weapons[mo.weapon_id]
+		local soundid = wep:get(mo.tracer.player.paint, "breaksound") or sfx_none
+		S_StartSound(mo.tracer, soundid)
+		
+		local rad = FixedDiv(mo.radius, mo.scale)
+		local hei = FixedDiv(mo.height, mo.scale)
+		local ang_s = mo.angle - ANGLE_90
+		local ang_f = mo.angle
+		for i = 0, 15
+			local push = FixedMul(rad, P_RandomFixedSigned())
+			local nudge = FixedMul(rad/4, P_RandomFixedSigned())
+			local zadj = FixedMul(hei, P_RandomFixed())
+			local dust = P_SpawnMobjFromMobj(mo,
+				P_ReturnThrustX(nil,ang_s, push) + P_ReturnThrustX(nil,ang_f, nudge),
+				P_ReturnThrustY(nil,ang_s, push) + P_ReturnThrustY(nil,ang_f, nudge),
+				zadj, MT_SPINDUST
+			)
+			dust.colorized = true
+			dust.color = Paint:getPlayerColor(mo.tracer.player)
+		end
+	end
+	--print(("DAMAGE: %f"):format(damage))
 	return false
 end
-
 addHook("ShouldDamage",brella_pain, MT_BRELLA_SHIELD)
+
+addHook("MobjMoveCollide",function(sh,mo)
+	if not (sh and sh.valid) then return end
+	if not (mo and mo.valid) then return end
+	if (mo == sh.tracer) then return end
+	if not mo.health then return end
+	if not L_ZCollide(sh,mo) then return end
+	if (sh.lasthit == mo) then return end
+	sh.lasthit = mo
+	
+	local wep = Paint.weapons[sh.weapon_id]
+	local me = sh.tracer
+	local p = me.player
+	local pt = p.paint
+	
+	local damage = wep:get(pt, "contactdamage")
+	local cooldown = wep:get(pt, "contactcooldown")
+	
+	if Paint_canHurtEnemy(p, mo)
+	or mo.type == MT_TNTBARREL
+		if not sh.cooldown
+			P_DamageMobj(mo,sh,me, damage)
+			P_DamageMobj(sh,mo,mo, damage*4)
+			Paint:doProjHitmarker(sh, mo, true)
+			sh.cooldown = cooldown
+			Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
+		end
+		
+		Knockback.addKnockback(mo, TR, R_PointToAngle2(mo.x,mo.y, me.x,me.y), -16*mo.scale)
+		return
+	end
+	
+	if mo.type == MT_PLAYER
+	and mo ~= me
+		if Paint_canHurtPlayer(p, mo.player)
+			local play = mo.player
+			if not sh.cooldown
+				Paint:damagePlayer(play,sh,p, damage)
+				Paint:doProjHitmarker(sh, mo, true)
+				Paint:playHurtSound(play)
+				sh.cooldown = cooldown
+				Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
+			end
+			Knockback.addKnockback(mo, TR, R_PointToAngle2(mo.x,mo.y, me.x,me.y), -16*mo.scale)
+		end
+	end
+end,MT_BRELLA_SHIELD)
+
+addHook("MobjThinker",function(b)
+	if not (b and b.valid) then return end
+	if not (b.tracer and b.tracer.valid and b.tracer.health)
+		P_RemoveMobj(b)
+	end
+end,MT_BRELLA_SHIELD)

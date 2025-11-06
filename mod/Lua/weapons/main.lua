@@ -120,8 +120,18 @@ local weapon_meta = {
 	pelletnoise = FU*3/2,
 	-- charger "maxdamage" is also used for brella pellets,
 	-- damage is chosen from [wep.damage, wep.maxdamage]
-	deploywait = TR*4/5,
+	deploywait = (TR/2)*4/5,
 	deployend = nil, -- use endlag if nil
+	deploydelay = 11, -- hold fire for this long before deploying
+	shieldingspeed = (FU/2)*7/10, -- `shootspeed` but for when you shield
+	readysound = nil,
+	deploysound = nil,
+	stowsound = nil,
+	breaksound = nil,
+	recoversound = nil,
+	contactdamage = 30*FU,
+	contactcooldown = TR/2,
+	releasedmultiplier = FU/2, -- damage mulitiplier when released
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
@@ -272,11 +282,11 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		end
 		-- 100% accurate for these (usually blasters)
 		if not dospread
-		and ((weap:get(pt, "neverspreadonground") and not me.jumptime)))
+		and ((weap:get(pt, "neverspreadonground") and not me.jumptime))
 			h_spread = 0
 			v_spread = 0
 		end
-		if (weap:get(pt,"neverspreadatall")
+		if (weap:get(pt,"neverspreadatall"))
 			h_spread = 0
 			v_spread = 0
 		end

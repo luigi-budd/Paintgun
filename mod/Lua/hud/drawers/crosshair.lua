@@ -10,8 +10,11 @@ local CRTYPE_CHARGERBASE	= 4
 local function drawReticle(v,x,y, p, type)
 	local prefix = "PAINT_CR_"
 	local wep = Paint.weapons[p.paint.weapon_id]
+	local pt = p.paint
+	
 	-- when brella-class loses its shield
 	if (wep.guntype == WPT_BRELLA)
+	and (pt.shield and pt.shield.valid and pt.shield.paint_hp <= 0)
 		prefix = "PAINT_CROPEN_"
 	end
 	

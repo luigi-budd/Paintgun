@@ -131,6 +131,8 @@ function Paint:initPlayer(p)
 		shield = nil, -- shield mobj for brellas
 		shieldwait = 0, -- dont deploy for this long
 		shieldlag = 0, -- keep deployed for this long
+		deployshield = false,
+		wasdeployed = false,
 		
 		inktank = 100*FU,
 		inkdelay = 0, -- delay before restoring ink

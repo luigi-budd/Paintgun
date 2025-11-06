@@ -1,6 +1,11 @@
-for i = 0,3
+for i = 0,8
 	sfxinfo[freeslot("sfx_p_s5_"..i)].caption = "Paint fired"
 end
+sfxinfo[sfx_p_s5_4].caption = "/"
+sfxinfo[sfx_p_s5_5].caption = "Brella deployed"
+sfxinfo[sfx_p_s5_6].caption = "/"
+sfxinfo[sfx_p_s5_7].caption = "Brella breaks"
+sfxinfo[sfx_p_s5_8].caption = "Brella recovered!"
 
 local MIN_DAMAGE = 10*FU + (FU*8/10)
 Paint:registerWeapon({
@@ -46,6 +51,11 @@ Paint:registerWeapon({
 	sounds = {
 		sfx_p_s5_0, sfx_p_s5_1, sfx_p_s5_2, sfx_p_s5_3
 	},
+	readysound = sfx_p_s5_4,
+	deploysound = sfx_p_s5_5,
+	stowsound = sfx_p_s5_6,
+	breaksound = sfx_p_s5_7,
+	recoversound = sfx_p_s5_8,
 	soundvolume = 255 * 4/5,
 	splatvolume = 255/2,
 	
