@@ -27,7 +27,7 @@ states[S_PAINT_SHOT_BIG] = {
 }
 states[S_PAINT_SHOT_PELLET] = {
 	sprite = SPR_PAINT_SHOT,
-	frame = 3|FF_FULLBRIGHT,
+	frame = 3,
 	tics = -1,
 	nextstate = S_PAINT_SHOT_PELLET
 }
@@ -218,7 +218,7 @@ local function HandleFloorSplat(shot)
 			hole.weapon_id = shot.weapon_id
 			hole.eflags = $|(ceil and MFE_VERTICALFLIP or 0)
 			hole.revgrav = hole.eflags & MFE_VERTICALFLIP
-			hole.dispoffset = abs(leveltime*64)
+			hole.dispoffset = -100
 			P_SetOrigin(hole, shot.x, shot.y, bull_z)
 		end
 		
