@@ -102,7 +102,6 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 		s.color = wepmo.color
 		s.fuse = 2
 		s.dispoffset = 20
-		s.renderflags = $|RF_ALWAYSONTOP
 		local frac = min(FixedDiv(pt.charge, cur_weapon:get(pt,"chargetime")),FU)
 		s.alpha = clamp(0, frac-1, FU)
 		P_SetScale(s, s.scale/2, true)
