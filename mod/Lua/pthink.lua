@@ -282,6 +282,7 @@ addHook("PlayerThink",function(p)
 			s.cooldown = 0
 			s.weapon_id = pt.weapon_id
 			s.dontdrawforviewmobj = me
+			s.dispoffset = 50
 			
 			s.paint_overlay = P_SpawnMobjFromMobj(s, 0,0,0, MT_OVERLAY)
 			s.paint_overlay.target = s
@@ -313,7 +314,6 @@ addHook("PlayerThink",function(p)
 		sh.angle = fireangle
 		sh.color = Paint:getPlayerColor(p)
 		
-		--print(("%s: %f"):format(p.name, sh.paint_hp))
 		if (pt.shieldlag == Paint.CANOPY_ANIM)
 		or (pt.shieldlag and ((cur_weapon:get(pt,"deployend") or cur_weapon:get(pt,"endlag")) <= Paint.CANOPY_ANIM))
 		and (sh.threshold == 0)
@@ -369,6 +369,7 @@ addHook("PlayerThink",function(p)
 				trail.flags = $|MF_NOCLIPTHING &~(MF_NOGRAVITY|MF_NOCLIPHEIGHT|MF_NOCLIP)
 				trail.frame = ($ &~FF_FRAMEMASK)|2
 				trail.weapon_id = sh.weapon_id
+				trail.flags2 = $|MF2_DONTDRAW
 			end
 		else
 			-- hidden
