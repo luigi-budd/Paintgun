@@ -7,6 +7,22 @@ sfxinfo[sfx_p_s5_6].caption = "/"
 sfxinfo[sfx_p_s5_7].caption = "Brella breaks"
 sfxinfo[sfx_p_s5_8].caption = "Brella recovered!"
 
+freeslot("S_PAINT_GUN_BRELLA_CLS")
+states[S_PAINT_GUN_BRELLA_CLS] = {
+	sprite = SPR_PAINT_GUN,
+	frame = 7,
+	tics = -1,
+	nextstate = S_PAINT_GUN_BRELLA_CLS
+}
+
+freeslot("S_PAINT_GUN_BRELLA_OPN")
+states[S_PAINT_GUN_BRELLA_OPN] = {
+	sprite = SPR_PAINT_GUN,
+	frame = 8,
+	tics = -1,
+	nextstate = S_PAINT_GUN_BRELLA_OPN
+}
+
 local MIN_DAMAGE = 10*FU + (FU*8/10)
 Paint:registerWeapon({
 	name = "brella",
@@ -28,7 +44,8 @@ Paint:registerWeapon({
 	startlag = 5,
 	endlag = 12,
 	
-	weaponstate = S_PAINT_GUN,
+	weaponstate = S_PAINT_GUN_BRELLA_CLS,
+	open_weaponstate = S_PAINT_GUN_BRELLA_OPN,
 	weaponstate_scale = FU/2,
 	shotstate = S_PAINT_SHOT_PELLET,
 	
@@ -93,7 +110,8 @@ Paint:registerWeapon({
 		if (pt.fireheld or p.cmd.buttons & BT_ATTACK)
 			firing = true
 		end
-		if (pt.endlag or pt.firewait)
+		if (pt.deployshield or pt.shieldlag)
+		or (pt.firewait or pt.fireheld or pt.endlag)
 			firing = true
 		end
 		if not firing then return end

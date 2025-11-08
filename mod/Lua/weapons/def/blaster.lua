@@ -41,6 +41,7 @@ Paint:registerWeapon({
 	guntype = WPT_BLASTER,
 	
 	weaponstate = S_PAINT_GUN_BLASTER,
+	weaponstate_scale = FU/2,
 	
 	sounds = {
 		sfx_p_s3_2

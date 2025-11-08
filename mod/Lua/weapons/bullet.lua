@@ -11,7 +11,8 @@ freeslot(
 	"S_PAINT_SHOT_BIG", 
 	"S_PAINT_SHOT_PELLET",
 	
-	"SPR_PAINT_MISC"
+	"SPR_PAINT_MISC",
+	"SPR_PAINT_GUN"
 )
 states[S_PAINT_SHOT] = {
 	sprite = SPR_PAINT_SHOT,
@@ -40,8 +41,8 @@ mobjinfo[MT_PAINT_SHOT] = {
 }
 
 states[S_BRELLA_SHIELD] = {
-	sprite = SPR_ESHI,
-	frame = 0,
+	sprite = SPR_PAINT_GUN,
+	frame = 9,
 	tics = -1,
 	nextstate = S_BRELLA_SHIELD
 }
@@ -56,7 +57,7 @@ mobjinfo[MT_BRELLA_SHIELD] = {
 	painstate = S_BRELLA_SHIELD,
 }
 
-freeslot("MT_PAINT_GUN", "S_PAINT_GUN", "SPR_PAINT_GUN")
+freeslot("MT_PAINT_GUN", "S_PAINT_GUN")
 states[S_PAINT_GUN] = {
 	sprite = SPR_PAINT_GUN,
 	frame = A,
@@ -891,7 +892,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 	or mo.type == MT_TNTBARREL
 		if not sh.cooldown
 			P_DamageMobj(mo,sh,me, damage)
-			--P_DamageMobj(sh,mo,mo, damage*4) --debug
+			P_DamageMobj(sh,mo,mo, damage*4) --debug
 			Paint:doProjHitmarker(sh, mo, true)
 			sh.cooldown = cooldown
 			Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)

@@ -25,6 +25,8 @@ Paint:registerWeapon({
 	v_spread = {0, 0},
 	
 	weaponstate = S_PAINT_GUN_CHARGER,
+	weaponstate_scale = FU/2,
+	
 	abilitywrap = Paint.wtemplate_charger,
 	soundvolume = 255,
 	/*

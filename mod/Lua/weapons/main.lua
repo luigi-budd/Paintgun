@@ -132,6 +132,9 @@ local weapon_meta = {
 	contactdamage = 30*FU,
 	contactcooldown = TR/2,
 	releasedmultiplier = FU/2, -- damage mulitiplier when released
+	open_weaponstate = nil, -- for when the canopy is open/released
+	shieldstate = nil, -- state for the canopy
+	shieldscale = FU/2, -- sprite scale for canopy
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies

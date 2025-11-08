@@ -38,12 +38,18 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	wepmo.destscale = me.scale
 	wepmo.scalespeed = wepmo.destscale + 1
 	wepmo.color = Paint:getPlayerColor(p)
+	
+	local finalstate = cur_weapon.weaponstate
 	if dualieflip
 	and cur_weapon:get(pt,"dualie_weaponstate") ~= nil
-		wepmo.state = cur_weapon:get(pt,"dualie_weaponstate")
-	else
-		wepmo.state = cur_weapon.weaponstate
+		finalstate = cur_weapon:get(pt,"dualie_weaponstate")
+	elseif (cur_weapon.guntype == WPT_BRELLA)
+		if (pt.deployshield or pt.shieldlag or (pt.shield and pt.shield.paint_hp <= 0))
+		and cur_weapon:get(pt,"open_weaponstate") ~= nil
+			finalstate = cur_weapon:get(pt,"open_weaponstate")
+		end
 	end
+	wepmo.state = finalstate
 	if cur_weapon:get(pt,"weaponstate_frame") ~= nil
 		wepmo.frame = ($ &~FF_FRAMEMASK)|(cur_weapon:get(pt,"weaponstate_frame") & FF_FRAMEMASK)
 	end
@@ -258,7 +264,6 @@ addHook("PlayerThink",function(p)
 			s.paint_destroyed = false
 			s.cooldown = 0
 			s.weapon_id = pt.weapon_id
-			s.spriteyscale = FU/2
 			s.dontdrawforviewmobj = me
 			
 			s.paint_overlay = P_SpawnMobjFromMobj(s, 0,0,0, MT_OVERLAY)
@@ -270,7 +275,17 @@ addHook("PlayerThink",function(p)
 			pt.shield = s
 			sh = s
 		end
-		local move = me.radius + 5*me.scale
+		local scale = cur_weapon:get(pt,"shieldscale")
+		sh.spritexscale = scale
+		sh.spriteyscale = scale
+		local newstate = cur_weapon:get(pt,"shieldstate")
+		if newstate ~= nil
+			sh.state = newstate
+		elseif sh.state ~= sh.info.spawnstate
+			sh.state = sh.info.spawnstate
+		end
+		
+		local move = me.radius + 16*me.scale
 		P_MoveOrigin(sh,
 			me.x + P_ReturnThrustX(nil,fireangle,move) + me.momx,
 			me.y + P_ReturnThrustY(nil,fireangle,move) + me.momy,
