@@ -210,12 +210,20 @@ function Paint:chargerSightline(p)
 					me.z + (41*(me.height)/48 - 8*me.scale) + me.momz
 	local ticker = (leveltime/4)
 	for i = 1,dots
-		if ((i-ticker) % 4 == 0) then continue end
 		local dist = step * i
+		local dx = x + FixedMul(dist, vec.x)
+		local dy = y + FixedMul(dist, vec.y)
+		local dz = z + FixedMul(dist, vec.z)
+		local fz = P_FloorzAtPos(dx,dy,dz, 4*FU)
+		local cz = P_CeilingzAtPos(dx,dy,dz, 4*FU)
+		if (dz <= fz
+		or dz >= cz)
+			break
+		end
+		
+		if ((i-ticker) % 4 == 0) then continue end
 		local dot = P_SpawnMobj(
-			x + FixedMul(dist, vec.x),
-			y + FixedMul(dist, vec.y),
-			z + FixedMul(dist, vec.z),
+			dx,dy,dz,
 			MT_PARTICLE
 		)
 		dot.color = me.color
@@ -229,10 +237,6 @@ function Paint:chargerSightline(p)
 		--dot.dontdrawforviewmobj = me
 		P_SetOrigin(dot, dot.x,dot.y,dot.z)
 		
-		if (dot.z <= dot.floorz
-		or dot.z >= dot.ceilingz)
-			break
-		end
 	end
 end
 
