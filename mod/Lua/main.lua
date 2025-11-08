@@ -229,6 +229,7 @@ Paint.ININK_FRIENDLY = -1
 Paint.ININK_ENEMY = 1
 Paint.MAX_HOLSTER = 5
 Paint.SQUID_HEIGHT = 22*FU
+Paint.CANOPY_ANIM = 6
 
 dofile("cvars/main.lua")
 dofile("lib/lib.lua")

@@ -260,6 +260,7 @@ addHook("PlayerThink",function(p)
 	pt.shieldwait = max($-1, 0)
 	if (pt.shieldlag)
 		pt.shieldlag = $ - 1
+		
 		if pt.shieldlag == 0
 			S_StartSound(me, cur_weapon:get(pt,"stowsound") or sfx_none)
 		end
@@ -274,7 +275,8 @@ addHook("PlayerThink",function(p)
 			local s = P_SpawnMobjFromMobj(me,0,0,0,MT_BRELLA_SHIELD)
 			s.tracer = me
 			s.target = me --im a lazy bum
-			s.paint_hp = 500*FU
+			s.paint_maxhp = cur_weapon:get(pt,"shieldhp")
+			s.paint_hp = s.paint_maxhp
 			s.paint_delay = 0
 			s.paint_shield = true
 			s.paint_destroyed = false
@@ -294,6 +296,8 @@ addHook("PlayerThink",function(p)
 		local scale = cur_weapon:get(pt,"shieldscale")
 		sh.spritexscale = scale
 		sh.spriteyscale = scale
+		sh.paint_scale = scale
+		
 		local newstate = cur_weapon:get(pt,"shieldstate")
 		if newstate ~= nil
 			sh.state = newstate
@@ -311,6 +315,12 @@ addHook("PlayerThink",function(p)
 		sh.color = Paint:getPlayerColor(p)
 		
 		--print(("%s: %f"):format(p.name, sh.paint_hp))
+		if (pt.shieldlag == Paint.CANOPY_ANIM)
+		or (pt.shieldlag and ((cur_weapon:get(pt,"deployend") or cur_weapon:get(pt,"endlag")) <= Paint.CANOPY_ANIM))
+		and (sh.threshold == 0)
+			sh.threshold = Paint.CANOPY_ANIM
+		end
+		
 		if not (pt.shieldwait)
 		and (pt.fireheld >= cur_weapon:get(pt,"deploydelay"))
 		and (pt.shotsfired)
@@ -318,6 +328,8 @@ addHook("PlayerThink",function(p)
 			pt.deployshield = true
 			if not pt.wasdeployed
 				S_StartSound(me, cur_weapon:get(pt,"deploysound") or sfx_none)
+				sh.threshold = Paint.CANOPY_ANIM
+				P_SetOrigin(sh, sh.x,sh.y,sh.z)
 			end
 		end
 		
@@ -350,8 +362,8 @@ addHook("PlayerThink",function(p)
 			sh.flags2 = $|MF2_DONTDRAW
 			sh.flags = $|MF_NOCLIP|MF_NOCLIPTHING &~MF_SHOOTABLE
 			if not sh.paint_destroyed
-				if sh.paint_hp ~= 500*FU
-					sh.paint_hp = min($ + FixedDiv(150*FU, TR*FU), 500*FU)
+				if sh.paint_hp ~= sh.paint_maxhp
+					sh.paint_hp = min($ + FixedDiv(cur_weapon:get(pt,"shieldregen"), TR*FU), sh.paint_maxhp)
 				else
 					sh.paint_color = nil
 				end
@@ -363,28 +375,6 @@ addHook("PlayerThink",function(p)
 		sh.health = sh.info.spawnhealth
 		sh.lasthit = nil
 		sh.cooldown = max($ - 1, 0)
-		
-		if (sh.paint_overlay and sh.paint_overlay.valid)
-			local ov = sh.paint_overlay
-			if (sh.paint_color == nil)
-				ov.color = ColorOpposite(Paint:getPlayerColor(p))
-			else
-				ov.color = sh.paint_color
-			end
-			ov.alpha = FU - FixedDiv(sh.paint_hp, 500*FU)
-			ov.sprite = sh.sprite
-			ov.frame = A
-			ov.frame = sh.frame
-			ov.angle = sh.angle
-			ov.spritexscale = sh.spritexscale
-			ov.spriteyscale = sh.spriteyscale
-			ov.spritexoffset = sh.spritexoffset
-			ov.spriteyoffset = sh.spriteyoffset
-			ov.pitch = 0
-			ov.roll = 0
-			ov.dispoffset = sh.dispoffset + 1
-			ov.flags2 = ($ &~MF2_DONTDRAW)|(sh.flags2 & MF2_DONTDRAW)
-		end
 	else
 		local sh = pt.shield
 		if (sh and sh.valid)

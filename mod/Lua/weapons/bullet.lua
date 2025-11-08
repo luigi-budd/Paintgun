@@ -919,9 +919,77 @@ addHook("MobjMoveCollide",function(sh,mo)
 	end
 end,MT_BRELLA_SHIELD)
 
+local PROPEL_EASE = Paint.CANOPY_ANIM
 addHook("MobjThinker",function(b)
 	if not (b and b.valid) then return end
 	if not (b.tracer and b.tracer.valid and b.tracer.health)
 		P_RemoveMobj(b)
+		return
+	end
+	if b.paint_scale == nil then return end
+	local me = b.tracer
+	local p = me.player
+	local pt = p.paint
+	
+	local xscale,yscale = FU,FU
+	
+	if b.threshold ~= 0
+		local threshold = PROPEL_EASE - b.threshold
+		local func = ease.inoutback
+		if (pt.shieldlag)
+			threshold = b.threshold
+		end
+		
+		local back = FU*3/5
+		local frac = (FU/PROPEL_EASE)*threshold
+		xscale = ease.inoutback(
+			frac,
+			FU*4/3, FU, back
+		)
+		if frac <= FU/2
+			yscale = ease.insine(
+				frac,
+				0, 2*FU
+			)
+		else
+			yscale = ease.outsine(
+				frac,
+				3*FU, FU
+			)
+		end
+	end
+	
+	xscale = FixedMul($, b.paint_scale)
+	yscale = FixedMul($, b.paint_scale)
+	
+	b.spritexscale = xscale
+	b.spriteyscale = yscale
+	
+	if b.threshold > 0
+		b.threshold = $ - 1
+	elseif b.threshold < 0
+		b.threshold = $ + 1
+	end
+
+	if (b.paint_overlay and b.paint_overlay.valid)
+		local ov = b.paint_overlay
+		if (b.paint_color == nil)
+			ov.color = ColorOpposite(Paint:getPlayerColor(p))
+		else
+			ov.color = b.paint_color
+		end
+		ov.alpha = FU - FixedDiv(b.paint_hp, b.paint_maxhp)
+		ov.sprite = b.sprite
+		ov.frame = A
+		ov.frame = b.frame
+		ov.angle = b.angle
+		ov.spritexscale = b.spritexscale
+		ov.spriteyscale = b.spriteyscale
+		ov.spritexoffset = b.spritexoffset
+		ov.spriteyoffset = b.spriteyoffset
+		ov.pitch = 0
+		ov.roll = 0
+		ov.dispoffset = b.dispoffset + 1
+		ov.flags2 = ($ &~MF2_DONTDRAW)|(b.flags2 & MF2_DONTDRAW)
 	end
 end,MT_BRELLA_SHIELD)

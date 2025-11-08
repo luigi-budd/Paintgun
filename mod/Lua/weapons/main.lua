@@ -117,7 +117,7 @@ local weapon_meta = {
 	turret_endsound = nil,
 	
 	--brella specific
-	pelletspread = 6*FU,
+	pelletspread = 8*FU,
 	pelletnoise = FU*3/2,
 	-- charger "maxdamage" is also used for brella pellets,
 	-- damage is chosen from [wep.damage, wep.maxdamage]
@@ -136,6 +136,8 @@ local weapon_meta = {
 	open_weaponstate = nil, -- for when the canopy is open/released
 	shieldstate = nil, -- state for the canopy
 	shieldscale = FU/2, -- sprite scale for canopy
+	shieldhp = 500*FU,
+	shieldregen = 150*FU, -- heal this much hp per second
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
