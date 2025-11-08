@@ -136,7 +136,10 @@ function Paint:initPlayer(p)
 		deployshield = false,
 		wasdeployed = false,
 		
+		oldinktank = 100*FU,
+		oldinkanim = 100*FU,
 		inktank = 100*FU,
+		maxinkdelay = 0,
 		inkdelay = 0, -- delay before restoring ink
 		tankmobj = nil,
 		
@@ -182,7 +185,11 @@ function Paint:resetPlayer(p)
 	local pt = p.paint
 	pt.timetoheal = 0
 	pt.hp = 100*FU
+	pt.oldinktank = 100*FU
+	pt.oldtankanim = 100*FU
 	pt.inktank = 100*FU
+	pt.inkdelay = 0
+	pt.maxinkdelay = 0
 	pt.inink = 0
 	
 	pt.charge = 0

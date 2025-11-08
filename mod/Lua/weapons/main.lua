@@ -138,6 +138,8 @@ local weapon_meta = {
 	shieldscale = FU/2, -- sprite scale for canopy
 	shieldhp = 500*FU,
 	shieldregen = 150*FU, -- heal this much hp per second
+	shieldrecover = 5*TR + (TR/2), -- wait this much before "respawning" the shield (either launched or destroyed)
+	shieldlifetime = 5*TR, -- released canopies last for this long
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
@@ -382,6 +384,13 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	end
 	
 	if not pt.calledbacks.onfire
+		pt.oldinktank = max(pt.oldinkanim, pt.inktank)
+		if pt.maxinkdelay == 0
+		and not pt.fireheld
+			pt.oldinkanim = pt.oldinktank
+		end
+		pt.maxinkdelay = max($, pt.inkdelay)
+		
 		pt.inktank = max($ - cur_weapon:get(pt,"inkcost"), 0)
 		pt.squidlag = max($, cur_weapon:get(pt,"squidlag"))
 		pt.justfired = true

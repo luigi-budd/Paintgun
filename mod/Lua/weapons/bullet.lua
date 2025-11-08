@@ -111,6 +111,11 @@ local function splattersound(shot)
 	local sfx = P_SpawnGhostMobj(shot)
 	sfx.flags2 = $|MF2_DONTDRAW
 	sfx.fuse = TR; sfx.tics = sfx.fuse
+
+	if shot.nosound
+		P_RemoveMobj(sfx)
+		return
+	end
 	
 	local sound = P_RandomRange(sfx_pn_sp0,sfx_pn_sp8)
 	local volume = wep and wep.splatvolume or 255

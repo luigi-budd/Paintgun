@@ -357,6 +357,20 @@ addHook("PlayerThink",function(p)
 			if (pt.shotsfired >= 1)
 				shieldout = true
 			end
+			if (P_IsObjectOnGround(me))
+			and (leveltime % 3 == 0)
+				local trail = P_SpawnMobjFromMobj(sh, 0,0,FU, MT_PAINT_SHOT)
+				trail.target = me
+				trail.tracer_p = p
+				trail.color = sh.color
+				trail.angle = sh.angle
+				trail.trail = true
+				trail.lifespan = 0
+				trail.nosound = true
+				trail.flags = $|MF_NOCLIPTHING &~(MF_NOGRAVITY|MF_NOCLIPHEIGHT|MF_NOCLIP)
+				trail.frame = ($ &~FF_FRAMEMASK)|2
+				trail.weapon_id = sh.weapon_id
+			end
 		else
 			-- hidden
 			sh.flags2 = $|MF2_DONTDRAW
@@ -638,9 +652,13 @@ addHook("PlayerThink",function(p)
 	end
 	
 	if pt.inkdelay
-		pt.inkdelay = $ - 1
+		if not pt.fireheld
+			pt.inkdelay = $ - 1
+		end
+		pt.oldinkanim = ease.linear(FU - FixedDiv(pt.inkdelay*FU, (pt.maxinkdelay or 1)*FU), pt.oldinktank, pt.inktank)
 	elseif pt.inktank ~= 100*FU
 	and not pt.fireheld
+		pt.maxinkdelay = 0
 		if (pt.inink == Paint.ININK_FRIENDLY)
 		and pt.hidden
 			pt.inktank = $ + fast_ink_refill_rate
@@ -705,7 +723,7 @@ addHook("PlayerThink",function(p)
 				S_StartSound(nil, cur_weapon.charge_sound, p)
 				S_StartSound(me, charge_sound)
 			end
-			local slowcharge = false
+			local slowcharge = (pt.inktank <= cur_weapon:get(pt,"inkcost")+1)
 			if me.jumptime
 			or (pt.inktank <= 0)
 				S_StopSoundByID(me, charge_sound)
@@ -957,6 +975,20 @@ addHook("PlayerThink",function(p)
 			tn.dontdrawforviewmobj = me
 			tn.target = me
 			
+			local mid = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
+			mid.sprite = SPR_PAINT_MISC
+			mid.frame = 3|FF_SEMIBRIGHT|FF_PAPERSPRITE|FF_TRANS50
+			mid.fuse = -1
+			mid.tics = -1
+			mid.dispoffset = 8
+			mid.radius = 2*me.scale
+			mid.height = 4*me.scale
+			mid.dontdrawforviewmobj = me
+			mid.color = SKINCOLOR_SUPERSILVER1
+			mid.colorized = true
+			mid.target = me
+			tn.target = mid
+			
 			local back = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
 			back.sprite = SPR_PAINT_MISC
 			back.frame = 2|FF_SEMIBRIGHT|FF_PAPERSPRITE
@@ -980,13 +1012,15 @@ addHook("PlayerThink",function(p)
 			local hide = pt.hidden
 			tank.flags2 = ($ &~MF2_DONTDRAW)|((pt.inktank <= 0 or hide) and MF2_DONTDRAW or 0)
 			tank.angle = p.drawangle + ANGLE_180
+			local angle = tank.angle
 			tank.spriteyscale = FixedDiv(pt.inktank, 100*FU)
 			tank.color = Paint:getPlayerColor(p)
 			teleport(tank,
-				me.x+me.momx + P_ReturnThrustX(nil, tank.angle, me.radius + 4*me.scale),
-				me.y+me.momy + P_ReturnThrustY(nil, tank.angle, me.radius + 4*me.scale),
+				me.x+me.momx + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale),
+				me.y+me.momy + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale),
 				me.z+me.momz + me.height*2/5
 			)
+			tank.angle = $ - ANGLE_90
 			tank.destscale = me.scale
 			tank.scalespeed = tank.destscale + 1
 			
@@ -994,17 +1028,28 @@ addHook("PlayerThink",function(p)
 			back.angle = tank.angle
 			back.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
 			teleport(back,
-				me.x+me.momx + P_ReturnThrustX(nil, tank.angle, me.radius + 4*me.scale - (me.scale/32)),
-				me.y+me.momy + P_ReturnThrustY(nil, tank.angle, me.radius + 4*me.scale - (me.scale/32)),
+				me.x+me.momx + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/32)),
+				me.y+me.momy + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale - (me.scale/32)),
 				me.z+me.momz + me.height*2/5
 			)
-			tank.angle = $ - ANGLE_90
-			back.angle = $ - ANGLE_90
 			back.destscale = me.scale
 			back.scalespeed = back.destscale + 1
 			
+			local mid = tank.target
+			mid.angle = tank.angle
+			mid.flags2 = ($ &~MF2_DONTDRAW)|((hide or (pt.inkdelay <= 0)) and MF2_DONTDRAW or 0)
+			mid.spriteyscale = FixedDiv(pt.oldinkanim, 100*FU)
+			teleport(mid,
+				me.x+me.momx + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
+				me.y+me.momy + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
+				me.z+me.momz + me.height*2/5
+			)
+			mid.destscale = me.scale
+			mid.scalespeed = mid.destscale + 1
+			
 			tank.pitch,tank.roll = 0,0
 			back.pitch,back.roll = 0,0
+			mid.pitch,mid.roll = 0,0
 		end
 	end
 	
