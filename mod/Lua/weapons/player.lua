@@ -192,36 +192,47 @@ function Paint:chargerSightline(p)
 	local wep = self.weapons[pt.weapon_id]
 	
 	if not pt.charge then return end
-	if leveltime & 1 then return end
+	--if leveltime & 1 then return end
 	
-	local range = wep:get(pt,"range")
-	local dots = 20
+	local range = wep:get(pt,"range") + (wep:get(pt,"falloff"))[2]*FU
+	range = FixedMul($, me.scale)
+	local dots = 50
 	local step = FixedDiv(range, dots*FU)
+	local angle = (p.cmd.angleturn<<16)
 	local vec = {
-		x = FixedMul(cos(me.angle), cos(p.aiming)),
-		y = FixedMul(sin(me.angle), cos(p.aiming)),
+		x = FixedMul(cos(angle), cos(p.aiming)),
+		y = FixedMul(sin(angle), cos(p.aiming)),
 		z = sin(p.aiming)
 	}
-	local offsets = {Paint:getWeaponOffset(me, me.angle - ANGLE_90, wep, false)}
+	local offsets = {Paint:getWeaponOffset(me, angle - ANGLE_90, wep, false)}
 	local x,y,z =	me.x + offsets[1] + me.momx,
 					me.y + offsets[2] + me.momy,
 					me.z + (41*(me.height)/48 - 8*me.scale) + me.momz
+	local ticker = (leveltime/4)
 	for i = 1,dots
+		if ((i-ticker) % 4 == 0) then continue end
 		local dist = step * i
 		local dot = P_SpawnMobj(
 			x + FixedMul(dist, vec.x),
 			y + FixedMul(dist, vec.y),
 			z + FixedMul(dist, vec.z),
-			MT_THOK
+			MT_PARTICLE
 		)
 		dot.color = me.color
-		dot.tics = 2
-		dot.fuse = -1
+		dot.state = S_THOK
+		dot.tics = -1
+		dot.fuse = 2
 		dot.blendmode = AST_ADD
+		dot.frame = $ &~FF_TRANSMASK
 		dot.renderflags = $|RF_FULLBRIGHT
 		dot.scale = FU/5
 		--dot.dontdrawforviewmobj = me
 		P_SetOrigin(dot, dot.x,dot.y,dot.z)
+		
+		if (dot.z <= dot.floorz
+		or dot.z >= dot.ceilingz)
+			break
+		end
 	end
 end
 

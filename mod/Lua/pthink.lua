@@ -91,6 +91,22 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	else
 		wepmo.eflags = $ &~MFE_VERTICALFLIP
 	end
+	if (cur_weapon.guntype == WPT_CHARGER)
+	and (pt.charge)
+		local s = P_SpawnMobjFromMobj(wepmo,
+			P_ReturnThrustX(nil, fireangle, FixedMul(cur_weapon:get(pt,"shineoffset"), me.scale)),
+			P_ReturnThrustY(nil, fireangle, FixedMul(cur_weapon:get(pt,"shineoffset"), me.scale)),
+			0,MT_PARTICLE
+		)
+		s.state = S_PAINT_FLAIR
+		s.color = wepmo.color
+		s.fuse = 2
+		s.dispoffset = 20
+		s.renderflags = $|RF_ALWAYSONTOP
+		local frac = min(FixedDiv(pt.charge, cur_weapon:get(pt,"chargetime")),FU)
+		s.alpha = clamp(0, frac-1, FU)
+		P_SetScale(s, s.scale/2, true)
+	end
 end
 
 -- takes about 11 seconds to fully refill passively with no ink-related abilities...
@@ -644,6 +660,7 @@ addHook("PlayerThink",function(p)
 		pt.inktank = min($, 100*FU)
 	end
 	
+	pt.justcharged = false
 	if (cur_weapon.guntype == WPT_SHOOTER
 	or cur_weapon.guntype == WPT_BLASTER
 	or cur_weapon.guntype == WPT_DUALIES
@@ -687,49 +704,58 @@ addHook("PlayerThink",function(p)
 			pt.dodgeroll.count = 0
 		end
 		pt.charge = 0
+		pt.maxcharged = false
 	elseif (cur_weapon.guntype == WPT_CHARGER)
 		local charge_sound = cur_weapon:get(pt,"charging_sound", p)
 		local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound", p)
+		local charge_time = cur_weapon:get(pt,"chargetime")
 		if pt.fireheld and (pt.cooldown == 0)
 			doslowdown = true
 			if not pt.charge
 				S_StartSound(nil, cur_weapon.charge_sound, p)
 				S_StartSound(me, charge_sound)
 			end
-			local docharge = true
+			local slowcharge = false
 			if me.jumptime
 			or (pt.inktank <= 0)
 				S_StopSoundByID(me, charge_sound)
 				if (me.jumptime == 1 or not pt.charge)
-				and pt.charge < cur_weapon.chargetime
+				and pt.charge < charge_time
 					S_StartSound(me, slow_charge_sound)
 				end
-				if not (leveltime & 1)
-					docharge = false
-				end
+				slowcharge = true
 			elseif S_SoundPlaying(me, slow_charge_sound)
 			and (slow_charge_sound ~= charge_sound)
 				S_StopSoundByID(me, slow_charge_sound)
-				if pt.charge <= cur_weapon.chargetime
+				if pt.charge <= charge_time
 					S_StartSound(me, charge_sound)
 				end
 			end
-			if docharge
-				pt.charge = min($ + 1, cur_weapon.chargetime + 1)
-				if pt.charge == cur_weapon.chargetime
-					S_StartSound(nil, cur_weapon.charged_sound, p)
-					S_StopSoundByID(me, charge_sound)
-					S_StopSoundByID(me, slow_charge_sound)
-				end
+			
+			local step = FU
+			if (slowcharge)
+				step = $ / 3
 			end
+			pt.charge = min($ + step, charge_time)
+			if pt.charge >= charge_time
+				if not pt.maxcharged
+					S_StartSound(nil, cur_weapon.charged_sound, p)
+					pt.justcharged = true
+					pt.maxcharged = true
+				end
+				S_StopSoundByID(me, charge_sound)
+				S_StopSoundByID(me, slow_charge_sound)
+			end
+			
 			pt.anglefix = max($, 1)
 		end
 		if not pt.fireheld
 		and (p.lastbuttons & BT_ATTACK)
 		and (pt.charge)
-			pt.charge = min($, cur_weapon.chargetime)
+			pt.charge = min($, charge_time)
 			Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 			pt.charge = 0
+			pt.maxcharged = false
 			S_StopSoundByID(me, charge_sound)
 			S_StopSoundByID(me, slow_charge_sound)
 		end

@@ -26,7 +26,7 @@ end
 function Paint.wtemplate_charger(p,pt, weapon, key,value)
 	if (key == "range")
 		local minrange = weapon:get(pt,"minrange")
-		local chargeprogress = min(FixedDiv(pt.charge*FU, weapon.chargetime*FU), FU)
+		local chargeprogress = min(FixedDiv(pt.charge, weapon.chargetime), FU)
 		return max(FixedMul(value, chargeprogress), minrange)
 	end
 end

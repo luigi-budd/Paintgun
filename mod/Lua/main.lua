@@ -107,7 +107,9 @@ function Paint:initPlayer(p)
 		spreadadd = 0, -- used for jump inaccuracy
 		spreadjump = 0,
 		
-		charge = 0,
+		charge = 0, -- in fixed_t
+		maxcharged = false,
+		justcharged = true,
 		shotsfired = 0, -- for dualies
 		turretmode = false, -- for dualies
 		dodgeroll = {
@@ -184,6 +186,8 @@ function Paint:resetPlayer(p)
 	pt.inink = 0
 	
 	pt.charge = 0
+	pt.maxcharged = false
+	pt.justcharged = false
 	pt.fireheld = 0
 	pt.firewait = 0
 	pt.endlag = 0
@@ -191,6 +195,9 @@ function Paint:resetPlayer(p)
 	pt.endlag = 0
 	pt.anglestand = (p.realmo and p.realmo.valid) and p.realmo.angle or p.cmd.angleturn << 16
 	pt.holsteranim = 0
+	pt.shieldlag = 0
+	pt.shieldwait = 0
+	pt.deployshield = false
 	
 	pt.spread = 0
 	pt.spreadcooldown = 0

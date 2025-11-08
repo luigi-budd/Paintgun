@@ -77,7 +77,7 @@ local weapon_meta = {
 	bulletspershot = 1, -- yes these DO factor into spread! yes, these DO change dualie order!
 	
 	--charger specific
-	chargetime = TR,
+	chargetime = TR*FU,
 	minrange = 140*FU,
 	charge_sound = sfx_p_s2_0,
 	weak_sounds = {
@@ -93,6 +93,7 @@ local weapon_meta = {
 	partialdamage = 80*FU, -- max partial charge damage (regular damage is minimum uncharged damage)
 	pierces = 3,
 	maxfirerate = 4, -- (firerate -> maxfirerate) * chargeprogress
+	shineoffset = -12*FU, --offset the shine vfx this much from fireangle
 	
 	--blaster specific
 	splashradius = 132*FU,
@@ -289,10 +290,6 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 			h_spread = 0
 			v_spread = 0
 		end
-		if (weap:get(pt,"neverspreadatall"))
-			h_spread = 0
-			v_spread = 0
-		end
 		
 		local random = P_RandomFixedSigned()
 		h_spread = $ + FixedMul(pt.spreadadd, random)
@@ -301,6 +298,10 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		
 		--angle = $ - h_spread
 		--aiming = $ + FixedAngle(v_spread)
+	end
+	if (weap:get(pt,"neverspreadatall"))
+		h_spread = 0
+		v_spread = 0
 	end
 	h_spread = $ - FixedAngle(hsprd)
 	v_spread = $ + FixedAngle(vsprd)
@@ -458,8 +459,9 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	end
 	if cur_weapon.guntype == WPT_CHARGER
 		local sound
-		local chargeprogress = min(FixedDiv(pt.charge*FU, cur_weapon.chargetime*FU), FU)
-		if pt.charge >= cur_weapon.chargetime/2
+		local chargetime = cur_weapon:get(pt,"chargetime")
+		local chargeprogress = min(FixedDiv(pt.charge, chargetime), FU)
+		if pt.charge >= chargetime/2
 			sound = cur_weapon.strong_sounds[P_RandomRange(1, #cur_weapon.strong_sounds)]
 		else
 			sound = cur_weapon.weak_sounds[P_RandomRange(1, #cur_weapon.weak_sounds)]

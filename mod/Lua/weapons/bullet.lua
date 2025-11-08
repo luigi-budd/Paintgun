@@ -525,22 +525,25 @@ addHook("MobjMoveCollide",function(shot,mo)
 	if (shot.lasthit == mo) then return end
 	shot.lasthit = mo
 	
+	if not (shot.target and shot.target.valid) then return end
+	local me = shot.target
+	local p = me.player
+	local pt = p.paint
 	local wep = Paint.weapons[shot.weapon_id]
-	if Paint_canHurtEnemy(shot.target.player, mo)
+
+	if Paint_canHurtEnemy(p, mo)
 	or mo.type == MT_TNTBARREL
-		P_DamageMobj(mo,shot,shot.target, shot.damage)
+		P_DamageMobj(mo,shot,me, shot.damage)
 		Paint:doProjHitmarker(shot, mo, true)
 		
 		if (wep.guntype == WPT_CHARGER
-		and shot.charge >= wep.chargetime)
+		and shot.charge >= wep:get(pt,"chargetime"))
 		or (wep.guntype == WPT_BLASTER)
-			S_StartSound(nil, sfx_p_s2_4, shot.target.player)
+			S_StartSound(nil, sfx_p_s2_4, p)
 			if wep.guntype == WPT_BLASTER
 				shot.donthit = mo
 				ExplodeShot(shot)
 				return
-			elseif wep.guntype == WPT_CHARGER
-				P_DamageMobj(mo,shot,shot.target)
 			end
 		end
 		
@@ -559,10 +562,6 @@ addHook("MobjMoveCollide",function(shot,mo)
 		return
 	end
 	
-	if not (shot.target and shot.target.valid) then return end
-	local me = shot.target
-	local p = me.player
-	
 	if mo.type == MT_PLAYER
 	and mo ~= me
 		if Paint_canHurtPlayer(p, mo.player)
@@ -571,7 +570,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 			Paint:playHurtSound(play)
 			Paint:doProjHitmarker(shot, mo, true)
 			if (wep.guntype == WPT_CHARGER
-			and shot.charge >= wep.chargetime)
+			and shot.charge >= wep:get(pt,"chargetime"))
 			or (wep.guntype == WPT_BLASTER)
 				S_StartSound(nil, sfx_p_s2_4, p)
 				if wep.guntype == WPT_BLASTER
