@@ -199,7 +199,7 @@ function Paint:resetPlayer(p)
 	pt.firewait = 0
 	pt.endlag = 0
 	p.cmd.buttons = $ &~BT_ATTACK
-	pt.endlag = 0
+	pt.shotsfired = 0
 	pt.anglestand = (p.realmo and p.realmo.valid) and p.realmo.angle or p.cmd.angleturn << 16
 	pt.holsteranim = 0
 	pt.shieldlag = 0
@@ -219,6 +219,7 @@ function Paint:resetPlayer(p)
 	
 	pt.squidtime = 0
 	pt.squidanim = 0
+	pt.squidlag = 0
 	
 	pt.teammates = nil
 	Paint:setTeammates()

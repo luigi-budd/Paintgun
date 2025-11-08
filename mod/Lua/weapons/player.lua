@@ -220,8 +220,8 @@ function Paint:chargerSightline(p)
 		or dz >= cz)
 			break
 		end
-		
 		if ((i-ticker) % 4 == 0) then continue end
+
 		local dot = P_SpawnMobj(
 			dx,dy,dz,
 			MT_PARTICLE
