@@ -489,12 +489,6 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 end
 
 addHook("HUD",function(v,p,cam)
-	v.dointerp = function(id)
-		if v.interpolate ~= nil
-			v.interpolate(id)
-		end
-	end
-	
 	local me = p.mo
 	if not (me and me.valid) then return end
 	if not Paint:playerIsActive(p) then hud.enable("crosshair"); return end

@@ -55,17 +55,7 @@ addHook("HUD",function(v,p,cam)
 		local fade = sin(FixedAngle(FixedMul(180*FU, FixedDiv((anim > HALFTICS) and (HALFTICS - anim) or anim, HALFTICS))))
 		
 		-- bg
-		do
-			local clip_w = 128*2
-			local clip_h = 48*2
-			local crop_w = 64*FU
-			local crop_h = 23*FU
-			local x = x + 2*FU
-			local y = y + 2*FU
-			v.drawCropped(x,y,FU,FU, v.cachePatch("PT_LOW_BG"), flags|V_20TRANS, clrmp,
-				abs((leveltime) % clip_w)*FU/2, abs((leveltime) % clip_h)*FU/2, crop_w,crop_h
-			)
-		end
+		HUD.drawSplashBG(v, x + 2*FU, y + 2*FU, abs(leveltime)*FU/2,abs(leveltime)*FU/2, 64*FU,23*FU, flags|V_50TRANS, clrmp, true)
 		
 		v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_TXT"), flags)
 		v.drawScaled(x,y + fade/2, FU, v.cachePatch("PT_LOW_TNK"), flags)

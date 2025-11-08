@@ -47,5 +47,14 @@ addHook("HUD",function(v,p,cam)
 		patch, 0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)),
 		0,cropheight, patch.width*FU, patch.height*FU
 	)
+	/*
+	HUD.drawSplashBG(v,
+		result.x - patch.leftoffset*result.scale,
+		result.y - patch.topoffset*result.scale + FixedMul(cropheight, FixedMul(result.scale, animprogress)),
+		abs(leveltime)*FU/4,abs(leveltime)*FU/4,
+		patch.width*result.scale, FixedMul(patch.height*FixedMul(result.scale,animprogress), inkprogress),
+		0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)), 
+		fast
+	)*/
 	v.dointerp(false)
 end,"game")
