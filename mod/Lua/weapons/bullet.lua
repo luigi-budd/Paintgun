@@ -724,7 +724,9 @@ end,MT_PAINT_WALLSPLAT)
 local function nope(splat,mo)
 	splat.health = mobjinfo[splat.type].spawnhealth
 	splat.flags = $|MF_SPECIAL
-	if (mo and mo.valid) and mo.player.paint.squidtime
+	if (mo and mo.valid)
+	and (mo.player and mo.player.paint)
+	and mo.player.paint.squidtime
 		splat.fuse = CV.splatter_lifetime.value * TR
 	end
 	return true
@@ -892,7 +894,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 	or mo.type == MT_TNTBARREL
 		if not sh.cooldown
 			P_DamageMobj(mo,sh,me, damage)
-			P_DamageMobj(sh,mo,mo, damage*4) --debug
+			--P_DamageMobj(sh,mo,mo, damage*4) --debug
 			Paint:doProjHitmarker(sh, mo, true)
 			sh.cooldown = cooldown
 			Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
