@@ -44,6 +44,11 @@ rawset(_G,"Paint_canHurtEnemy",function(p, mobj,flags,exclude, nobs)
 		if (p.mo == mobj.tracer)
 			return false
 		end
+		if (mobj.tracer and mobj.tracer.valid)
+			if not Paint_canHurtPlayer(p, mobj.tracer.player)
+				return false
+			end
+		end
 	end
 	
 	/*
