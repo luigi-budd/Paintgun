@@ -745,7 +745,7 @@ local function inkDamage(splat,mo, targp, pnt)
 	local p = splat.tracer_player
 	
 	if (p and p.valid)
-	and not Paint_canHurtPlayer(p, targp)
+	and not Paint_canHurtPlayer(p, targp, true)
 		Paint:setPlayerInInk(targp, Paint.ININK_FRIENDLY)
 		return nope(splat,mo);
 	end
