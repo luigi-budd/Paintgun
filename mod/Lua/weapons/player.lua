@@ -77,7 +77,7 @@ function Paint:killPlayer(p, shot, sorp, inf)
 	else
 		deathcolor = (sorp and sorp.valid) and self:getPlayerColor(sorp) or ColorOpposite(self:getPlayerColor(p))
 	end
-	for i = 0,P_RandomRange(15,20)
+	for i = 0,P_RandomRange(30,50)
 		local angle = FixedAngle(P_RandomFixedRange(0,360))
 		local drop = P_SpawnMobjFromMobj(me,0,0,FU, MT_PAINT_SHOT)
 		if drop and drop.valid
