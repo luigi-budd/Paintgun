@@ -196,6 +196,7 @@ addHook("PlayerThink",function(p)
 	--lol
 	if Paint:isMode()
 	or (Paint.CV.paintnerfs.value)
+	and (not (p.pflags & PF_TAGIT))
 		p.dashmode = 0
 		p.charflags = $|SF_NOSHIELDABILITY &~SF_DASHMODE
 		p.charability = CA_NONE
