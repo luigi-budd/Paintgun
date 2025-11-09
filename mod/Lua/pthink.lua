@@ -1137,6 +1137,8 @@ addHook("PostThinkFrame",do for p in players.iterate
 		if (overlay and overlay.valid)
 			overlay.flags2 = $|MF2_DONTDRAW
 		end
+		pt.deployshield = false
+		pt.wasdeployed = false
 		continue
 	end
 	
