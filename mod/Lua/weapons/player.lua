@@ -332,3 +332,16 @@ function Paint:doDodgeRoll(p)
 	S_StartSound(me, sfx_pt_dge)
 	return true
 end
+
+-- checks mo2 against mo1 if they are on the same team
+function Paint:mobjsOnTeam(mo1, mo2)
+	if not (mo2.player and mo2.player.valid)
+		if not (mo1.player and mo1.player.valid)
+			return false
+		end
+		return mo2.color == self:getPlayerColor(mo1.player)
+	end
+	if (mo1.player == mo2.player) then return true; end
+	if not G_GametypeHasTeams() then return false; end
+	return mo1.player.ctfteam == mo2.player.ctfteam
+end

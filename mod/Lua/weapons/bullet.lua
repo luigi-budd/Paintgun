@@ -741,26 +741,6 @@ local function nope(splat,mo)
 end
 
 local MIN_INK_HP = 40*FU
-local function inkDamage(splat,mo, targp, pnt)
-	local p = splat.tracer_player
-	
-	if (p and p.valid)
-	and not Paint_canHurtPlayer(p, targp, true)
-		Paint:setPlayerInInk(targp, Paint.ININK_FRIENDLY)
-		return nope(splat,mo);
-	end
-	
-	if pnt.hp >= MIN_INK_HP
-		Paint:damagePlayer(targp, splat, p, FixedDiv(18*FU, TR*FU))
-		pnt.hp = max($, MIN_INK_HP)
-	end
-	Paint:damagePlayer(targp, splat, p, 0)
-	Paint:setPlayerInInk(targp, Paint.ININK_ENEMY)
-	
-	-- if we dont do this, then people hiding in this
-	-- ink puddle would pop out because inink wouldnt be set for them
-	return nope(splat,mo);
-end
 addHook("TouchSpecial",function(splat,mo)
 	if not (splat and splat.valid) then return end
 	if not (mo and mo.valid and mo.health) then return nope(splat); end
@@ -774,22 +754,25 @@ addHook("TouchSpecial",function(splat,mo)
 	pnt.inkleveltime = leveltime
 	
 	local p = splat.tracer_player
-	if not (p and p.valid) then
-		if (splat.color ~= Paint:getPlayerColor(targp))
-			if inkDamage(splat,mo, targp, pnt)
-				return true
-			end
-		end
-		return nope(splat,mo);
-	end
-	if p == targp
-		Paint:setPlayerInInk(p, Paint.ININK_FRIENDLY)
-		return nope(splat,mo);
+	local friendly = false
+
+	if not (p and p.valid)
+		friendly = Paint:mobjsOnTeam(mo, splat)
+	else
+		friendly = Paint:mobjsOnTeam(mo, p.mo)
 	end
 	
-	if inkDamage(splat,mo, targp, pnt)
-		return true
+	if friendly
+		Paint:setPlayerInInk(targp, Paint.ININK_FRIENDLY)
+	elseif (pnt.inink ~= Paint.ININK_FRIENDLY) -- stepping in friendly ink should have precedence over enemy ink
+		if pnt.hp >= MIN_INK_HP
+			Paint:damagePlayer(targp, splat, p, FixedDiv(18*FU, TR*FU))
+			pnt.hp = max($, MIN_INK_HP)
+		end
+		Paint:damagePlayer(targp, splat, p, 0)
+		Paint:setPlayerInInk(targp, Paint.ININK_ENEMY)
 	end
+	return nope(splat,mo);
 end,MT_PAINT_SPLATTER)
 addHook("MobjCollide",function(splat,mo)
 	if mo.type ~= splat.type then return end
@@ -797,13 +780,7 @@ addHook("MobjCollide",function(splat,mo)
 	if (splat.collided == nil) then return end
 	if (splat.collided[mo] ~= nil) then return end
 	
-	local friendly = false
-	if splat.tracer_player == mo.tracer_player
-		friendly = true
-	elseif not Paint_canHurtPlayer(splat.tracer_player,mo.tracer_player)
-	and splat.color == mo.color
-		friendly = true
-	end
+	local friendly = Paint:mobjsOnTeam(splat.tracer_player.mo, mo.tracer_player.mo)
 	
 	if R_PointToDist2(mo.x,mo.y, splat.x,splat.y) <= splat.radius * 4/5
 		if friendly
@@ -833,14 +810,16 @@ addHook("TouchSpecial",function(splat,mo)
 	--if (pnt.inkleveltime == leveltime) then return nope(splat,mo); end
 	
 	local p = splat.tracer_player
+	local friendly = false
+
 	if not (p and p.valid)
-		if (splat.color ~= Paint:getPlayerColor(targp))
-			return nope(splat,mo);
-		end
-	elseif (not Paint_canHurtPlayer(p, targp))
-	or (p == targp)
-		Paint:setPlayerWallInk(p)
-		return nope(splat,mo);
+		friendly = Paint:mobjsOnTeam(mo, splat)
+	else
+		friendly = Paint:mobjsOnTeam(mo, p.mo)
+	end
+	
+	if friendly
+		Paint:setPlayerWallInk(targp)
 	end
 	return nope(splat,mo);
 end,MT_PAINT_WALLSPLAT)
