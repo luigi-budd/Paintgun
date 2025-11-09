@@ -88,8 +88,8 @@ function Paint:killPlayer(p, shot, sorp, inf)
 			drop.lifespan = 0
 			drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
 			drop.tracer_player = sorp
-			P_SetObjectMomZ(drop, P_RandomFixedRange(1,13))
-			P_Thrust(drop, angle, P_RandomFixedRange(1,13))
+			P_SetObjectMomZ(drop, P_RandomFixedRange(1,17))
+			P_Thrust(drop, angle, P_RandomFixedRange(1,17))
 		end
 		S_StartSound(me, sfx_pt_ow1)
 		S_StartSound(me, sfx_pt_ow1)

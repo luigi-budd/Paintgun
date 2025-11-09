@@ -670,6 +670,7 @@ addHook("PlayerThink",function(p)
 	end
 	
 	pt.justcharged = false
+	pt.inkqueue = 0
 	if (cur_weapon.guntype == WPT_SHOOTER
 	or cur_weapon.guntype == WPT_BLASTER
 	or cur_weapon.guntype == WPT_DUALIES
@@ -723,12 +724,16 @@ addHook("PlayerThink",function(p)
 			if not pt.charge
 				S_StartSound(nil, cur_weapon.charge_sound, p)
 				S_StartSound(me, charge_sound)
+				pt.oldinktank = pt.inktank
+				pt.oldinkanim = pt.oldinktank
 			end
-			local slowcharge = (pt.inktank <= cur_weapon:get(pt,"inkcost")+1)
-			if me.jumptime
-			or (pt.inktank <= 0)
+			
+			local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "inkcost")+1)
+			local slowcharge = lowink
+			if (me.jumptime and cur_weapon:get(pt,"slowwhenjumping"))
+			or lowink
 				S_StopSoundByID(me, charge_sound)
-				if (me.jumptime == 1 or not pt.charge)
+				if (pt.wasfastcharging or pt.charge == 0)
 				and pt.charge < charge_time
 					S_StartSound(me, slow_charge_sound)
 				end
@@ -741,6 +746,9 @@ addHook("PlayerThink",function(p)
 				end
 			end
 			
+			if lowink
+				Paint.HUD:lowInkWarning(p, TR/2)
+			end
 			local step = FU
 			if (slowcharge)
 				step = $ / 3
@@ -755,6 +763,10 @@ addHook("PlayerThink",function(p)
 				S_StopSoundByID(me, charge_sound)
 				S_StopSoundByID(me, slow_charge_sound)
 			end
+			local mincost = cur_weapon:get(pt,"mininkcost")
+			local chargeprogress = min(FixedDiv(pt.charge, cur_weapon.chargetime), FU)
+			pt.inkqueue = mincost + FixedMul(cur_weapon:get(pt,"inkcost") - mincost, chargeprogress)
+			pt.wasfastcharging = not slowcharge
 			
 			pt.anglefix = max($, 1)
 		end
@@ -765,6 +777,7 @@ addHook("PlayerThink",function(p)
 			Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 			pt.charge = 0
 			pt.maxcharged = false
+			pt.wasfastcharging = true
 			S_StopSoundByID(me, charge_sound)
 			S_StopSoundByID(me, slow_charge_sound)
 		end
@@ -1014,7 +1027,7 @@ addHook("PlayerThink",function(p)
 			tank.flags2 = ($ &~MF2_DONTDRAW)|((pt.inktank <= 0 or hide) and MF2_DONTDRAW or 0)
 			tank.angle = p.drawangle + ANGLE_180
 			local angle = tank.angle
-			tank.spriteyscale = FixedDiv(pt.inktank, 100*FU)
+			tank.spriteyscale = FixedDiv(max(pt.inktank - pt.inkqueue, 0), 100*FU)
 			tank.color = Paint:getPlayerColor(p)
 			teleport(tank,
 				me.x+me.momx + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale),
@@ -1038,7 +1051,14 @@ addHook("PlayerThink",function(p)
 			
 			local mid = tank.target
 			mid.angle = tank.angle
-			mid.flags2 = ($ &~MF2_DONTDRAW)|((hide or (pt.inkdelay <= 0)) and MF2_DONTDRAW or 0)
+			mid.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
+			local shouldihide = true
+			if (pt.inkdelay > 0)
+			or (pt.inktank - pt.inkqueue < pt.oldinktank)
+				shouldihide = false
+			end
+			mid.flags2 = $|(shouldihide and MF2_DONTDRAW or 0)
+			print(("%f"):format(pt.oldinktank))
 			mid.spriteyscale = FixedDiv(pt.oldinkanim, 100*FU)
 			teleport(mid,
 				me.x+me.momx + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/16)),

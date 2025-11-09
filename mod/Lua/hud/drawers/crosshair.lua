@@ -251,6 +251,13 @@ local charger_vfx = 0
 local function drawCharger(v,p,cam, dx,dy)
 	local pt = p.paint
 	local wep = Paint.weapons[pt.weapon_id]
+	if charger_vfx
+		v.drawScaled(cross_x,cross_y,
+			FU,
+			v.cachePatch("PAINT_BALL"), (10 - charger_vfx)<<V_ALPHASHIFT, v.getColormap(nil,Paint:getPlayerColor(p))
+		)
+		charger_vfx = $ - 1
+	end
 	if wep.guntype == WPT_CHARGER
 	and pt.charge
 		local chargetime = wep:get(pt,"chargetime")
@@ -273,13 +280,6 @@ local function drawCharger(v,p,cam, dx,dy)
 			)
 		end
 		v.dointerp(5 + interptag)
-	end
-	if charger_vfx
-		v.drawScaled(cross_x,cross_y,
-			FU,
-			v.cachePatch("PAINT_BALL"), (10 - charger_vfx)<<V_ALPHASHIFT, v.getColormap(nil,Paint:getPlayerColor(p))
-		)
-		charger_vfx = $ - 1
 	end
 end
 

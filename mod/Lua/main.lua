@@ -110,6 +110,8 @@ function Paint:initPlayer(p)
 		charge = 0, -- in fixed_t
 		maxcharged = false,
 		justcharged = true,
+		wasfastcharging = false,
+		
 		shotsfired = 0, -- for dualies
 		turretmode = false, -- for dualies
 		dodgeroll = {
@@ -139,6 +141,7 @@ function Paint:initPlayer(p)
 		oldinktank = 100*FU,
 		oldinkanim = 100*FU,
 		inktank = 100*FU,
+		inkqueue = 0, -- for charger animation
 		maxinkdelay = 0,
 		inkdelay = 0, -- delay before restoring ink
 		tankmobj = nil,

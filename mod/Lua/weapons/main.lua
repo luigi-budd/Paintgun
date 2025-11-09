@@ -49,6 +49,7 @@ local weapon_meta = {
 	handoffset = 16 * FU,
 	inkcost = FU,
 	inkdelay = 12,
+	firewithnoink = false, -- allow firing even if you have low ink
 	
 	--shooter-specific
 	h_spread = {6, 6}, --TODO: make 1 value only
@@ -79,6 +80,7 @@ local weapon_meta = {
 	--charger specific
 	chargetime = TR*FU,
 	minrange = 140*FU,
+	mininkcost = 2*FU + (FU/4),
 	charge_sound = sfx_p_s2_0,
 	weak_sounds = {
 		sfx_p_s2_1
@@ -94,6 +96,7 @@ local weapon_meta = {
 	pierces = 3,
 	maxfirerate = 4, -- (firerate -> maxfirerate) * chargeprogress
 	shineoffset = -12*FU, --offset the shine vfx this much from fireangle
+	slowwhenjumping = true, -- slow charging when jumping
 	
 	--blaster specific
 	splashradius = 132*FU,
@@ -360,27 +363,31 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	pt.inkdelay = max($, cur_weapon:get(pt,"inkdelay"))
 	if (pt.inktank < cur_weapon:get(pt,"inkcost") - 1)
 	and not pt.calledbacks.onfire
+		local canfire = cur_weapon:get(pt,"firewithnoink")
 		local firerate = cur_weapon:get(pt,"firerate")
-		pt.cooldown = (firerate * 2) + 1
+		if not canfire then firerate = $*2; end
+		pt.cooldown = firerate + 1
 		pt.endlag = max($, cur_weapon.endlag)
 		pt.shotsfired = $ + 1
 		pt.squidlag = max($, cur_weapon:get(pt,"squidlag"))
 		
 		Paint.HUD:lowInkWarning(p, pt.cooldown)
 		
-		local handoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, nil, false)}
-		pt.anglefix = pt.cooldown
-		if (pt.weaponmobj and pt.weaponmobj.valid)
-		and not handoffset[3] -- flipped
-			pt.weaponmobj.fireanim = 4
+		if not canfire
+			local handoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, nil, false)}
+			pt.anglefix = pt.cooldown
+			if (pt.weaponmobj and pt.weaponmobj.valid)
+			and not handoffset[3] -- flipped
+				pt.weaponmobj.fireanim = 4
+			end
+			if (pt.weaponmobjdupe and pt.weaponmobjdupe.valid)
+			and handoffset[3] -- flipped
+				pt.weaponmobjdupe.fireanim = 4
+			end
+			
+			S_StartSound(me, sfx_pt_dr0, sfx_pt_dr3)
+			return
 		end
-		if (pt.weaponmobjdupe and pt.weaponmobjdupe.valid)
-		and handoffset[3] -- flipped
-			pt.weaponmobjdupe.fireanim = 4
-		end
-		
-		S_StartSound(me, sfx_pt_dr0, sfx_pt_dr3)
-		return
 	end
 	
 	if not pt.calledbacks.onfire

@@ -15,6 +15,7 @@ Paint:registerWeapon({
 	shootspeed = FU/6,
 	
 	inkcost = 18*FU,
+	firewithnoink = true,
 
 	inkdelay = 12,
 	squidlag = 14,
