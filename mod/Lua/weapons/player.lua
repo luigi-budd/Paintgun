@@ -232,7 +232,7 @@ function Paint:chargerSightline(p)
 		dot.fuse = 2
 		dot.blendmode = AST_ADD
 		dot.frame = $ &~FF_TRANSMASK
-		dot.renderflags = $|RF_FULLBRIGHT
+		dot.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 		dot.scale = FU/5
 		--dot.dontdrawforviewmobj = me
 		P_SetOrigin(dot, dot.x,dot.y,dot.z)
