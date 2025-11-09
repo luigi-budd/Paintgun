@@ -8,7 +8,7 @@ addHook("MobjDamage",function(mo, inf,sor, damage)
 	if not (sor and sor.valid and sor.player and sor.player.valid and sor.player.paint and sor.player.paint.active) then return end
 	if not (mo.flags & (MF_ENEMY|MF_BOSS)) then return end
 	
-	mo.paint_maxhp = FixedDiv(mo.info.radius + mo.info.height, baseinfo.height + baseinfo.radius) * 120 
+	mo.paint_maxhp = FixedDiv(mo.info.radius + mo.info.height, baseinfo.height + baseinfo.radius) * 120
 	if mo.paint_hp == nil
 	and not mo.paint_resist
 		mo.paint_hp = mo.paint_maxhp

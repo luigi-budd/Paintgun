@@ -1058,7 +1058,6 @@ addHook("PlayerThink",function(p)
 				shouldihide = false
 			end
 			mid.flags2 = $|(shouldihide and MF2_DONTDRAW or 0)
-			print(("%f"):format(pt.oldinktank))
 			mid.spriteyscale = FixedDiv(pt.oldinkanim, 100*FU)
 			teleport(mid,
 				me.x+me.momx + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
@@ -1196,35 +1195,6 @@ addHook("PostThinkFrame",do for p in players.iterate
 		overlay.dispoffset = me.dispoffset + 1
 		if overlay.color == SKINCOLOR_NONE
 			overlay.color = ColorOpposite(Paint:getPlayerColor(p))
-		end
-	end
-	
-	if p == displayplayer
-	and (pt.teammates ~= nil)
-		for k, play in ipairs(pt.teammates)
-			if not (play and play.valid and play.mo and play.mo.valid and play.mo.health)
-			or (play == p)
-				--dont remove, since this table is a reference
-				continue
-			end
-			local mo = play.mo
-			local mark = team_markers[#play]
-			if not (mark and mark.valid)
-				local new = P_SpawnMobjFromMobj(mo, 0,0, FixedDiv(mo.height,mo.scale), MT_THOK)
-				new.fuse = -1
-				new.frame = (leveltime >= 30*TICRATE) and B or A
-				new.sprite = SPR_PAINT_MISC
-				new.renderflags = $|RF_FULLBRIGHT
-				new.drawonlyforplayer = p
-				team_markers[#play] = new
-				mark = new
-			end
-			if (leveltime == 30*TICRATE)
-				mark.frame = B
-			end
-			mark.tics = 2
-			mark.color = Paint:getPlayerColor(p)
-			P_MoveOrigin(mark, mo.x, mo.y, mo.z + mo.height)
 		end
 	end
 end; end)

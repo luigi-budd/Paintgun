@@ -11,12 +11,13 @@ dofiles("drawers/libs/",{
 	"splashbg.lua",
 })
 dofiles("drawers/",{
-	"crosshair.lua",
+	"nametags.lua",
+	"inktank.lua",
 	"hpoverlay.lua",
 	"painsurge.lua",
-	"killconf.lua",
+	"crosshair.lua",
 	"hitmarker.lua",
-	"inv.lua",
 	"lowink.lua",
-	"inktank.lua",
+	"killconf.lua",
+	"inv.lua",
 })

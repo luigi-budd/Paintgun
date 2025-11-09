@@ -37,6 +37,7 @@ function Paint:killPlayer(p, shot, sorp, inf)
 		return
 	end
 	
+	Paint.HUD:killNotice(p)
 	P_KillMobj(me, shot, (sorp and sorp.valid) and sorp.mo or inf)
 	if not self.isFriendlyFire(p,sorp)
 		--CONS_Printf(sorp, "\x82Killed "..p.name.."!")
