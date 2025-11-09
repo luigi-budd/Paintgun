@@ -559,6 +559,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 		and shot.pierces)
 		or (wep.pierces == -1))
 		and shot.powerful
+		and (not mo.paint_shield)
 			shot.pierces = $ - 1
 		else
 			P_RemoveMobj(shot)
