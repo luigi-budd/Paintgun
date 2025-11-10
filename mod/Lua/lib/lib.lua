@@ -27,7 +27,7 @@ rawset(_G,"P_RandomFixedSigned",do
 	return P_RandomFixed() * sign(P_SignedRandom())
 end)
 rawset(_G,"P_RandomFixedRange",function(a,b)
-	return P_RandomRange(a,b)*FU + P_RandomFixedSigned()
+	return clamp(a*FU, P_RandomRange(a,b)*FU + P_RandomFixedSigned(), b*FU)
 end)
 
 rawset(_G,"R_PointTo3DAngles",function(x1,y1,z1, x2,y2,z2)

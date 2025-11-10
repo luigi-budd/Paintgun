@@ -34,6 +34,12 @@ local function drawReticle(v,x,y, p, type)
 end
 
 local d_raycast, r_raycast, dh_raycast, dh_raycast2 /*"Direct Hit"*/
+rawset(_G, "local_raycasts", {
+	rangecast = nil,
+	drangecast = nil,
+	hitcast = nil,
+	dhitcast = nil
+})
 local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 	local workray = r_raycast
 	if (dualieflip or chargerdupe)
@@ -74,8 +80,10 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 		
 		if (dualieflip or chargerdupe)
 			d_raycast = ray
+			local_raycasts.drangecast = ray
 		else
 			r_raycast = ray
+			local_raycasts.rangecast = ray
 		end
 		workray = ray
 	end
@@ -170,8 +178,10 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		
 		if (dualieflip)
 			dh_raycast2 = ray
+			local_raycasts.dhitcast = ray
 		else
 			dh_raycast = ray
+			local_raycasts.hitcast = ray
 		end
 		workray = ray
 	end

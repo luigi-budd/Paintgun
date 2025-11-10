@@ -58,8 +58,9 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	
 	local offx,offy = 0,0
 	local firing = false
-	if (pt.deployshield or pt.shieldlag)
-	or (pt.firewait or pt.fireheld or pt.endlag)
+	if ((pt.deployshield or pt.shieldlag)
+	or (pt.firewait or pt.fireheld or pt.endlag))
+	and (pt.anglefix)
 		firing = true
 	end
 	
@@ -306,12 +307,6 @@ addHook("PlayerThink",function(p)
 			sh.state = sh.info.spawnstate
 		end
 		
-		local move = me.radius + 16*me.scale
-		P_MoveOrigin(sh,
-			me.x + P_ReturnThrustX(nil,fireangle,move) + me.momx,
-			me.y + P_ReturnThrustY(nil,fireangle,move) + me.momy,
-			me.z + me.momz
-		)
 		sh.angle = fireangle
 		sh.color = Paint:getPlayerColor(p)
 		
@@ -387,6 +382,12 @@ addHook("PlayerThink",function(p)
 			
 			end
 		end
+		local move = me.radius + 16*me.scale
+		P_MoveOrigin(sh,
+			me.x + P_ReturnThrustX(nil,fireangle,move) + me.momx,
+			me.y + P_ReturnThrustY(nil,fireangle,move) + me.momy,
+			me.z + me.momz
+		)
 		sh.health = sh.info.spawnhealth
 		sh.lasthit = nil
 		sh.cooldown = max($ - 1, 0)
@@ -452,6 +453,7 @@ addHook("PlayerThink",function(p)
 	if not (p.cmd.buttons & BT_ATTACK or pt.fireheld)
 	and not (pt.cooldown or pt.firewait or pt.endlag or pt.shieldlag)
 		pt.shotsfired = 0
+		pt.shieldjustbroke = false
 	end
 	
 	-- squid form
@@ -675,11 +677,11 @@ addHook("PlayerThink",function(p)
 	or cur_weapon.guntype == WPT_BLASTER
 	or cur_weapon.guntype == WPT_DUALIES
 	or cur_weapon.guntype == WPT_BRELLA)
-		if ( ( (justpressedfire or pt.fireheld) and pt.cooldown <= 0)
-		/*or (pt.fireheld % cur_weapon:get(pt,"firerate") == 0)*/)
+		if ( ( (justpressedfire or (pt.fireheld and not cur_weapon:get(pt,"tapfire"))) and pt.cooldown <= 0) )
 		and (p.cmd.buttons & BT_ATTACK)
 		and (pt.firewait <= 1)
 		and not (cur_weapon.guntype == WPT_DUALIES and (pt.dodgeroll.tics or pt.firewait))
+		and not pt.shieldjustbroke
 			local chance = cur_weapon:get(pt,"spread_base") + pt.spread
 			if pt.spreadadd ~= 0
 				chance = max($, cur_weapon:get(pt,"spread_jumpchance"))

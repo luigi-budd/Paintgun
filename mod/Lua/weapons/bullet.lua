@@ -780,7 +780,7 @@ addHook("MobjCollide",function(splat,mo)
 	if (splat.collided == nil) then return end
 	if (splat.collided[mo] ~= nil) then return end
 	
-	local friendly = Paint:mobjsOnTeam(splat.tracer_player.mo, mo.tracer_player.mo)
+	local friendly = Paint:mobjsOnTeam((splat.tracer_player ~= nil) and splat.tracer_player.mo or splat, mo.tracer_player.mo)
 	
 	if R_PointToDist2(mo.x,mo.y, splat.x,splat.y) <= splat.radius * 4/5
 		if friendly
@@ -833,7 +833,9 @@ local function brella_pain(mo, inf,sor, damage)
 	if mo.paint_hp <= 0
 		mo.paint_destroyed = true
 		local wep = Paint.weapons[mo.weapon_id]
-		local soundid = wep:get(mo.tracer.player.paint, "breaksound") or sfx_none
+		local p = mo.tracer.player
+		local pt = p.paint
+		local soundid = wep:get(pt, "breaksound") or sfx_none
 		S_StartSound(mo.tracer, soundid)
 		
 		local rad = FixedDiv(mo.radius, mo.scale)
@@ -850,10 +852,11 @@ local function brella_pain(mo, inf,sor, damage)
 				zadj, MT_SPINDUST
 			)
 			dust.colorized = true
-			dust.color = Paint:getPlayerColor(mo.tracer.player)
+			dust.color = Paint:getPlayerColor(p)
 			P_Thrust(dust, FixedAngle(P_RandomFixedRange(0,360)), 5 * P_RandomFixed())
 			P_SetObjectMomZ(dust, 2 * P_RandomFixed())
 		end
+		pt.shieldjustbroke = true
 	end
 	--print(("DAMAGE: %f"):format(damage))
 	return false
@@ -881,7 +884,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 	or mo.type == MT_TNTBARREL
 		if not sh.cooldown
 			P_DamageMobj(mo,sh,me, damage)
-			--P_DamageMobj(sh,mo,mo, damage*4) --debug
+			P_DamageMobj(sh,mo,mo, damage*5) --debug
 			Paint:doProjHitmarker(sh, mo, true)
 			sh.cooldown = cooldown
 			Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)

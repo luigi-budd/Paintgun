@@ -137,6 +137,7 @@ function Paint:initPlayer(p)
 		shieldlag = 0, -- keep deployed for this long
 		deployshield = false,
 		wasdeployed = false,
+		shieldjustbroke = false, -- ugh
 		
 		oldinktank = 100*FU,
 		oldinkanim = 100*FU,
@@ -208,6 +209,7 @@ function Paint:resetPlayer(p)
 	pt.shieldlag = 0
 	pt.shieldwait = 0
 	pt.deployshield = false
+	pt.shieldjustbroke = false
 	
 	pt.spread = 0
 	pt.spreadcooldown = 0

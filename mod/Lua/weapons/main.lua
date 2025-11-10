@@ -38,6 +38,7 @@ local weapon_meta = {
 	squidlag = 0, -- wait this many frames before being able to swim
 	shootspeed = FU/2, --how much to slow down when shooting
 	inertia = false,
+	tapfire = false,
 	
 	subtype = SUB_BOMB,
 	
@@ -127,6 +128,7 @@ local weapon_meta = {
 	deploywait = (TR/2)*4/5,
 	deployend = nil, -- use endlag if nil
 	deploydelay = 11, -- hold fire for this long before deploying
+	releasetime = 64, -- wait this long AFTER deploying the canopy to release it
 	shieldingspeed = (FU/2)*7/10, -- `shootspeed` but for when you shield
 	readysound = nil,
 	deploysound = nil,
@@ -291,9 +293,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 			h_spread = FixedDiv($, FU*5/2)
 			v_spread = FixedDiv($, FU*5/2)
 		end
-		-- 100% accurate for these (usually blasters)
 		if not dospread
-		and ((weap:get(pt, "neverspreadonground") and not me.jumptime))
 			h_spread = 0
 			v_spread = 0
 		end
@@ -307,6 +307,8 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		--aiming = $ + FixedAngle(v_spread)
 	end
 	if (weap:get(pt,"neverspreadatall"))
+	-- 100% accurate for these (usually blasters)
+	or ((weap:get(pt, "neverspreadonground") and not me.jumptime))
 		h_spread = 0
 		v_spread = 0
 	end

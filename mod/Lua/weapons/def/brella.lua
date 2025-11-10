@@ -40,6 +40,7 @@ Paint:registerWeapon({
 	inkcost = tofixed("6.325"),
 	inkdelay = TR,
 	dragmul = FU*58/100,
+	tapfire = false,
 	
 	startlag = 5,
 	endlag = 12,
@@ -114,9 +115,15 @@ Paint:registerWeapon({
 		or (pt.firewait or pt.fireheld or pt.endlag)
 			firing = true
 		end
-		if not firing then return end
+		if not (pt.anglefix) then firing = false; end
+		
 		if (key == "handoffset")
+		and firing
 			return 0
+		end
+		if (key == "tapfire")
+		and (pt.shield and pt.shield.paint_hp <= 0)
+			return true
 		end
 	end
 })
