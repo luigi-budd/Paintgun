@@ -294,8 +294,8 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 			v_spread = FixedDiv($, FU*5/2)
 		end
 		if not dospread
-			h_spread = 0
-			v_spread = 0
+			h_spread = $ / 4
+			v_spread = $ / 4
 		end
 		
 		local random = P_RandomFixedSigned()
@@ -308,7 +308,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	end
 	if (weap:get(pt,"neverspreadatall"))
 	-- 100% accurate for these (usually blasters)
-	or ((weap:get(pt, "neverspreadonground") and not me.jumptime))
+	or ((weap:get(pt, "neverspreadonground") and not  me.jumptime))
 		h_spread = 0
 		v_spread = 0
 	end
