@@ -40,20 +40,24 @@ addHook("HUD",function(v,p,cam)
 		local speed = 7*FU
 		local YPOS = 100*FU + FixedMul( strength/3, sin(FixedAngle(speed *leveltime)) )
 		v.dointerp(100)
-		for i = 0,p_h
-			local ifrac = i*FU
-			local shift = FixedMul(strength, cos(FixedAngle( speed * (leveltime+i) )) )
-			
-			v.drawCropped(160*FU + shift, YPOS + FixedMul(ifrac,Y_STR),
-				X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp,
-				0, ifrac, p_w*FU, FU
-			)
-			if fade < 5
+		if (v.renderer() == "opengl")
+			for i = 0,p_h
+				local ifrac = i*FU
+				local shift = FixedMul(strength, cos(FixedAngle( speed * (leveltime+i) )) )
+				
 				v.drawCropped(160*FU + shift, YPOS + FixedMul(ifrac,Y_STR),
-					X_STR,Y_STR, patch, ((fade*2) << V_ALPHASHIFT)|V_ADD, clrmp,
+					X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp,
 					0, ifrac, p_w*FU, FU
 				)
+				if fade < 5
+					v.drawCropped(160*FU + shift, YPOS + FixedMul(ifrac,Y_STR),
+						X_STR,Y_STR, patch, ((fade*2) << V_ALPHASHIFT)|V_ADD, clrmp,
+						0, ifrac, p_w*FU, FU
+					)
+				end
 			end
+		else
+			v.drawStretched(160*FU, YPOS, X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp)
 		end
 		v.dointerp(false)
 		
