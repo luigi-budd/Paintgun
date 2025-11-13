@@ -780,7 +780,10 @@ addHook("MobjCollide",function(splat,mo)
 	if (splat.collided == nil) then return end
 	if (splat.collided[mo] ~= nil) then return end
 	
-	local friendly = Paint:mobjsOnTeam((splat.tracer_player ~= nil) and splat.tracer_player.mo or splat, mo.tracer_player.mo)
+	local friendly = Paint:mobjsOnTeam(
+		(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
+		(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
+	)
 	
 	if R_PointToDist2(mo.x,mo.y, splat.x,splat.y) <= splat.radius * 4/5
 		if friendly

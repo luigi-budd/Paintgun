@@ -34,6 +34,25 @@ rawset(_G, "TR", TICRATE)
 
 rawset(_G,"Paint",{})
 
+Paint.alphateam = {}
+Paint.bravoteam = {}
+addHook("NetVars",function(n)
+	Paint.alphateam = n($)
+	Paint.bravoteam = n($)
+end)
+addHook("ThinkFrame",do
+	for k,play in ipairs(Paint.alphateam)
+		if not (play and play.valid)
+			table.remove(Paint.alphateam, k)
+		end
+	end
+	for k,play in ipairs(Paint.bravoteam)
+		if not (play and play.valid)
+			table.remove(Paint.bravoteam, k)
+		end
+	end
+end)
+
 function Paint:setTeammates()
 	if not G_GametypeHasTeams() then return end
 	
@@ -64,6 +83,8 @@ function Paint:setTeammates()
 			play.paint.teammates = blueteam
 		end		
 	end
+	Paint.alphateam = redteam
+	Paint.bravoteam = blueteam
 	
 	--Then, the displayplayer iterates through their teammates
 	--and spawns team markers

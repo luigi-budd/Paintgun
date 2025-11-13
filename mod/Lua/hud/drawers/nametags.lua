@@ -18,7 +18,7 @@ function HUD:killNotice(target)
 		name = target.name,
 		tics = 5 * TR,
 		color = Paint:getPlayerColor(target),
-		id = (#target) + leveltime, --always a player
+		id = (#target) + leveltime,
 		play = target,
 	})
 end
@@ -33,6 +33,7 @@ addHook("HUD",function(v,p,cam)
 	
 	for k,v in ipairs(HUD.memory.killtags)
 		if v.tics <= 0
+		or not (v.play and v.play.valid)
 			table.remove(HUD.memory.killtags, k)
 			continue
 		end
@@ -44,12 +45,12 @@ addHook("HUD",function(v,p,cam)
 	and #pt.teammates)
 		for k,v in pairs(pt.teammates)
 			local dist = 0
-			if (v and v.mo and v.mo.valid and v.mo.health and v ~= p)
+			if (v and v.valid and v.mo and v.mo.valid and v.mo.health and v ~= p)
 				dist = R_PointToDist(v.mo.x, v.mo.y)
 			else
 				continue
 			end
-			table.insert(tmp, {play = v, dist = dist})
+			table.insert(tmp, {play = v, dist = dist, id = #v})
 		end
 	end
 	for k,v in ipairs(HUD.memory.killtags)
@@ -59,6 +60,7 @@ addHook("HUD",function(v,p,cam)
 			pos = v.pos,
 			name = v.name,
 			clr = v.color,
+			id = v.id,
 		})
 	end
 	table.sort(tmp, function(a,b)
@@ -97,7 +99,7 @@ addHook("HUD",function(v,p,cam)
 			wacmap = v.getColormap(TC_DEFAULT, va.clr)
 		end
 		
-		v.dointerp(#play)
+		v.dointerp(va.id)
 		v.drawScaled(pro.x,pro.y + 12*pro.scale, pro.scale/2, v.getSpritePatch(SPR_PAINT_MISC,1,0), 0, wacmap)
 		
 		local str = (va.tag) and (va.name) or play.name
