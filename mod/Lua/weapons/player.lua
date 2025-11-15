@@ -1,4 +1,5 @@
 -- Player interactions and handlers
+local CV = Paint.CV
 
 local function isFriendlyFire(p1,p2)
 	if G_GametypeHasTeams()
@@ -342,6 +343,12 @@ function Paint:mobjsOnTeam(mo1, mo2)
 		return mo2.color == self:getPlayerColor(mo1.player)
 	end
 	if (mo1.player == mo2.player) then return true; end
+	if (gametyperules & GTR_FRIENDLY)
+		if CV.FindVar("friendlyfire").value
+			return false
+		end
+		return true
+	end
 	if not G_GametypeHasTeams() then return false; end
 	return mo1.player.ctfteam == mo2.player.ctfteam
 end

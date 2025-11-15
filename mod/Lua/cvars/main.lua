@@ -1,6 +1,20 @@
 Paint.CV = {}
 local CV = Paint.CV
 
+local CV_Lookup = {}
+setmetatable(CV_Lookup, {
+	__mode = "kv"
+})
+
+CV.FindVar = function(cv_name)
+	if CV_Lookup[cv_name]
+		return CV_Lookup[cv_name]
+	end
+	local cvar = CV_FindVar(cv_name)
+	CV_Lookup[cv_name] = cvar
+	return cvar
+end
+
 CV.splatter_lifetime = CV_RegisterVar({
 	name = "paint_splatlifetime",
 	defaultvalue = "20",
