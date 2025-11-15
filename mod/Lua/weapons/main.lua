@@ -170,9 +170,6 @@ registerMetatable(weapon_meta)
 
 function Paint:registerWeapon(props)
 	assert(props.name, "Properties table must have a name field")
-	setmetatable(props, {
-		__index = weapon_meta,
-	})
 	props.get = function(self, paint, key)
 		local value = self[key]
 		if self.abilitywrap ~= nil
@@ -183,6 +180,9 @@ function Paint:registerWeapon(props)
 		end
 		return value
 	end
+	setmetatable(props, {
+		__index = weapon_meta,
+	})
 	Paint.weapons[props.name] = props
 end
 

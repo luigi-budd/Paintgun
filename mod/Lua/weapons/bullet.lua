@@ -164,27 +164,8 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 		z = shot.z + shot.height/2,
 	}
 	
-	Paint.HUD:hitMarker(shot.target.player, pos, FixedAngle(P_RandomRange(0,230)*FU), (shot.pellet and FU/2 or FU), shot.powerful)
-	/*
-	local spr_scale = FU/4 + P_RandomFixedSigned() / 4
-	local tntstate = S_TNTBARREL_EXPL3
-	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
-	local fx = P_SpawnMobj(
-		shot.x + P_RandomRange(-16,16)*FU,
-		shot.y + P_RandomRange(-16,16)*FU,
-		shot.z + P_RandomRange(-16,16)*FU,
-		MT_THOK
-	)
-	P_SetMobjStateNF(fx, tntstate)
-	fx.spritexscale = FixedMul($, spr_scale)
-	fx.spriteyscale = fx.spritexscale
-	fx.renderflags = $|rflags &~RF_PAPERSPRITE
-	fx.frame = $ &~FF_PAPERSPRITE
-	fx.color = shot.color
-	fx.colorized = true
-	fx.drawonlyforplayer = shot.target.player
-	fx.dispoffset = 300
-	*/
+	local rollangle = FixedAngle(P_RandomRange(0,230)*FU)
+	Paint.HUD:hitMarker(shot.target.player, pos, rollangle, (shot.pellet and FU/2 or FU), shot.powerful)
 end
 
 local function SetSplatSkew(splat,slope,skew)
@@ -637,7 +618,6 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 		)
 	end
 	
-	--MM.BulletDies(ring, m,l)
 	splattersound(mo)
 	P_RemoveMobj(mo)
 end, MT_PAINT_SHOT)
@@ -666,6 +646,9 @@ addHook("MobjThinker",function(splat)
 	if splat.lifespan == nil
 		splat.lifespan = -1
 		splat.collided = {}
+		-- which splats check us
+		-- so we can clean up when we get removed
+		splat.checkedme = {}
 	end
 	splat.lifespan = $ + 1
 	
@@ -778,14 +761,16 @@ addHook("MobjCollide",function(splat,mo)
 	if mo.type ~= splat.type then return end
 	if (mo.revgrav ~= splat.revgrav) then return end
 	if (splat.collided == nil) then return end
+	if (mo.checkedme == nil) then return end
 	if (splat.collided[mo] ~= nil) then return end
 	
-	local friendly = Paint:mobjsOnTeam(
-		(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
-		(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
-	)
-	
 	if R_PointToDist2(mo.x,mo.y, splat.x,splat.y) <= splat.radius * 4/5
+		local friendly = Paint:mobjsOnTeam(
+			(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
+			(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
+		)
+		table.insert(mo.checkedme, splat)
+		
 		if friendly
 			if splat.scale < 2*FU
 				splat.scale = $ + FU/4
@@ -800,6 +785,18 @@ addHook("MobjCollide",function(splat,mo)
 	end
 	splat.collided[mo] = true
 end,MT_PAINT_SPLATTER)
+
+local function splat_destruct(mo)
+	if mo.checkedme == nil then return end
+	for k, checked in ipairs(mo.checkedme)
+		if checked.collided == nil then continue end --!?
+		checked.collided[mo] = nil
+	end
+	mo.checkedme = nil
+end
+addHook("MobjFuse",splat_destruct,MT_PAINT_SPLATTER)
+addHook("MobjRemoved",splat_destruct,MT_PAINT_SPLATTER)
+addHook("MobjDeath",splat_destruct,MT_PAINT_SPLATTER)
 
 addHook("TouchSpecial",function(splat,mo)
 	if not (splat and splat.valid) then return end
@@ -887,7 +884,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 	or mo.type == MT_TNTBARREL
 		if not sh.cooldown
 			P_DamageMobj(mo,sh,me, damage)
-			P_DamageMobj(sh,mo,mo, damage*5) --debug
+			--P_DamageMobj(sh,mo,mo, damage*5) --debug
 			Paint:doProjHitmarker(sh, mo, true)
 			sh.cooldown = cooldown
 			Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)

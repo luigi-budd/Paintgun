@@ -3,11 +3,12 @@ addHook("NetVars",function(n)
 	Paint.enemyList = n($)
 end)
 
-local baseinfo = mobjinfo[MT_BLUECRAWLA]
+local basetype = MT_BLUECRAWLA
 addHook("MobjDamage",function(mo, inf,sor, damage)
 	if not (sor and sor.valid and sor.player and sor.player.valid and sor.player.paint and sor.player.paint.active) then return end
 	if not (mo.flags & (MF_ENEMY|MF_BOSS)) then return end
 	
+	local baseinfo = mobjinfo[basetype]
 	mo.paint_maxhp = FixedDiv(mo.info.radius + mo.info.height, baseinfo.height + baseinfo.radius) * 120
 	if mo.paint_hp == nil
 	and not mo.paint_resist
@@ -57,14 +58,12 @@ addHook("MobjDamage",function(me, inf,sor, damage)
 end,MT_PLAYER)
 
 addHook("ThinkFrame",do
+	local removedelayed = {}
 	for k,mo in ipairs(Paint.enemyList)
 		if not (mo and mo.valid)
-			table.remove(Paint.enemyList,k)
+			table.insert(removedelayed, {key = k})
+			continue
 		end
-	end
-	
-	for k,mo in ipairs(Paint.enemyList)
-		if not (mo and mo.valid) then continue end
 		
 		if not (mo.health and mo.paint_hp ~= nil)
 			local overlay = mo.paint_overlay
@@ -113,5 +112,8 @@ addHook("ThinkFrame",do
 			overlay.dispoffset = mo.dispoffset + 1
 			overlay.color = mo.paint_color
 		end
+	end
+	for k,v in ipairs(removedelayed)
+		table.remove(Paint.enemyList, v.key)
 	end
 end)

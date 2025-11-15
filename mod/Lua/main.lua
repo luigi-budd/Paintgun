@@ -36,10 +36,6 @@ rawset(_G,"Paint",{})
 
 Paint.alphateam = {}
 Paint.bravoteam = {}
-addHook("NetVars",function(n)
-	Paint.alphateam = n($)
-	Paint.bravoteam = n($)
-end)
 addHook("ThinkFrame",do
 	for k,play in ipairs(Paint.alphateam)
 		if not (play and play.valid)
@@ -275,4 +271,6 @@ dofile("enemy.lua")
 
 addHook("NetVars",function(n)
 	Paint.modes = n($)
+	Paint.alphateam = n($)
+	Paint.bravoteam = n($)
 end)
