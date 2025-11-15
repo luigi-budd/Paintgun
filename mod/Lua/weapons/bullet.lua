@@ -797,7 +797,7 @@ local function splat_destruct(mo)
 end
 addHook("MobjFuse",splat_destruct,MT_PAINT_SPLATTER)
 addHook("MobjRemoved",splat_destruct,MT_PAINT_SPLATTER)
-addHook("MobjDeath",splat_destruct,MT_PAINT_SPLATTER)
+--addHook("MobjDeath",splat_destruct,MT_PAINT_SPLATTER)
 
 addHook("TouchSpecial",function(splat,mo)
 	if not (splat and splat.valid) then return end
