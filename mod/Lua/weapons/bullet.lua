@@ -789,6 +789,7 @@ end,MT_PAINT_SPLATTER)
 local function splat_destruct(mo)
 	if mo.checkedme == nil then return end
 	for k, checked in ipairs(mo.checkedme)
+		if not (checked and checked.valid) then continue end
 		if checked.collided == nil then continue end --!?
 		checked.collided[mo] = nil
 	end
