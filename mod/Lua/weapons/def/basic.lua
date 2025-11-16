@@ -2,7 +2,7 @@ Paint:registerWeapon({
 	name = "basic",
 	handoffset = 8*FU,
 	h_spread = {6, 6},
-	v_spread = {4, 4},
+	v_spread = {3, 3},
 	damage = 35*FU,
 	inkcost = FU * 92/100,
 	

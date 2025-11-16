@@ -1,12 +1,18 @@
 --hitmarker
-for i = 0,5
-	sfxinfo[freeslot("sfx_pnt_h"..i)].caption = "/"
-end
-for i = 0,5
-	sfxinfo[freeslot("sfx_pnt_n"..i)].caption = "/" -- N for Nullified
-end
-for i = 0,5
-	sfxinfo[freeslot("sfx_pnt_s"..i)].caption = "/" -- S for Shield hit
+local hitmarker_attribs = {
+	caption = "/",
+	priority = 100 
+}
+local hitmarker_prefix = {
+	[1] = "h", -- Hitmarker
+	[2] = "n", -- N for Nullified
+	[3] = "s", -- S for Shield hit
+}
+for j = 1, 3
+	local pre = hitmarker_prefix[j]
+	for i = 0,5
+		sfxinfo[freeslot("sfx_pnt_"..pre..i)] = hitmarker_attribs
+	end
 end
 
 for i = 0,3
@@ -17,7 +23,10 @@ sfxinfo[sfx_pt_ow3].caption = "Shield lost!"
 
 --sorry that these are all wavs
 for i = 0,8
-	sfxinfo[freeslot("sfx_pn_sp"..i)].caption = "Splatter"
+	sfxinfo[freeslot("sfx_pn_sp"..i)] = {
+		caption = "Splatter",
+		flags = SF_NOINTERRUPT
+	}
 end
 sfxinfo[freeslot("sfx_pt_noi")].caption = "Low ink!"
 
