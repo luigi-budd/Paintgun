@@ -113,25 +113,31 @@ mobjinfo[MT_PAINT_WALLSPLAT] = {
 	deathstate = S_PAINT_WALLSPLATTER,
 }
 
-local function splattersound(shot)
-	local wep = Paint.weapons[shot.weapon_id]
+local function splattersound(shot, collided)
+	if shot.nosound
+		return
+	end
 	
+	local wep = Paint.weapons[shot.weapon_id]
 	local sfx = P_SpawnGhostMobj(shot)
 	sfx.flags2 = $|MF2_DONTDRAW
 	sfx.fuse = TR; sfx.tics = sfx.fuse
 
-	if shot.nosound
-		P_RemoveMobj(sfx)
-		return
+	local startsound = sfx_p_sp0
+	local endsound = sfx_p_sp8
+	if collided
+		startsound = sfx_p_sp9
+		endsound = sfx_p_sp12
 	end
-	
-	local sound = P_RandomRange(sfx_pn_sp0,sfx_pn_sp8)
+
+	local sound = P_RandomRange(startsound,endsound)
 	local volume = wep and wep.splatvolume or 255
 	S_StartSoundAtVolume(sfx, sound, volume)
 	if not shot.trail
 		S_StartSoundAtVolume(sfx, sound, volume)
 	end
 	
+	if collided then return end
 	if not wep then return end
 	if wep.guntype == WPT_BLASTER
 	and not shot.trail
@@ -162,7 +168,10 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 	if nullify then return end
 	
 	if splatter
-		splattersound(shot)
+		splattersound(shot, true)
+		if not shot.pellet
+			splattersound(shot, true)
+		end
 	end
 	
 	local range = 6
@@ -217,7 +226,7 @@ local function HandleFloorSplat(shot)
 			P_SetOrigin(hole, shot.x, shot.y, bull_z)
 		end
 		
-		splattersound(shot)
+		splattersound(shot, not shot.trail)
 		P_RemoveMobj(shot); return true
 	end
 end
@@ -626,7 +635,7 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 		)
 	end
 	
-	splattersound(mo)
+	splattersound(mo, true)
 	P_RemoveMobj(mo)
 end, MT_PAINT_SHOT)
 

@@ -22,8 +22,10 @@ sfxinfo[sfx_pt_ow1].flags = SF_X2AWAYSOUND|SF_TOTALLYSINGLE
 sfxinfo[sfx_pt_ow3].caption = "Shield lost!"
 
 --sorry that these are all wavs
-for i = 0,8
-	sfxinfo[freeslot("sfx_pn_sp"..i)] = {
+for i = 0,12
+	-- 0 - 8: floor splat sounds
+	-- 9 - 12: wall/object collision splat sounds 
+	sfxinfo[freeslot("sfx_p_sp"..i)] = {
 		caption = "Splatter",
 		flags = SF_NOINTERRUPT
 	}
