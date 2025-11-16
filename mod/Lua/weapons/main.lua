@@ -345,7 +345,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	proj.momy = FixedMul(speed, mom.y)
 	proj.momz = FixedMul(speed, mom.z)
 	
-	proj.angle = R_PointToAngle2(proj.x,proj.y, point.x,point.y)
+	proj.angle = R_PointToAngle2(proj.x,proj.y, point.x,point.y) - h_spread
 	
 	/*
 	P_SpawnMobj(point.x,point.y,point.z, MT_THOK).color = (dospread and SKINCOLOR_RED or SKINCOLOR_GREEN)
