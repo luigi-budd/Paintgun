@@ -1,5 +1,13 @@
 local CV = Paint.CV
 
+Paint.splatterid = 0
+addHook("MapLoad",function()
+	Paint.splatterid = 0
+end)
+addHook("NetVars",function(n)
+	Paint.splatterid = n($)
+end)
+
 freeslot(
 	"MT_PAINT_SHOT",
 	"SPR_PAINT_SHOT",
@@ -629,6 +637,10 @@ addHook("MobjThinker",function(shot)
 	end
 end,MT_PAINT_GUN)
 
+addHook("MobjSpawn",function(splat)
+	splat.splatid = Paint.splatterid
+	Paint.splatterid = $ + 1
+end,MT_PAINT_SPLATTER)
 addHook("MobjThinker",function(splat)
 	splat.flags = $|MF_SPECIAL
 	splat.health = splat.info.spawnhealth
@@ -648,7 +660,7 @@ addHook("MobjThinker",function(splat)
 		splat.collided = {}
 		-- which splats check us
 		-- so we can clean up when we get removed
-		splat.checkedme = {}
+		-- splat.checkedme = {}
 	end
 	splat.lifespan = $ + 1
 	
@@ -761,15 +773,15 @@ addHook("MobjCollide",function(splat,mo)
 	if mo.type ~= splat.type then return end
 	if (mo.revgrav ~= splat.revgrav) then return end
 	if (splat.collided == nil) then return end
-	if (mo.checkedme == nil) then return end
-	if (splat.collided[mo] ~= nil) then return end
+	if (mo.splatid == nil) then return end
+	if (splat.collided[mo.splatid] ~= nil) then return end
 	
 	if R_PointToDist2(mo.x,mo.y, splat.x,splat.y) <= splat.radius * 4/5
 		local friendly = Paint:mobjsOnTeam(
 			(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
 			(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
 		)
-		table.insert(mo.checkedme, splat)
+		--table.insert(mo.checkedme, splat)
 		
 		if friendly
 			if splat.scale < 2*FU
@@ -783,9 +795,10 @@ addHook("MobjCollide",function(splat,mo)
 			return false
 		end
 	end
-	splat.collided[mo] = true
+	splat.collided[mo.splatid] = true
 end,MT_PAINT_SPLATTER)
 
+/*
 local function splat_destruct(mo)
 	if mo.checkedme == nil then return end
 	for k, checked in ipairs(mo.checkedme)
@@ -798,6 +811,7 @@ end
 addHook("MobjFuse",splat_destruct,MT_PAINT_SPLATTER)
 addHook("MobjRemoved",splat_destruct,MT_PAINT_SPLATTER)
 --addHook("MobjDeath",splat_destruct,MT_PAINT_SPLATTER)
+*/
 
 addHook("TouchSpecial",function(splat,mo)
 	if not (splat and splat.valid) then return end
