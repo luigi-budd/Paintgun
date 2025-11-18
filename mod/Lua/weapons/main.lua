@@ -55,6 +55,7 @@ local weapon_meta = {
 	--shooter-specific
 	h_spread = {6, 6},
 	v_spread = {3, 3},
+	verticalspread = false,
 	-- spread values (PERCETANGES [0, 100*FRACUNIT], DIVIDED BY 100*FU WHEN NEEDED)
 	spread_base = (FU * 1), -- chance to spread, similar to accelstart
 	spread_pershot = (FU * 1), -- add this much chance to spread per shot
@@ -308,13 +309,13 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	end
 	if (weap:get(pt,"neverspreadatall"))
 	-- 100% accurate for these (usually blasters)
-	or ((weap:get(pt, "neverspreadonground") and not  me.jumptime))
+	or ((weap:get(pt,"neverspreadonground") and not me.jumptime))
 		h_spread = 0
 		v_spread = 0
 	end
 	-- apparently shooters dont have any vertical spread in splatoon
 	-- weapon.v_spread will stay for visuals and other weapon classes
-	if not (weap.guntype == WPT_BRELLA)
+	if not (weap:get(pt,"verticalspread"))
 		v_spread = 0
 	end
 	

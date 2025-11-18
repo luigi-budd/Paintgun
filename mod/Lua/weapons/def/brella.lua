@@ -31,6 +31,7 @@ Paint:registerWeapon({
 	dropoff = 310*FU,
 	h_spread = {10, 10},
 	v_spread = {8, 8},
+	verticalspread = true,
 	falloff = {2,2},
 	maxdamage = 16*FU + (FU/5),
 	damage = MIN_DAMAGE,
