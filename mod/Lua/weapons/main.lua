@@ -53,8 +53,8 @@ local weapon_meta = {
 	firewithnoink = false, -- allow firing even if you have low ink
 	
 	--shooter-specific
-	h_spread = {6, 6}, --TODO: make 1 value only
-	v_spread = {3, 3}, --TODO: make 1 value only
+	h_spread = {6, 6},
+	v_spread = {3, 3},
 	-- spread values (PERCETANGES [0, 100*FRACUNIT], DIVIDED BY 100*FU WHEN NEEDED)
 	spread_base = (FU * 1), -- chance to spread, similar to accelstart
 	spread_pershot = (FU * 1), -- add this much chance to spread per shot
@@ -312,6 +312,12 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		h_spread = 0
 		v_spread = 0
 	end
+	-- apparently shooters dont have any vertical spread in splatoon
+	-- weapon.v_spread will stay for visuals and other weapon classes
+	if not (weap.guntype == WPT_BRELLA)
+		v_spread = 0
+	end
+	
 	h_spread = $ - FixedAngle(hsprd)
 	v_spread = $ + FixedAngle(vsprd)
 
