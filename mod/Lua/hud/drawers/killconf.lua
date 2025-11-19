@@ -1,6 +1,6 @@
 local HUD = Paint.HUD
 local offset = 0
-local len = 5*TR
+local len = 7*TR
 local popup = 4
 local slidein = 4
 
