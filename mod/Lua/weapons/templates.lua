@@ -12,7 +12,7 @@ function Paint.wtemplate_dualies(p,pt, weapon, key,value)
 	elseif (key == "shotoffset")
 		return 0
 	elseif (key == "neverspreadonground")
-		return P_RandomChance(FU/10)
+		return false --P_RandomChance(FU/10) -- seems like it causes resynchs?
 	elseif (key == "inkcost")
 		if weapon.dodgeshotcost == nil
 			return value
