@@ -422,7 +422,14 @@ addHook("PlayerThink",function(p)
 		p.cmd.buttons = $ &~BT_ATTACK
 	end
 	if not p.exiting
+		if (pt.buttons & BT_SPIN)
+			pt.spinheld = $ + 1
+		else
+			pt.spinheld = 0
+		end
+		
 		if (p.cmd.buttons & BT_ATTACK)
+		and not pt.nofiring
 			if not pt.fireheld
 				justpressedfire = true
 				pt.firewait = cur_weapon.startlag
@@ -433,8 +440,16 @@ addHook("PlayerThink",function(p)
 			end
 			pt.fireheld = $ + 1
 			p.cmd.buttons = $|BT_ATTACK
+			if (pt.spinheld and pt.spinheld < pt.fireheld)
+				pt.fireheld = 0
+				p.cmd.buttons = $ &~BT_ATTACK
+				pt.nofiring = true
+			end
 		else
 			pt.fireheld = 0
+			if not (p.cmd.buttons & BT_ATTACK)
+				pt.nofiring = false
+			end
 		end
 		if pt.firewait == 1
 			justpressedfire = true
@@ -456,7 +471,7 @@ addHook("PlayerThink",function(p)
 		pt.shieldjustbroke = false
 	end
 	
-	-- squid form
+	-- squid form / swim form
 	p.shieldscale = skin.shieldscale
 	pt.squidtoggle = false
 	do
@@ -471,6 +486,7 @@ addHook("PlayerThink",function(p)
 		and (p.charability2 == CA2_SQUIDFORM)
 		and not (pt.dodgeroll.tics or pt.dodgeroll.getup)
 		and not (pt.squidlag)
+		and not (pt.fireheld > 1)
 			if not pt.wasinsquid
 				S_StartSound(me,sfx_pt_tos)
 			end
@@ -480,12 +496,17 @@ addHook("PlayerThink",function(p)
 			local frac = (FU/MAX_SQUIDTIME)*pt.squidtime
 			--me.height = easing(frac, $, 22*me.scale)
 			me.spriteyscale = easing(frac, FU, maxsquish)
-			pt.fireheld = 0
-			p.cmd.buttons = $ &~BT_ATTACK
+			--pt.fireheld = 0
+			--p.cmd.buttons = $ &~BT_ATTACK
 			pt.wasinsquid = true
 		else
 			if pt.wasinsquid
 				S_StartSound(me,sfx_pt_toh)
+				if pt.fireheld ~= 0
+					pt.fireheld = 1
+					justpressedfire = true
+				end
+				pt.nofiring = false
 			end
 			S_StopSoundByID(me,sfx_pt_swm)
 			
@@ -673,117 +694,119 @@ addHook("PlayerThink",function(p)
 	
 	pt.justcharged = false
 	pt.inkqueue = 0
-	if (cur_weapon.guntype == WPT_SHOOTER
-	or cur_weapon.guntype == WPT_BLASTER
-	or cur_weapon.guntype == WPT_DUALIES
-	or cur_weapon.guntype == WPT_BRELLA)
-		if ( ( (justpressedfire or (pt.fireheld and not cur_weapon:get(pt,"tapfire"))) and pt.cooldown <= 0) )
-		and (p.cmd.buttons & BT_ATTACK)
-		and (pt.firewait <= 1)
-		and not (cur_weapon.guntype == WPT_DUALIES and (pt.dodgeroll.tics or pt.firewait))
-		and not pt.shieldjustbroke
-			local chance = cur_weapon:get(pt,"spread_base") + pt.spread
-			if pt.spreadadd ~= 0
-				chance = max($, cur_weapon:get(pt,"spread_jumpchance"))
-			end
-			local spread = P_RandomChance(FixedDiv(chance, 100*FU))
-			
-			if (cur_weapon:get(pt, "neverspreadonground")
-			and not me.jumptime)
-			or (cur_weapon:get(pt, "neverspreadatall"))
-				spread = false
-			end
-			
-			if not shieldout
-				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
-				local bps = cur_weapon:get(pt,"bulletspershot")
-				if bps ~= 1
-				and bps > 1
-					for i = 1, bps - 1
-						Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+	if not pt.squidtoggle
+		if (cur_weapon.guntype == WPT_SHOOTER
+		or cur_weapon.guntype == WPT_BLASTER
+		or cur_weapon.guntype == WPT_DUALIES
+		or cur_weapon.guntype == WPT_BRELLA)
+			if ( ( (justpressedfire or (pt.fireheld and not cur_weapon:get(pt,"tapfire"))) and pt.cooldown <= 0) )
+			and (p.cmd.buttons & BT_ATTACK)
+			and (pt.firewait <= 1)
+			and not (cur_weapon.guntype == WPT_DUALIES and (pt.dodgeroll.tics or pt.firewait))
+			and not pt.shieldjustbroke
+				local chance = cur_weapon:get(pt,"spread_base") + pt.spread
+				if pt.spreadadd ~= 0
+					chance = max($, cur_weapon:get(pt,"spread_jumpchance"))
+				end
+				local spread = P_RandomChance(FixedDiv(chance, 100*FU))
+				
+				if (cur_weapon:get(pt, "neverspreadonground")
+				and not me.jumptime)
+				or (cur_weapon:get(pt, "neverspreadatall"))
+					spread = false
+				end
+				
+				if not shieldout
+					Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+					local bps = cur_weapon:get(pt,"bulletspershot")
+					if bps ~= 1
+					and bps > 1
+						for i = 1, bps - 1
+							Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+						end
 					end
+				else
+					pt.cooldown = (cur_weapon:get(pt,"firerate")) + 1
+					pt.endlag = max($, cur_weapon.endlag)
+					pt.squidlag = max($, cur_weapon:get(pt,"squidlag"))
+					pt.justfired = true
+					pt.anglefix = pt.cooldown
 				end
-			else
-				pt.cooldown = (cur_weapon:get(pt,"firerate")) + 1
-				pt.endlag = max($, cur_weapon.endlag)
-				pt.squidlag = max($, cur_weapon:get(pt,"squidlag"))
-				pt.justfired = true
-				pt.anglefix = pt.cooldown
+				doslowdown = true
 			end
-			doslowdown = true
-		end
-		if (cur_weapon.guntype ~= WPT_DUALIES)
-			pt.dodgeroll.count = 0
-		end
-		pt.charge = 0
-		pt.maxcharged = false
-	elseif (cur_weapon.guntype == WPT_CHARGER)
-		local charge_sound = cur_weapon:get(pt,"charging_sound", p)
-		local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound", p)
-		local charge_time = cur_weapon:get(pt,"chargetime")
-		if pt.fireheld and (pt.cooldown == 0)
-			doslowdown = true
-			if not pt.charge
-				S_StartSound(nil, cur_weapon.charge_sound, p)
-				S_StartSound(me, charge_sound)
-				pt.oldinktank = pt.inktank
-				pt.oldinkanim = pt.oldinktank
+			if (cur_weapon.guntype ~= WPT_DUALIES)
+				pt.dodgeroll.count = 0
 			end
-			
-			local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "inkcost")+1)
-			local slowcharge = lowink
-			if (me.jumptime and cur_weapon:get(pt,"slowwhenjumping"))
-			or lowink
-				S_StopSoundByID(me, charge_sound)
-				if (pt.wasfastcharging or pt.charge == 0)
-				and pt.charge < charge_time
-					S_StartSound(me, slow_charge_sound)
-				end
-				slowcharge = true
-			elseif S_SoundPlaying(me, slow_charge_sound)
-			and (slow_charge_sound ~= charge_sound)
-				S_StopSoundByID(me, slow_charge_sound)
-				if pt.charge <= charge_time
-					S_StartSound(me, charge_sound)
-				end
-			end
-			
-			if lowink
-				Paint.HUD:lowInkWarning(p, TR/2)
-			end
-			local step = FU
-			if (slowcharge)
-				step = $ / 3
-			end
-			pt.charge = min($ + step, charge_time)
-			if pt.charge >= charge_time
-				if not pt.maxcharged
-					S_StartSound(nil, cur_weapon.charged_sound, p)
-					pt.justcharged = true
-					pt.maxcharged = true
-				end
-				S_StopSoundByID(me, charge_sound)
-				S_StopSoundByID(me, slow_charge_sound)
-			end
-			local mincost = cur_weapon:get(pt,"mininkcost")
-			local chargeprogress = min(FixedDiv(pt.charge, cur_weapon.chargetime), FU)
-			pt.inkqueue = mincost + FixedMul(cur_weapon:get(pt,"inkcost") - mincost, chargeprogress)
-			pt.wasfastcharging = not slowcharge
-			
-			pt.anglefix = max($, 1)
-		end
-		if not pt.fireheld
-		and (p.lastbuttons & BT_ATTACK)
-		and (pt.charge)
-			pt.charge = min($, charge_time)
-			Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 			pt.charge = 0
 			pt.maxcharged = false
-			pt.wasfastcharging = true
-			S_StopSoundByID(me, charge_sound)
-			S_StopSoundByID(me, slow_charge_sound)
+		elseif (cur_weapon.guntype == WPT_CHARGER)
+			local charge_sound = cur_weapon:get(pt,"charging_sound", p)
+			local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound", p)
+			local charge_time = cur_weapon:get(pt,"chargetime")
+			if pt.fireheld and (pt.cooldown == 0)
+				doslowdown = true
+				if not pt.charge
+					S_StartSound(nil, cur_weapon.charge_sound, p)
+					S_StartSound(me, charge_sound)
+					pt.oldinktank = pt.inktank
+					pt.oldinkanim = pt.oldinktank
+				end
+				
+				local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "inkcost")+1)
+				local slowcharge = lowink
+				if (me.jumptime and cur_weapon:get(pt,"slowwhenjumping"))
+				or lowink
+					S_StopSoundByID(me, charge_sound)
+					if (pt.wasfastcharging or pt.charge == 0)
+					and pt.charge < charge_time
+						S_StartSound(me, slow_charge_sound)
+					end
+					slowcharge = true
+				elseif S_SoundPlaying(me, slow_charge_sound)
+				and (slow_charge_sound ~= charge_sound)
+					S_StopSoundByID(me, slow_charge_sound)
+					if pt.charge <= charge_time
+						S_StartSound(me, charge_sound)
+					end
+				end
+				
+				if lowink
+					Paint.HUD:lowInkWarning(p, TR/2)
+				end
+				local step = FU
+				if (slowcharge)
+					step = $ / 3
+				end
+				pt.charge = min($ + step, charge_time)
+				if pt.charge >= charge_time
+					if not pt.maxcharged
+						S_StartSound(nil, cur_weapon.charged_sound, p)
+						pt.justcharged = true
+						pt.maxcharged = true
+					end
+					S_StopSoundByID(me, charge_sound)
+					S_StopSoundByID(me, slow_charge_sound)
+				end
+				local mincost = cur_weapon:get(pt,"mininkcost")
+				local chargeprogress = min(FixedDiv(pt.charge, cur_weapon.chargetime), FU)
+				pt.inkqueue = mincost + FixedMul(cur_weapon:get(pt,"inkcost") - mincost, chargeprogress)
+				pt.wasfastcharging = not slowcharge
+				
+				pt.anglefix = max($, 1)
+			end
+			if not pt.fireheld
+			and (p.lastbuttons & BT_ATTACK)
+			and (pt.charge)
+				pt.charge = min($, charge_time)
+				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+				pt.charge = 0
+				pt.maxcharged = false
+				pt.wasfastcharging = true
+				S_StopSoundByID(me, charge_sound)
+				S_StopSoundByID(me, slow_charge_sound)
+			end
+			Paint:chargerSightline(p)
 		end
-		Paint:chargerSightline(p)
 	end
 	--print("lag", pt.firewait, pt.endlag, pt.cooldown, "firerate = "..cur_weapon:get(pt,"firerate"))
 	

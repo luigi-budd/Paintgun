@@ -123,9 +123,11 @@ function Paint:initPlayer(p)
 		forwardmove = 0, sidemove = 0,buttons = 0,
 		
 		jumpheld = 0,
+		spinheld = 0,
 		fireheld = 0,
 		firewait = 0,
 		justfired = false,
+		nofiring = false,
 		cooldown = 0,
 		
 		-- percentage
@@ -227,6 +229,7 @@ function Paint:resetPlayer(p)
 	pt.charge = 0
 	pt.maxcharged = false
 	pt.justcharged = false
+	pt.nofiring = false
 	pt.fireheld = 0
 	pt.firewait = 0
 	pt.endlag = 0
