@@ -467,7 +467,7 @@ addHook("PlayerThink",function(p)
 		
 		if (p.cmd.buttons & BT_SPIN)
 		and not ((pt.endlag or pt.shieldlag or pt.firewait or pt.cooldown or pt.justfired or (pt.charge ~= 0))
-		or (pt.fireheld and pt.cooldown <= 0))
+		or (pt.cooldown))
 		and (p.charability2 == CA2_SQUIDFORM)
 		and not (pt.dodgeroll.tics or pt.dodgeroll.getup)
 		and not (pt.squidlag)
@@ -1093,7 +1093,7 @@ addHook("JumpSpecial",function(p)
 	if not (pt) then return end
 	if not pt.active then return end
 	if (pt.squidtime) then return end
-	if pt.firewait then return true; end
+	if pt.firewait then return end
 	
 	local dd = pt.dodgeroll
 	if (dd.tics or dd.getup) then return true; end

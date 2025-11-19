@@ -395,12 +395,13 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 			end
 			
 			S_StartSound(me, sfx_pt_dr0, sfx_pt_dr3)
+			pt.oldinktank = min(max(pt.oldinkanim, pt.inktank), 100*FU)
 			return
 		end
 	end
 	
 	if not pt.calledbacks.onfire
-		pt.oldinktank = max(pt.oldinkanim, pt.inktank)
+		pt.oldinktank = min(max(pt.oldinkanim, pt.inktank), 100*FU)
 		if pt.maxinkdelay == 0
 		and not pt.fireheld
 			pt.oldinkanim = pt.oldinktank
