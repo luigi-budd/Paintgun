@@ -4,7 +4,6 @@ CP.Num = 0
 CP.Mode = false
 CP.ID = {}
 CP.TeamCapAmt = {0,0}
-CP.LeadCapPlr = nil
 CP.LeadCapAmt = 0
 CP.Active = false
 CP.Capturing = false
@@ -33,11 +32,8 @@ end
 CP.ThinkFrame = function(mo)
 	if not (gametype == GT_PAINTCP and CP.Mode) then return end
 	if leveltime < TR then return end
-	if not (G_GametypeHasTeams()) and (CP.LeadCapAmt > 0 and not(CP.LeadCapPlr != nil and CP.LeadCapPlr.valid and CP.LeadCapPlr.playerstate == PST_LIVE and CP.LeadCapPlr.mo and CP.LeadCapPlr.mo.valid)) then
-		CP.RefreshLeadCapPlr()
-	end
-	
 	if CP.Active == true then return end
+	
 	//Countdown to activate capture point
 	CP.Timer = $-1
 	if CP.Timer == TICRATE*10 then
@@ -54,11 +50,10 @@ end
 CP.RefreshPoints = function()
 	CP.TeamCapAmt[1] = 0
 	CP.TeamCapAmt[2] = 0
-	CP.LeadCapPlr = nil
 	CP.LeadCapAmt = 0
 	CP.Blocked = false
 	CP.Capturing = false
-	for player in players.iterate()
+	for player in players.iterate do
 		player.captureamount = 0
 		player.capturing = 0
 	end
@@ -75,13 +70,13 @@ end
 local function shuffle(set)
 	local sh = {}
 	local size = #set
-	for n = 1,size
-		while sh[n] == nil 
+	for n = 1,size do
+		while sh[n] == nil do
 			local r = P_RandomRange(1,size)
 			sh[n] = set[r]
 			set[r] = nil
 		end
-	end		
+	end
 	dprint("Shuffled "..size.." indices")
 	return sh
 end
@@ -92,12 +87,11 @@ end
 
 CP.BackupGenerate = function()
 	//Spawning a single backup CP at the player 1 spawn, in case something has gone wrong with the map or mode
-	for mapthing in mapthings.iterate
+	for mapthing in mapthings.iterate do
 		if mapthing.type != 1 then continue end
-		local fu = FRACUNIT
-		local x = mapthing.x*fu
-		local y = mapthing.y*fu
-		local z = mapthing.z*fu
+		local x = mapthing.x*FU
+		local y = mapthing.y*FU
+		local z = mapthing.z*FU
 		local subsector = R_PointInSubsector(x,y)
 		if subsector.valid and subsector.sector then
 			z = $+subsector.sector.floorheight
@@ -129,10 +123,10 @@ CP.Generate = function()
 	local sp_inf = CV.CPSpawnInfinity.value
 	local n = 1
 	dprint("Checking map things for Control Point spawn placement")
-	for mapthing in mapthings.iterate
+	for mapthing in mapthings.iterate do
 		local t = mapthing.type
 		//Range of types
-		if not(t >= 330 and t <= 335) and not(t == 303) then continue end
+		if not (t >= 330 and t <= 335) and not (t == 303) then continue end
 		//CVar checks
 		if t==303 and not(sp_inf) then continue end
 		if t==330 and not(sp_bounce) then continue end
@@ -142,10 +136,9 @@ CP.Generate = function()
 		if t==334 and not(sp_scatter) then continue end
 		if t==335 and not(sp_grenade) then continue end
 		dprint("Spawning for thing type "..t)
-		local fu = FRACUNIT
-		local x = mapthing.x*fu
-		local y = mapthing.y*fu
-		local z = mapthing.z*fu
+		local x = mapthing.x*FU
+		local y = mapthing.y*FU
+		local z = mapthing.z*FU
 		local subsector = R_PointInSubsector(x,y)
 		if subsector.valid and subsector.sector then
 			z = $+subsector.sector.floorheight
@@ -217,7 +210,8 @@ end
 CP.MapThingSpawn = function(mo,thing)
 	if not (gametype == GT_PAINTCP) then
 		P_RemoveMobj(mo)
-	return end
+		return
+	end
 	CP.ID[#CP.ID+1] = mo
 	local settings = thing.options&15
 	local parameters = thing.extrainfo
@@ -240,8 +234,7 @@ CP.MapThingSpawn = function(mo,thing)
 	if settings&2 then flip = 1 end //Flip flag
 	if settings&4 then n = -1 end //Special flag
 	mo.cp_height = CP.CalcHeight(n)
-	local fu = FRACUNIT
-	dprint("Control Point ID #"..#CP.ID..": radius "..mo.cp_radius/fu..", height "..mo.cp_height/fu..", flip "..flip..", meter "..mo.cp_meter)
+	dprint("Control Point ID #"..#CP.ID..": radius "..mo.cp_radius/FU..", height "..mo.cp_height/FU..", flip "..flip..", meter "..mo.cp_meter)
 end
 
 local function Wrap(num,size)
@@ -252,8 +245,8 @@ local function Wrap(num,size)
 end
 
 CP.ActivatePoint = function()
-	if not(CP.Num) then CP.Num = 1 end 
-	if not(CP.ID[CP.Num] and CP.ID[CP.Num].valid) then
+	if not CP.Num then CP.Num = 1 end 
+	if not (CP.ID[CP.Num] and CP.ID[CP.Num].valid) then
 		print("\x82 WARNING:\x80 Next control point is invalid! Attempting to spawn backup CP...")
 		local mo = CP.BackupGenerate()
 		if mo != nil then
@@ -273,32 +266,21 @@ CP.ActivatePoint = function()
 end
 
 CP.SeizePoint = function()
-	if G_GametypeHasTeams() then	//Teams
-		local victor = 0
-		if CP.TeamCapAmt[1] > CP.TeamCapAmt[2] then
-			victor = 1
-			print("\x85 Red Team captured the Control Point!")
-			redscore = $+1
-		end
-		if CP.TeamCapAmt[2] > CP.TeamCapAmt[1] then
-			victor = 2			
-			print("\x84 Blue Team captured the Control Point!")
-			bluescore = $+1
-		end
-		if consoleplayer and consoleplayer.ctfteam == victor then
-			S_StartSound(nil,CP.WinSFX)
-		else
-			S_StartSound(nil,CP.LoseSFX)
-		end
-	elseif CP.LeadCapPlr and CP.LeadCapPlr.valid then //Free for all
-		print(CP.LeadCapPlr.name.." captured the Control Point!")
-		P_AddPlayerScore(CP.LeadCapPlr,CV.CPBonus.value)
-		
-		if consoleplayer == CP.LeadCapPlr then
-			S_StartSound(nil,CP.WinSFX)
-		else
-			S_StartSound(nil,CP.LoseSFX)
-		end
+	local victor = 0
+	if CP.TeamCapAmt[1] > CP.TeamCapAmt[2] then
+		victor = 1
+		print("\x85 Red Team captured the Control Point!")
+		redscore = $+1
+	end
+	if CP.TeamCapAmt[2] > CP.TeamCapAmt[1] then
+		victor = 2			
+		print("\x84 Blue Team captured the Control Point!")
+		bluescore = $+1
+	end
+	if consoleplayer and consoleplayer.ctfteam == victor then
+		S_StartSound(nil,CP.WinSFX)
+	else
+		S_StartSound(nil,CP.LoseSFX)
 	end
 	CP.RefreshPoints()
 	CP.Active = false
@@ -317,14 +299,6 @@ CP.PointHover = function(mo,floor,flip,height)
 	end
 	if mo.z < hover_amount+floor then
 		mo.momz = min(hover_speed,$+hover_accel)
-	end
-end
-
-local function randomcolor(mo) 
-	if G_GametypeHasTeams() then
-		return mo.color
-	else
-		return P_RandomRange(1,113)
 	end
 end
 
@@ -350,26 +324,23 @@ local function visual_cp(mo,floor,radius,fuse,quadrants,color,flip)
 end
 
 CP.ActiveThinker = function(mo,floor,flip,ceil,radius,height,meter)	
-	//Do Aesthetic
-	mo.flags2 = $&~MF2_SHADOW
-	
 	//Visuals
+	mo.flags2 = $&~MF2_SHADOW
 	mo.angle = $+ANG1*2
-	visual_cp(mo,floor,radius,16,false,randomcolor(mo),flip)
-	visual_cp(mo,floor,radius,16,false,randomcolor(mo),flip)
+	visual_cp(mo,floor,radius,16,false,mo.color,flip)
+	visual_cp(mo,floor,radius,16,false,mo.color,flip)
 	visual_cp(mo,floor+flip*height/4,radius/8,2,true,mo.color,flip)
 	visual_cp(mo,floor+flip*height/8,radius/16,2,true,mo.color,flip)
-	visual_cp(mo,flip*height+floor,radius,16,false,randomcolor(mo),flip)
+	visual_cp(mo,flip*height+floor,radius,16,false,mo.color,flip)
 	visual_cp(mo,flip*height*3/4+floor,radius/8,2,true,mo.color,flip)
 	visual_cp(mo,flip*height*7/8+floor,radius/16,2,true,mo.color,flip)
-
 	mo.color = SKINCOLOR_JET
-
+	
 	//Get capturers
 	local team = {0,0}
 	local activeplayers = 0
 	local captureplayers = 0
-	for player in players.iterate()
+	for player in players.iterate do
 		player.capturing = 0
 		if player.spectator then continue end
 		activeplayers = $+1
@@ -383,13 +354,10 @@ CP.ActiveThinker = function(mo,floor,flip,ceil,radius,height,meter)
 		if flip == 1 and (zpos1 > height or zpos2 < 0) then continue end
 		if flip == -1 and (zpos2 < -height or zpos1 > 0)  then continue end
 		player.capturing = 1
-		local t = player.ctfteam
 		captureplayers = $+1
-		if t then
-			team[t] = $+1
-		end
+		team[player.ctfteam] = $+1
 	end
-	if G_GametypeHasTeams() and team[1] > 0 and team[2] > 0 then	//Contested point
+	if team[1] > 0 and team[2] > 0 then	//Contested point
 		if team[1] != team[2] then //Uneven player amounts
 			CP.Blocked = false
 			//Color flash
@@ -406,7 +374,7 @@ CP.ActiveThinker = function(mo,floor,flip,ceil,radius,height,meter)
 			else
 				CP.TeamCapAmt[2] = $+team[2]-team[1]
 			end
-			for player in players.iterate
+			for player in players.iterate do
 				if player.capturing and not(leveltime&7) then
 					P_AddPlayerScore(player,1)
 				end
@@ -420,10 +388,9 @@ CP.ActiveThinker = function(mo,floor,flip,ceil,radius,height,meter)
 			end
 		end
 		CP.LeadCapAmt = max(CP.TeamCapAmt[1],CP.TeamCapAmt[2])
-
-	elseif G_GametypeHasTeams() then	// Team capturing
+	else // Team capturing
 		CP.Blocked = false
-		for t = 1,2
+		for t = 1,2 do
 			local amt = team[t]
 			CP.TeamCapAmt[t] = $+amt
 			if team[1] > team[2] then
@@ -432,34 +399,13 @@ CP.ActiveThinker = function(mo,floor,flip,ceil,radius,height,meter)
 			if team[2] > team[1] then
 				mo.color = SKINCOLOR_BLUE
 			end
-			for player in players.iterate
-				if player.capturing and not(leveltime&3) then
+			for player in players.iterate do
+				if player.capturing and not (leveltime&3) then
 					P_AddPlayerScore(player,1)
 				end
 			end
 		end
 		CP.LeadCapAmt = max(CP.TeamCapAmt[1],CP.TeamCapAmt[2])
-
-	else //Free for all capture
-		CP.Blocked = false
-		for player in players.iterate()
-			if player.capturing then
-				local amt = 2
--- 				local amt = max(1,4/captureplayers)
-				player.captureamount = $+amt
-				CP.LeadCapAmt = max($,player.captureamount)
-				if player.captureamount == CP.LeadCapAmt and CP.LeadCapPlr != player then
-					CP.LeadCapPlr = player
-					print(player.name.." has taken the capture lead!")
-				end
-				if player == CP.LeadCapPlr then
-					mo.color = player.skincolor
-				end
-				if not(leveltime&3)
-					P_AddPlayerScore(player,amt)
-				end
-			end
-		end
 	end
 	
 	//Update capturing state
@@ -469,7 +415,7 @@ CP.ActiveThinker = function(mo,floor,flip,ceil,radius,height,meter)
 	elseif CP.Capturing == false then
 		CP.Capturing = true
 		S_StartSound(mo,CP.StartCaptureSFX)
-	elseif not(S_SoundPlaying(mo,CP.StartCaptureSFX)) then
+	elseif not S_SoundPlaying(mo,CP.StartCaptureSFX) then
 		if CP.SFXtic == 1 then
 			S_StartSound(mo,CP.CapturingSFX)
 		end
@@ -484,23 +430,18 @@ CP.ActiveThinker = function(mo,floor,flip,ceil,radius,height,meter)
 		CP.SeizePoint()
 	end
 
-	if captureplayers and not(CP.Blocked) then
+	if captureplayers and not CP.Blocked then
 		local interval = 3
--- 		if G_GametypeHasTeams() then
--- 			interval = 3
--- 		else
--- 			interval = min(4,captureplayers+1)
--- 		end
-		if not(leveltime&(1<<interval - 1)) then
-			for player in players.iterate
-				if not(player.capturing) then continue end
+		if not (leveltime & (1<<interval - 1)) then
+			for player in players.iterate do
+				if not player.capturing then continue end
 				local b = P_SpawnMobj(mo.x,mo.y,mo.z,MT_CPBONUS)
 				if b and b.valid then
 					b.target = player.mo
 					b.tracer = mo
 					b.fuse = 10
 					b.extravalue1 = b.fuse
-					b.color = randomcolor(mo)
+					b.color = mo.color
 					b.scale = $*2
 				end
 			end
@@ -560,30 +501,20 @@ CP.PointThinker = function(mo)
 	end
 end
 
-CP.RefreshLeadCapPlr = function(mo)
-	CP.LeadCapPlr = nil
-	CP.LeadCapAmt = 0
-	for player in players.iterate()
-		if player.playerstate == PST_LIVE and player.captureamount > CP.LeadCapAmt then
-			CP.LeadCapPlr = player
-			CP.LeadCapAmt = player.captureamount
-		end
-	end
-end
-
 CP.SphereThinker = function(mo)
 	local tc = mo.tracer
 	local tg = mo.target
 	local ev = mo.extravalue1
 	local fs = mo.fuse
-	if not(tc and tc.valid and tg and tg.valid and ev and fs) then
-		if fs < ev and fs&1 then 
-			mo.flags2 = $|MF2_SHADOW 
+	if not (tc and tc.valid and tg and tg.valid and ev and fs) then
+		if fs < ev and fs&1 then
+			mo.flags2 = $|MF2_SHADOW
 			mo.scale = FRACUNIT*fs/ev
 		else
 			mo.flags2 = $&~MF2_SHADOW
 		end
-	return end
+		return
+	end
 	local frac = FRACUNIT*fs/ev
 	local x = FixedLerp(tg.x,tc.x,frac)
 	local y = FixedLerp(tg.y,tc.y,frac)
