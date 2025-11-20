@@ -2,16 +2,16 @@ local CP = SplatZones
 -- Net
 local function sync(net)
 	//Control Point
-	CP.Num			= network($)
-	CP.Mode	  	 	= network($)
-	CP.LeadCapPlr 	= network($)
-	CP.LeadCapAmt 	= network($)
-	CP.Active	 	= network($)
-	CP.Capturing  	= network($)
-	CP.Blocked   	= network($)
-	CP.Timer	  	= network($)
-	CP.ID		 	= network($)
-	CP.TeamCapAmt 	= network($)
+	CP.Num			= net($)
+	CP.Mode	  	 	= net($)
+	CP.LeadCapPlr 	= net($)
+	CP.LeadCapAmt 	= net($)
+	CP.Active	 	= net($)
+	CP.Capturing  	= net($)
+	CP.Blocked   	= net($)
+	CP.Timer	  	= net($)
+	CP.ID		 	= net($)
+	CP.TeamCapAmt 	= net($)
 end
 addHook("NetVars",sync)
 
