@@ -4,7 +4,6 @@ local function sync(net)
 	//Control Point
 	CP.Num			= net($)
 	CP.Mode	  	 	= net($)
-	CP.LeadCapPlr 	= net($)
 	CP.LeadCapAmt 	= net($)
 	CP.Active	 	= net($)
 	CP.Capturing  	= net($)
@@ -29,3 +28,4 @@ addHook("MobjThinker",CP.PointThinker,MT_CONTROLPOINT)
 addHook("MobjThinker",CP.SphereThinker,MT_CPBONUS)
 addHook("MobjRemoved",onBonusRmve,MT_CPBONUS)
 addHook("ThinkFrame",CP.ThinkFrame)
+
