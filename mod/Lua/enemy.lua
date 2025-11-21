@@ -9,7 +9,9 @@ addHook("MobjDamage",function(mo, inf,sor, damage)
 	if not (mo.flags & (MF_ENEMY|MF_BOSS)) then return end
 	
 	local baseinfo = mobjinfo[basetype]
-	mo.paint_maxhp = FixedDiv(mo.info.radius + mo.info.height, baseinfo.height + baseinfo.radius) * 120
+	if mo.paint_maxhp == nil
+		mo.paint_maxhp = FixedDiv(mo.info.radius + mo.info.height, baseinfo.height + baseinfo.radius) * 120
+	end
 	if mo.paint_hp == nil
 	and not mo.paint_resist
 		mo.paint_hp = mo.paint_maxhp
@@ -43,6 +45,13 @@ addHook("MobjDamage",function(me, inf,sor, damage)
 	if not (sor and sor.valid) then return end
 	if not (inf and inf.valid) then return end
 	if not (sor.flags & (MF_ENEMY|MF_BOSS|MF_MISSILE|MF_FIRE|MF_PAIN)) then return end
+	
+	if (inf.flags & (MF_ENEMY|MF_BOSS|MF_MISSILE|MF_FIRE|MF_PAIN))
+	and (inf.paint_touchpain ~= nil)
+		if inf.paint_touchpain == false
+			return true
+		end
+	end
 	
 	if (inf.flags & MF_MISSILE)
 		damage = $ * 3

@@ -41,7 +41,8 @@ rawset(_G,"Paint_canHurtEnemy",function(p, mobj,flags,exclude, nobs)
 	if (mobj.type == MT_EGGMAN_BOX or mobj.type == MT_EGGMAN_GOLDBOX) then flingable = false end
 	
 	if (mobj.type == MT_BRELLA_SHIELD)
-		if (p.mo == mobj.tracer)
+		if (p and p.valid)
+		and (p.mo == mobj.tracer)
 			return false
 		end
 		if (mobj.tracer and mobj.tracer.valid)

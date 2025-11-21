@@ -79,7 +79,7 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	else
 		pt.holsteranim = max($-1, 0)
 	end
-	local handoffset = {Paint:getWeaponOffset(me,fireangle - ANGLE_90, cur_weapon, dualieflip, false)}
+	local handoffset = {Paint:getWeaponOffset(me,pt,fireangle - ANGLE_90, cur_weapon, dualieflip, false)}
 	local zoffset = (41*me.height)/48 - (12 * me.scale)
 	teleport(wepmo,
 		me.x + handoffset[1] + me.momx + offx,
@@ -746,7 +746,7 @@ addHook("PlayerThink",function(p)
 			if pt.fireheld and (pt.cooldown == 0)
 				doslowdown = true
 				if not pt.charge
-					S_StartSound(nil, cur_weapon.charge_sound, p)
+					S_StartSound(nil, cur_weapon.charge_sound)
 					S_StartSound(me, charge_sound)
 					pt.oldinktank = pt.inktank
 					pt.oldinkanim = pt.oldinktank

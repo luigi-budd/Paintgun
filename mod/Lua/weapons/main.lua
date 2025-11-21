@@ -220,11 +220,10 @@ end
 --returns x,y
 -- DONT FORGET to wrap the results, `{Paint:getWeaponOffset(me, me.angle - ANGLE_90, wep)}` for example
 -- aimit: use shotoffset for aimProjectile, handoffset otherwise
-function Paint:getWeaponOffset(me, angle, cur_weapon, doflip, aimit)
-	local pt = me.player.paint
+function Paint:getWeaponOffset(me,pt, angle, cur_weapon, doflip, aimit)
 	local flipped = false
 	local offset = (cur_weapon.guntype == WPT_DUALIES and aimit) and cur_weapon:get(pt,"shotoffset") or cur_weapon:get(pt,"handoffset")
-	if ((cur_weapon.guntype == WPT_DUALIES) and (me.player.paint.shotsfired % 2) and (doflip == nil))
+	if ((cur_weapon.guntype == WPT_DUALIES) and (pt.shotsfired % 2) and (doflip == nil))
 	or doflip
 		angle = $ - ANGLE_180
 		flipped = true
@@ -260,8 +259,8 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	end
 	mom_vec = $ or {x = 0,y = 0}
 	
-	local handoffset2 = {Paint:getWeaponOffset(me,angle - ANGLE_90, weap, dualieflip, false)}
-	local handoffset  = {Paint:getWeaponOffset(me,angle - ANGLE_90, weap, dualieflip, true)}
+	local handoffset2 = {Paint:getWeaponOffset(me,pt,angle - ANGLE_90, weap, dualieflip, false)}
+	local handoffset  = {Paint:getWeaponOffset(me,pt,angle - ANGLE_90, weap, dualieflip, true)}
 	handoffset[4], handoffset[5] = handoffset[1], handoffset[2]
 	
 	local range = FixedMul(chargerdupe and (weap.range) or (weap:get(pt,"range")), me.scale)
@@ -383,7 +382,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		Paint.HUD:lowInkWarning(p, pt.cooldown)
 		
 		if not canfire
-			local handoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, nil, false)}
+			local handoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, nil, false)}
 			pt.anglefix = pt.cooldown
 			if (pt.weaponmobj and pt.weaponmobj.valid)
 			and not handoffset[3] -- flipped
@@ -425,7 +424,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.lifespan = 0
 	proj.falloff = FixedMul(P_RandomFixedRange(-cur_weapon.falloff[1], cur_weapon.falloff[2]), proj.scale)
 	local mom_vec = {x = doinertia and me.momx or 0,y = doinertia and me.momy or 0}
-	local handoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, nil, false)}
+	local handoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, nil, false)}
 	-- fire from the center
 	if (cur_weapon.guntype == WPT_BRELLA)
 		handoffset[1] = 0
@@ -502,6 +501,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		pt.cooldown = (firerate + (FixedMul((cur_weapon.maxfirerate - firerate)*FU, chargeprogress)/FU)) + 1
 		pt.endlag = pt.cooldown
 		
+		proj.falloff = FixedMul(cur_weapon.falloff[2], proj.scale)
 		proj.progress = chargeprogress
 		if (chargeprogress >= FU)
 			proj.damage = cur_weapon.maxdamage

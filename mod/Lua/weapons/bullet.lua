@@ -700,8 +700,8 @@ addHook("MobjThinker",function(splat)
 		else
 			splat.z = P_FloorzAtPos(splat.x,splat.y,splat.z,splat.height)
 		end
+		if not (splat and splat.valid) then return end
 	end
-	if not (splat and splat.valid) then return end
 	
 	if not (splat.extravalue1)
 		splat.extravalue1 = 1

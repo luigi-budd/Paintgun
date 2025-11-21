@@ -2,6 +2,7 @@
 local CV = Paint.CV
 
 local function isFriendlyFire(p1,p2)
+	if not (p1 and p1.valid and p2 and p2.valid) then return false; end
 	if G_GametypeHasTeams()
 		return p1.ctfteam == p2.ctfteam
 	elseif G_TagGametype()
@@ -79,7 +80,7 @@ function Paint:killPlayer(p, shot, sorp, inf)
 	else
 		deathcolor = (sorp and sorp.valid) and self:getPlayerColor(sorp) or ColorOpposite(self:getPlayerColor(p))
 	end
-	for i = 0,P_RandomRange(30,50)
+	for i = 0,30
 		local angle = FixedAngle(P_RandomFixedRange(0,360))
 		local drop = P_SpawnMobjFromMobj(me,0,0,FU, MT_PAINT_SHOT)
 		if drop and drop.valid
@@ -206,7 +207,7 @@ function Paint:chargerSightline(p)
 		y = FixedMul(sin(angle), cos(p.aiming)),
 		z = sin(p.aiming)
 	}
-	local offsets = {Paint:getWeaponOffset(me, angle - ANGLE_90, wep, false)}
+	local offsets = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, wep, false)}
 	local x,y,z =	me.x + offsets[1] + me.momx,
 					me.y + offsets[2] + me.momy,
 					me.z + (41*(me.height)/48 - 8*me.scale) + me.momz
@@ -336,11 +337,18 @@ end
 
 -- checks mo2 against mo1 if they are on the same team
 function Paint:mobjsOnTeam(mo1, mo2)
-	if not (mo2.player and mo2.player.valid)
-		if not (mo1.player and mo1.player.valid)
-			return false
+	if not (mo1.player and mo1.player.valid)
+		if (mo2.player and mo2.player.valid)
+			return mo1.color == self:getPlayerColor(mo2.player)
+		else
+			return mo1.color == mo2.color
 		end
-		return mo2.color == self:getPlayerColor(mo1.player)
+	elseif not (mo2.player and mo2.player.valid)
+		if (mo1.player and mo1.player.valid)
+			return mo2.color == self:getPlayerColor(mo1.player)
+		else
+			return mo2.color == mo1.color
+		end
 	end
 	if (mo1.player == mo2.player) then return true; end
 	if (gametyperules & GTR_FRIENDLY)

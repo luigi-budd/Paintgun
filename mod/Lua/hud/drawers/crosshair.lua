@@ -60,7 +60,7 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 		ray.target = me
 		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		ray.weapon_id = pt.weapon_id
-		local weaponoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, dualieflip, false)}
+		local weaponoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, dualieflip, false)}
 		if (pt.turretmode and (cur_weapon.guntype == WPT_DUALIES))
 			weaponoffset[1],weaponoffset[2] = 0,0
 		end
@@ -161,7 +161,7 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		ray.target = me
 		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		ray.weapon_id = pt.weapon_id
-		local weaponoffset = {Paint:getWeaponOffset(me, angle - ANGLE_90, cur_weapon, dualieflip, false)}
+		local weaponoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, dualieflip, false)}
 		P_SetOrigin(ray,
 			me.x + weaponoffset[1],
 			me.y + weaponoffset[2],
