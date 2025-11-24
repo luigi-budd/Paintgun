@@ -362,7 +362,7 @@ end
 local old = 0
 Salmon.startEnemyWave = function()
 	local rs = Salmon.roundstatus
-	local spawn = FixedMul(50*FU, rs.hazard)/FU
+	local spawn = FixedMul(40*FU, rs.hazard)/FU
 	
 	rs.tospawn = $ + P_RandomRange(max(spawn * 2/3, 1), spawn)
 	
@@ -468,7 +468,6 @@ addHook("ThinkFrame",do
 		local count = Salmon.countPlayers()
 		if count.playing < 8
 			local frac = FixedDiv(count.playing*FU, 8*FU)
-			frac = clamp(0, ease.outsine($, 0, FU)*3, FU)
 			print(("adjust: %f"):format(frac*100))
 			interval = FixedDiv($, frac)
 			print(("new:    %f"):format(FixedDiv(interval, TR*FU)))
