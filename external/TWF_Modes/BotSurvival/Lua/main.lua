@@ -405,7 +405,7 @@ Salmon.spawnEnemy = function()
 	local chance = FU/2
 	-- under quota?
 	if (rs.carriersspawned*3 <= rs.quota * 7/5)
-		chance = FU*12/10 - FixedDiv(rs.carriersspawned*3*FU, (rs.quota * 7/5)*FU)
+		chance = FU*12/10 - FixedDiv((rs.carriersspawned*3*FU) or FU, ((rs.quota or 1) * 7/5)*FU)
 	end
 	
 	if P_RandomChance(chance / 3)
@@ -1060,6 +1060,7 @@ end,MT_PAINT_ENEMY)
 addHook("NetVars",function(n)
 	Salmon.spawnpoints = n($)
 	Salmon.waypoints = n($)
+	Salmon.playerspawns = n($)
 	Salmon.playercolor = n($)
 	Salmon.roundstatus = n($)
 end)
