@@ -29,7 +29,7 @@ addHook("HUD",function(v,p)
 	v.drawString(x, y, "Hazard level:", flags, "center")
 	v.drawString(x, y + 10,
 		("%.0f%% \x1d %.0f%%"):format(
-			FixedDiv(rs.hazard - Salmon.const.HAZARD_INCREASE, FU/2)*100,
+			FixedDiv(rs.oldhazard, FU/2)*100,
 			FixedDiv(rs.hazard, FU/2)*100
 		), flags, "center"
 	)

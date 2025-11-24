@@ -33,6 +33,7 @@ for i = 0,12
 	}
 end
 sfxinfo[freeslot("sfx_pt_noi")].caption = "Low ink!"
+sfxinfo[freeslot("sfx_pt_sig")].caption = "Signal"
 
 sfxinfo[freeslot("sfx_pt_toh")].caption = "/"
 sfxinfo[freeslot("sfx_pt_tos")].caption = "/"
@@ -201,6 +202,9 @@ function Paint:initPlayer(p)
 		hidden = false,
 		wasinsquid = 0,
 		
+		signaltime = 0,
+		signaltype = 0,
+		
 		paintoverlay = nil,
 		teammates = nil,
 		
@@ -274,8 +278,14 @@ end
 Paint.ININK_FRIENDLY = -1
 Paint.ININK_ENEMY = 1
 Paint.MAX_HOLSTER = 5
-Paint.SQUID_HEIGHT = 22*FU
+Paint.SQUID_HEIGHT = 25*FU
 Paint.CANOPY_ANIM = 6
+
+Paint.SIGNAL_TIME = 3*TR
+Paint.SIGNAL_BOOYAH		= 1
+Paint.SIGNAL_THISWAY	= 2
+Paint.SIGNAL_OUCH		= 3
+Paint.SIGNAL_HELP		= 3
 
 dofile("cvars/main.lua")
 dofile("lib/lib.lua")

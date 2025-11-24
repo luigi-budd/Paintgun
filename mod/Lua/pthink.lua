@@ -1178,6 +1178,49 @@ addHook("PostThinkFrame",do for p in players.iterate
 		cb.onfire = false
 	end
 	
+	-- signals
+	if (pt.signaltime) then pt.signaltime = $ - 1; end
+	if (p.cmd.buttons & (BT_CUSTOM1|BT_CUSTOM2)
+	and not (p.lastbuttons & (BT_CUSTOM1|BT_CUSTOM2)))
+	and not pt.signaltime
+		pt.signaltime = Paint.SIGNAL_TIME
+		local type
+		local sfx
+		
+		if p.cmd.buttons & BT_CUSTOM1
+			-- This way!
+			if (me.health and not p.lifesaver)
+				type = Paint.SIGNAL_THISWAY
+				sfx = sfx_s3kc1s
+			else
+				-- Help!
+				if (p.lifesaver)
+					type = Paint.SIGNAL_HELP
+					sfx = sfx_s3kd6s
+				-- Ouch...
+				else
+					type = Paint.SIGNAL_OUCH
+					sfx = sfx_kc3e
+				end
+			end
+		-- Booyah!
+		elseif p.cmd.buttons & BT_CUSTOM2
+			type = Paint.SIGNAL_BOOYAH
+			sfx = sfx_ncspec
+		end
+		
+		pt.signaltype = type
+		for play in players.iterate
+			if play.spectator then continue end
+			if not (play.realmo and play.realmo.valid) then continue end
+			if not Paint:mobjsOnTeam(p.realmo, play.realmo) then continue end
+			
+			S_StartSound(nil, sfx, play)
+			Paint.HUD:addSignal(p, play, type)
+		end
+		S_StartSound(nil, sfx_pt_sig, p)
+	end
+	
 	if not (me and me.valid and me.health)
 		local overlay = pt.paintoverlay
 		if (overlay and overlay.valid)

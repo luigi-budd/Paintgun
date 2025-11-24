@@ -36,7 +36,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	local onscreen = true
 	if not (p and p.valid and point)
 		onscreen = false
-		return {x=0,y=0,onscreen=onscreen}
+		return {x=0,y=0,onscreen=onscreen, camAngle = 0, camAiming = 0, camPos = {x=0,y=0,z=0}}
 	end
 	
 	if (takis_custombuild and interpmobj)
@@ -216,5 +216,9 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		end
 	end
 	
-	return {x = x, y = y, scale = scale, onscreen = onscreen}
+	return {x = x, y = y, scale = scale, onscreen = onscreen,
+		camAngle = camAngle,
+		camAiming = camAiming,
+		camPos = camPos,
+	}
 end)

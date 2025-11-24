@@ -13,6 +13,7 @@ function HUD:killNotice(target)
 	if not (CV.nametags.value) then return end
 	local mo = target.realmo
 	if not (mo and mo.valid) then return end
+	if not (displayplayer and displayplayer.valid) then return end
 	
 	table.insert(HUD.memory.killtags, {
 		pos = {x=mo.x,y=mo.y,z=mo.z + mo.height/2, play = target},
@@ -21,13 +22,14 @@ function HUD:killNotice(target)
 		color = Paint:getPlayerColor(target),
 		id = (#target) + leveltime,
 		play = target,
+		friendly = Paint:mobjsOnTeam(displayplayer.realmo, mo)
 	})
 end
 
 addHook("HUD",function(v,p,cam)
 	local me = p.realmo
 	if not (me and me.valid) then return end
-	if not Paint:playerIsActive(p) then return end
+	--if not Paint:playerIsActive(p) then return end
 	local pt = p.paint
 	
 	if not (CV.nametags.value) then return end
@@ -51,7 +53,7 @@ addHook("HUD",function(v,p,cam)
 			else
 				continue
 			end
-			table.insert(tmp, {play = v, dist = dist, id = #v})
+			table.insert(tmp, {play = v, dist = dist, id = #v, friendly = Paint:mobjsOnTeam(p.realmo, v.realmo)})
 		end
 	end
 	for k,v in ipairs(HUD.memory.killtags)
@@ -62,11 +64,20 @@ addHook("HUD",function(v,p,cam)
 			name = v.name,
 			clr = v.color,
 			id = v.id,
+			
+			friendly = v.friendly
 		})
 	end
 	table.sort(tmp, function(a,b)
 		return a.dist > b.dist
 	end)
+	
+	local sci_w = (v.width() / v.dupx())
+	local sci_h = (v.height() / v.dupy())
+	local sc_w = sci_w*FU
+	local sc_h = sci_h*FU
+	local sch_w = (sci_w - BASEVIDWIDTH)*FU/2
+	local sch_h = (sci_h - BASEVIDHEIGHT)*FU/2
 	
 	local clr = Paint:getPlayerColor(p)
 	if clr == SKINCOLOR_NONE then return end
@@ -81,8 +92,45 @@ addHook("HUD",function(v,p,cam)
 		else
 			pos = play.realmo
 		end
+		
+		local wcmap = cmap
+		local wacmap = acmap
+		if (va.tag)
+			wcmap = v.getStringColormap(skincolors[va.clr].chatcolor)
+			wacmap = v.getColormap(TC_DEFAULT, va.clr)
+		end
+		
 		local pro = K_GetScreenCoords(v,p,cam, pos, {anglecliponly = true})
-		if not pro.onscreen then continue end
+		if not pro.onscreen
+			if not va.tag then continue end
+			--if not va.friendly then continue end
+			
+			local da = pro.camAngle - R_PointToAngle2(pro.camPos.x,pro.camPos.y, pos.x,pos.y)
+			local borderx = 15
+			local bordery = 15
+			local center = {
+				x = 160*FU,
+				y = 100*FU,
+			}
+			local scr = {
+				x = (160 - borderx)*FU + sch_w,
+				y = (100 - bordery)*FU + sch_h,
+			}
+			local x = center.x + FixedMul(scr.x, sin(da))
+			local y = center.y - FixedMul(scr.y, cos(da))
+			
+			v.dointerp(va.id)
+			v.drawScaled(x,y, FU/2, v.cachePatch("PAINT_KNOTICE_X"), 0, wacmap)
+			v.drawScaled(x, y,
+				FU/2,
+				v.getSpritePatch(SPR_PAINT_MISC, 20, 0, 
+					InvAngle(da) + ANGLE_90
+				),
+				0
+			)
+			v.dointerp(false)
+			continue
+		end
 		
 		if (va.tag)
 		and (va.tics >= (5*TR - ANIM))
@@ -92,13 +140,6 @@ addHook("HUD",function(v,p,cam)
 		pro.y = $ - (60 * pro.scale)
 		pro.scale = FU / 2
 		local tx = pro.x
-		
-		local wcmap = cmap
-		local wacmap = acmap
-		if (va.tag)
-			wcmap = v.getStringColormap(skincolors[va.clr].chatcolor)
-			wacmap = v.getColormap(TC_DEFAULT, va.clr)
-		end
 		
 		v.dointerp(va.id)
 		v.drawScaled(pro.x,pro.y + 12*pro.scale, pro.scale/2, v.getSpritePatch(SPR_PAINT_MISC,1,0), 0, wacmap)

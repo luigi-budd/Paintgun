@@ -5,7 +5,7 @@ states[S_PAINT_GUN_BLASTER] = {
 	tics = -1,
 	nextstate = S_PAINT_GUN_BLASTER
 }
-for i = 0,3
+for i = 0,2
 	sfxinfo[freeslot("sfx_p_s3_"..i)].caption = "Splatter"
 end
 sfxinfo[sfx_p_s3_0] = {

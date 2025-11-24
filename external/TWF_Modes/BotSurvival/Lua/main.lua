@@ -172,7 +172,8 @@ Salmon.roundstatus = {
 	roundtime = 0,
 	postround = 0,
 	
-	hazard = HAZARD_START,
+	oldhazard = HAZARD_START,
+	hazard = HAZARD_START - HAZARD_INCREASE,
 	wavenumber = 0,
 	waveclear = false,
 	failed = false,
@@ -204,14 +205,12 @@ Salmon.setupRound = function(stage)
 		end
 		
 		print(("frac: %f -> %f"):format(rs.hazard, haz))
-		local work = FixedMul(70*FU, haz)/FU
-		local count = Salmon.countPlayers()
-		if count.playing < 8
-			local frac = FixedDiv(count.playing*FU, 8*FU)
-			frac = clamp(0, ease.outsine($, 0, FU)*3, FU)
-			work = FixedMul($, frac)
+		local work = FixedMul(70*FU, haz)
+		local curve = Salmon.playerCurve()
+		if curve ~= FU
+			work = FixedMul($, curve)
 		end
-		rs.quota = work
+		rs.quota = max(work/FU, 3)
 		rs.eggsin = 0
 		
 		rs.enemiesspawned = 0
@@ -233,6 +232,7 @@ Salmon.setupRound = function(stage)
 		rs.spawncooldown = 0
 		
 		rs.postround = POST_TIME
+		rs.oldhazard = rs.hazard
 		
 		print("WAVE "..rs.wavenumber.." CLEARED: enemies spawned: "..rs.enemiesspawned.." player count: "..(Salmon.countPlayers().playing))
 	end
@@ -244,6 +244,7 @@ Salmon.resetStatus = function()
 		roundtime = 0,
 		postround = 0,
 		
+		oldhazard = HAZARD_START,
 		hazard = HAZARD_START,
 		wavenumber = 0,
 		waveclear = false,
@@ -359,6 +360,15 @@ Salmon.bossAlert = function()
 	Salmon.roundstatus.bossalert = BOSS_ALERT
 end
 
+Salmon.playerCurve = function()
+	local count = Salmon.countPlayers()
+	local frac = FU
+	if count.playing < 8
+		frac = ease.outquint(FixedDiv(count.playing*FU, 8*FU), 0, FU)
+	end
+	return frac
+end
+
 local old = 0
 Salmon.startEnemyWave = function()
 	local rs = Salmon.roundstatus
@@ -402,13 +412,16 @@ Salmon.spawnEnemy = function()
 	mobj.paint_maxhp = 110*FU
 	mobj.paint_hp = mobj.paint_maxhp
 	
-	local chance = FU/2
+	local chance = FU/5
 	-- under quota?
 	if (rs.carriersspawned*3 <= rs.quota * 7/5)
 		chance = FU*12/10 - FixedDiv((rs.carriersspawned*3*FU) or FU, ((rs.quota or 1) * 7/5)*FU)
+		if (rs.roundtime <= 40*TR)
+			chance = FU
+		end
 	end
 	
-	if P_RandomChance(chance / 3)
+	if P_RandomChance(chance)
 		mobj.sr_eggcarrier = true
 		mobj.color = SKINCOLOR_MASTER
 		mobj.paint_color = mobj.color
@@ -465,17 +478,15 @@ addHook("ThinkFrame",do
 			("base:   %f"):format(FixedDiv(interval, TR*FU))
 		)
 		
-		local count = Salmon.countPlayers()
-		if count.playing < 8
-			local frac = FixedDiv(count.playing*FU, 8*FU)
-			print(("adjust: %f"):format(frac*100))
-			interval = FixedDiv($, frac)
-			print(("new:    %f"):format(FixedDiv(interval, TR*FU)))
+		local curve = Salmon.playerCurve()
+		if curve ~= FU
+			interval = FixedDiv($, curve)
 		end
 		print("final:   "..(interval / FU)..", "..(interval/FU)/TR)
 		
 		interval = $ / FU
 		if (interval < 1) then interval = 1; end
+		if (interval > 30*TR) then interval = 30*TR; end
 		if (rs.roundtime % interval == 0)
 		or (rs.roundtime == ROUND_TIME - 1)
 			Salmon.startEnemyWave()
@@ -512,6 +523,7 @@ addHook("ThinkFrame",do
 			end
 		end
 		
+		local count = Salmon.countPlayers()
 		if count.dead == count.playing
 			S_ChangeMusic(waveSong(hazard,true), true, nil, 0,S_GetMusicPosition(), 0,0)
 			mapmusname = waveSong(hazard,true)
@@ -630,9 +642,21 @@ addHook("PlayerThink",function(p)
 	
 	if me.deathtimer == nil
 		me.deathtimer = 0
+		
+		-- we probably just spawned
+		local teammates = {}
+		for play in players.iterate
+			table.insert(teammates, play)
+		end
+		for play in players.iterate
+			play.paint.teammates = teammates
+		end
 	end
 	
 	if (p.playerstate == PST_DEAD)
+		if me.deathtimer == 0
+			p.deathpos = {x = me.x, y = me.y, z = me.z}
+		end
 		me.deathtimer = $ + 1
 		p.sr_teleported = false
 		p.jumpfactor = 0
@@ -679,9 +703,8 @@ addHook("PlayerThink",function(p)
 			p.drawangle = me.angle
 			pt.anglestand = me.angle
 			me.paint_lifesaver = true
-			me.paint_forcehit = true
 			p.lifesaver = true
-			p.lifesaver_hp = 75*FU
+			p.lifesaver_hp = 40*FU
 			p.lifesaver_anim = DEAD_ANIM
 			p.paint.hp = 100*FU
 			
@@ -746,6 +769,11 @@ addHook("PlayerThink",function(p)
 		if (ls and ls.valid and not p.lifesaver_anim)
 			ls.threshold = $ + 1
 			ls.rollangle = FixedAngle(5 * sin(FixedAngle(ls.threshold * FU * 4)))
+			
+			if not me.deathtimer
+				me.paint_forcehit = true
+				p.deathpos = {x = me.x, y = me.y, z = me.z}
+			end
 		end
 		
 		if p.lifesaver_hp <= 0
@@ -1012,10 +1040,12 @@ addHook("MobjMoveCollide",function(shot,mo)
 	if mo.type == MT_PLAYER
 	and mo ~= me
 		if (mo.player.lifesaver)
+		and not (mo.player.lifesaver_anim)
 			local play = mo.player
 			
 			play.lifesaver_hp = $ - shot.damage
 			Paint:doProjHitmarker(shot, mo, true)
+			S_StartSound(nil, sfx_pnt_r0, play)
 			
 			if (wep.guntype == WPT_CHARGER
 			and shot.charge >= wep:get(pt,"chargetime"))
@@ -1107,6 +1137,7 @@ end)
 */
 
 local hudfiles = {
+	"revives",
 	"wipe",
 	"timer",
 	"roundclear",

@@ -11,6 +11,7 @@ dofiles("drawers/libs/",{
 	"splashbg.lua",
 })
 dofiles("drawers/",{
+	"signals.lua",
 	"nametags.lua",
 	"inktank.lua",
 	"hpoverlay.lua",
