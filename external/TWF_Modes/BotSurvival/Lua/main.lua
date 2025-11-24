@@ -225,6 +225,9 @@ Salmon.setupRound = function(stage)
 		for mobj in mobjs.iterate()
 			if mobj.type == MT_SR_MACGUFFIN
 				P_RemoveMobj(mobj)
+			elseif (mobj.type == MT_PAINT_WALLSPLAT or mobj.type == MT_PAINT_SPLATTER)
+			and (mobj.color ~= Salmon.playercolor)
+				P_RemoveMobj(mobj)
 			end
 		end
 		
@@ -534,7 +537,9 @@ addHook("ThinkFrame",do
 			rs.waveclear = true
 			rs.failed = true
 			
-			rs.hazard = max($ - HAZARD_INCREASE*2, HAZARD_START)
+			if rs.hazard > HAZARD_START
+				rs.hazard = max($ - HAZARD_INCREASE*2, HAZARD_START)
+			end
 		end
 		player_time = rs.roundtime
 	elseif (rs.postround ~= 0)

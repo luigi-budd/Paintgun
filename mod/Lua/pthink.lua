@@ -1218,7 +1218,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 			S_StartSound(nil, sfx, play)
 			Paint.HUD:addSignal(p, play, type)
 		end
-		S_StartSound(nil, sfx_pt_sig, p)
+		S_StartSoundAtVolume(nil, sfx_pt_sig, 255*3/5, p)
 	end
 	
 	if not (me and me.valid and me.health)
