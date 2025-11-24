@@ -1,0 +1,9 @@
+Sprite LFSR
+{
+	Frame A
+	{
+		XPivot 23
+		YPivot 57
+		RotAxis Z
+	}
+}

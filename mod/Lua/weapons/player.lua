@@ -143,11 +143,15 @@ function Paint:damagePlayer(p, shot, sorp, damage, inf) -- mobj if no player
 	local pt = p.paint
 	
 	if (pt.paintoverlay and pt.paintoverlay.valid)
-	and (shot and shot.valid)
-		pt.paintoverlay.color = (shot.color ~= SKINCOLOR_NONE) and shot.color or ColorOpposite(self:getPlayerColor(p))
-		if (shot.color == SKINCOLOR_NONE)
-		and (inf and inf.valid and inf.color ~= SKINCOLOR_NONE)
-			pt.paintoverlay.color = inf.color
+		pt.paintoverlay.color = ColorOpposite(self:getPlayerColor(p))
+		local mo = shot or inf
+		
+		if (mo and mo.valid)
+			if (mo.paint_color)
+				pt.paintoverlay.color = mo.paint_color
+			elseif mo.color ~= SKINCOLOR_NONE
+				pt.paintoverlay.color = mo.color
+			end
 		end
 	end
 	

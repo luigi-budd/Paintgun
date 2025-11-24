@@ -2,11 +2,10 @@ local box_width = 30
 local box_height = 19
 local spacing = 25
 
-local function func(v,inscores)
-	if not (TurfWar and Paint) then return end
-	if not Paint:isMode() then return end
+local function func(v,game)
 	if not G_GametypeHasTeams() then return end
 	
+	local inscores = (not game)
 	local flags = V_SNAPTOTOP
 	local y = (inscores) and 5 or 20
 	local gotflags = 0
@@ -91,5 +90,4 @@ local function func(v,inscores)
 	end
 end
 
-addHook("HUD",function(v) func(v,false); end,"game")
-addHook("HUD",function(v) func(v,true); end, "scores")
+return func, "gameandscores"

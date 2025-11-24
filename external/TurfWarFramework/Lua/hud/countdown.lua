@@ -1,7 +1,4 @@
-addHook("HUD",function(v)
-	if not (TurfWar and Paint) then return end
-	if not Paint:isMode() then return end
-	
+return function(v)
 	if not (TurfWar.time > 0
 	and TurfWar.time <= 10*TR)
 		return
@@ -20,4 +17,4 @@ addHook("HUD",function(v)
 	)
 	
 	animation = $ - 1
-end,"game")
+end

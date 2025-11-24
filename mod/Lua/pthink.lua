@@ -145,6 +145,7 @@ addHook("PlayerThink",function(p)
 				me.state = S_PLAY_DEAD
 			end
 			Paint:resetPlayer(p)
+			me.spriteyscale = FU
 		end
 		return
 	end
@@ -162,8 +163,9 @@ addHook("PlayerThink",function(p)
 	local pt = p.paint
 	local skin = skins[p.skin]
 	
-	if not Paint:isMode()
-	and not CV.paintguns.value
+	if (not Paint:isMode()
+	and not CV.paintguns.value)
+	or (me.paint_inactive)
 		if pt.active
 			local wepmo = pt.weaponmobj
 			if (wepmo and wepmo.valid)
@@ -949,7 +951,7 @@ addHook("PlayerThink",function(p)
 		if (pt.deployshield or pt.shieldlag)
 			slowdown = cur_weapon:get(pt,"shieldingspeed")
 		end
-		p.normalspeed = FixedMul(skins[p.skin].normalspeed, slowdown)
+		p.normalspeed = FixedMul(skins[p.skin].normalspeed * 4/5, slowdown)
 	end
 	pt.lastslowdown = doslowdown
 	
@@ -1220,6 +1222,11 @@ addHook("PostThinkFrame",do for p in players.iterate
 		overlay.dispoffset = me.dispoffset + 1
 		if overlay.color == SKINCOLOR_NONE
 			overlay.color = ColorOpposite(Paint:getPlayerColor(p))
+		end
+		if (pt.hidden)
+			overlay.flags2 = $|MF2_DONTDRAW
+		else
+			overlay.flags2 = $ &~MF2_DONTDRAW
 		end
 	end
 end; end)

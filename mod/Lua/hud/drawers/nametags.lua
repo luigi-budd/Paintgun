@@ -10,6 +10,7 @@ for i = 26, 126
 end
 
 function HUD:killNotice(target)
+	if not (CV.nametags.value) then return end
 	local mo = target.realmo
 	if not (mo and mo.valid) then return end
 	

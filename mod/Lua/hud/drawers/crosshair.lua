@@ -125,6 +125,7 @@ local function directhit_blockmap(ray, mo)
 	
 	if Paint_canHurtEnemy(ray.target.player, mo)
 	or mo.type == MT_TNTBARREL
+	or mo.paint_forcehit
 		ray.direct = true
 		ray.momx,ray.momy,ray.momz = 0,0,0
 		ray.fuse = 1

@@ -11,13 +11,3 @@ folder = ""
 dofolder{
 	"main.lua"
 }
-folder = "hud/"
-dofolder{
-	"oneminute.lua",
-	"topinfo.lua",
-	"scores.lua",
-	"gameset.lua",
-	"timer.lua",
-	"gamestate_text.lua",
-	--"countdown.lua",
-}

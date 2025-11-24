@@ -157,11 +157,16 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 	if nullify
 		startrange, endrange = sfx_pnt_n0, sfx_pnt_n5
 	end
+	if (mo.paint_lifesaver)
+		startrange, endrange = sfx_pnt_r0, sfx_pnt_r0
+	end
 	hitmarker = P_RandomRange(startrange, endrange)
 	
 	if hitmark_tic ~= leveltime
 		S_StartSound(nil, hitmarker, shot.target.player)
-		S_StartSoundAtVolume(nil, hitmarker, 255/2, shot.target.player) --Bruh
+		if not mo.paint_lifesaver
+			S_StartSoundAtVolume(nil, hitmarker, 255/2, shot.target.player) --Bruh
+		end
 	end
 	hitmark_tic = leveltime
 	
@@ -202,7 +207,12 @@ local function HandleFloorSplat(shot)
 	or (shot.eflags & MFE_JUSTSTEPPEDDOWN)
 		local ceil = shot.z+shot.height >= shot.ceilingz
 		
-		local bull_z = ceil and shot.ceilingz - 1 or shot.floorz + 1
+		local bull_z
+		if ceil
+			bull_z = P_CeilingzAtPos(shot.x,shot.y,shot.z,shot.height) - 1
+		else
+			bull_z = P_FloorzAtPos(shot.x,shot.y,shot.z,shot.height) + 1
+		end
 		do
 			local hole = P_SpawnMobjFromMobj(shot, 0,0,0, MT_PAINT_SPLATTER)			
 			hole.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT

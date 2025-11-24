@@ -12,9 +12,7 @@ local htranstable = {
 	[10] = 5,
 }
 
-addHook("HUD",function(v)
-	if not (TurfWar and Paint) then return end
-	if not Paint:isMode() then return end
+return function(v)
 	local msg = TurfWar.messagestate
 	if not msg.tics then return end
 	
@@ -63,4 +61,4 @@ addHook("HUD",function(v)
 	end
 	
 	v.drawString(x,y, msg.text, V_SNAPTOTOP|V_ALLOWLOWERCASE|(fade << V_ALPHASHIFT), "center")
-end)
+end

@@ -12,7 +12,7 @@ local function drawTeam(v,p, y)
 		"thin"
 	)
 end
-addHook("HUD",function(v,p)
+return function(v,p)
 	if not (TurfWar and Paint) then return end
 	if not Paint:isMode() then return end
 	if (p.spectator) then return end
@@ -78,4 +78,4 @@ addHook("HUD",function(v,p)
 	)
 	drawTeam(v,p, 10 + moveup)
 	v.dointerp(false)
-end)
+end

@@ -1,7 +1,7 @@
 local cv_timelimit
 local cv_overtime
 
-addHook("HUD",function(v)
+return function(v)
 	if not (TurfWar and Paint) then return end
 	if not Paint:isMode() then return end
 	
@@ -100,4 +100,4 @@ addHook("HUD",function(v)
 		end
 	end
 	
-end,"game")
+end

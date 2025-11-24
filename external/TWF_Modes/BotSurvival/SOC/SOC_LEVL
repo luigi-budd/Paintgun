@@ -1,0 +1,7 @@
+Level J2
+LevelName = Spawning Grounds
+NoZone = true
+Music = _OCEAN
+NextLevel = N0
+TypeOfLevel = BotSurvival
+SkyNum = 15

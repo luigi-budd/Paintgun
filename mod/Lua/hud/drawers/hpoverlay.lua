@@ -6,9 +6,16 @@ addHook("HUD",function(v,p,cam)
 	if not Paint:playerIsActive(p) then return end
 	local pt = p.paint
 	
+	if (me.paint_nopainoverlay) then return end
+	
 	if pt.hp ~= 100*FU
 	or (p.playerstate == PST_DEAD)
 		local hp = (p.playerstate ~= PST_DEAD) and pt.hp or 0
+		if p.playerstate == PST_DEAD
+		and (me.paint_overlayhp ~= nil)
+			hp = me.paint_overlayhp
+		end
+		if hp >= 100*FU then return end
 		
 		local fadeprogress = ease.insine(FixedDiv(hp, 100*FU), FU, 0)
 		local fade = fadeprogress

@@ -69,7 +69,12 @@ end,MT_PLAYER)
 addHook("ThinkFrame",do
 	local removedelayed = {}
 	for k,mo in ipairs(Paint.enemyList)
-		if not (mo and mo.valid)
+		if not (mo and mo.valid and mo.health)
+			if (mo and mo.valid and not mo.health)
+				if (mo.paint_overlay and mo.paint_overlay.valid)
+					P_RemoveMobj(mo.paint_overlay)
+				end
+			end
 			table.insert(removedelayed, {key = k})
 			continue
 		end

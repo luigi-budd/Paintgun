@@ -14,6 +14,8 @@ for j = 1, 3
 		sfxinfo[freeslot("sfx_pnt_"..pre..i)] = hitmarker_attribs
 	end
 end
+-- Revive shot
+sfxinfo[freeslot("sfx_pnt_r0")] = hitmarker_attribs
 
 for i = 0,3
 	sfxinfo[freeslot("sfx_pt_ow"..i)].caption = "/"

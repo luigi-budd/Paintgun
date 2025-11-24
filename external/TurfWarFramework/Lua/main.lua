@@ -12,7 +12,6 @@ TurfWar.const.TEAM_BRAVO = 2
 TurfWar.const.MSG_TIME = 2*TR + (TR/2)
 
 TurfWar.time = TurfWar.const.NOTIMER
-TurfWar.starttimes = {}
 TurfWar.minutewarning = false
 
 TurfWar.old = {
@@ -47,8 +46,73 @@ G_AddGametype({
     headercolor = 164,
 	description = "Team Deathmatch"
 })
-Paint.modes[GT_TURFWAR] = true
-TurfWar.starttimes[GT_TURFWAR] = TurfWar.const.ROUNDTIME
+
+
+local gamemode_t = {
+	starttime = TurfWar.const.NOTIMER,
+	nohud = false,
+}
+registerMetatable(gamemode_t)
+TurfWar.gamemodes = {}
+TurfWar.registerGamemode = function(gt, props)
+	Paint.modes[gt] = true
+	setmetatable(props, {
+		__index = gamemode_t
+	})
+	TurfWar.gamemodes[gt] = props
+end
+
+TurfWar.HUDS = {
+	game = {},
+	scores = {}
+}
+
+local function dofolder(files)
+	for k, file in ipairs(files)
+		local func,order = dofile("hud/"..file)
+		order = $ or "game"
+		if order == "game"
+			table.insert(TurfWar.HUDS.game, func)
+		elseif order == "scores"
+			table.insert(TurfWar.HUDS.scores, func)
+		elseif order == "gameandscores"
+			table.insert(TurfWar.HUDS.game, func)
+			table.insert(TurfWar.HUDS.scores, func)
+		end
+	end
+end
+dofolder{
+	"oneminute.lua",
+	"topinfo.lua",
+	"scores.lua",
+	"gameset.lua",
+	"timer.lua",
+	"gamestate_text.lua",
+	--"countdown.lua",
+}
+
+addHook("HUD",function(v,p,c)
+	if not (TurfWar and Paint) then return end
+	if not Paint:isMode() then return end
+	if TurfWar.gamemodes[gametype].nohud then return end
+	
+	for k, func in ipairs(TurfWar.HUDS.game)
+		func(v,p,c)
+	end
+end,"game")
+addHook("HUD",function(v)
+	if not (TurfWar and Paint) then return end
+	if not Paint:isMode() then return end
+	if TurfWar.gamemodes[gametype].nohud then return end
+	
+	for k, func in ipairs(TurfWar.HUDS.scores)
+		func(v)
+	end
+end,"scores")
+
+TurfWar.registerGamemode(GT_TURFWAR, {
+	starttime = TurfWar.const.ROUNDTIME
+})
 
 local cv_allowmusic = CV_RegisterVar({
 	name = "paint_1minutemusic",
@@ -73,11 +137,9 @@ addHook("MapChange",function(nextmap)
 		skincolor_redteam = color
 		skincolor_blueteam = ColorOpposite(color)
 		
-		if TurfWar.starttimes[gametype] ~= nil
-			TurfWar.time = TurfWar.starttimes[gametype]
-		else
-			TurfWar.time = TurfWar.const.NOTIMER
-		end
+		local gm = TurfWar.gamemodes[gametype]
+		TurfWar.time = gm.starttime
+		
 		for item,_ in pairs(items)
 			hud.disable(item)
 		end
@@ -332,5 +394,15 @@ addHook("ThinkFrame",do
 end)
 
 addHook("NetVars",function(n)
-	TurfWar = n($)
+	--TurfWar = n($)
+	TurfWar.const = n($)
+	TurfWar.time = n($)
+	TurfWar.minutewarning = n($)
+
+	TurfWar.old = n($)
+	TurfWar.messagestate = n($)
+	TurfWar.gotflags = n($)
+
+	TurfWar.gamemodes = n($)
 end)
+

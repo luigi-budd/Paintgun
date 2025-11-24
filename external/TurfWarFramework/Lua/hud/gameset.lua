@@ -1,7 +1,5 @@
 local y
-addHook("HUD",function(v)
-	if not (TurfWar and Paint) then return end
-	if not Paint:isMode() then return end
+return function(v)
 	if (TurfWar.time == TurfWar.const.NOTIMER) then return end
 	
 	if TurfWar.time > 0
@@ -15,4 +13,4 @@ addHook("HUD",function(v)
 		100 - (v.levelTitleHeight(str)/2) - y,
 		str, 0
 	)
-end,"game")
+end
