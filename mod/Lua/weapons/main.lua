@@ -98,6 +98,7 @@ local weapon_meta = {
 	pierces = 3,
 	maxfirerate = 4, -- (firerate -> maxfirerate) * chargeprogress
 	shineoffset = -12*FU, --offset the shine vfx this much from fireangle
+	muzzleoffset = 40*FU, --for the max-charge effect
 	slowwhenjumping = true, -- slow charging when jumping
 	
 	--blaster specific

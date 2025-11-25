@@ -48,7 +48,7 @@ addHook("HUD",function(v,p, cam)
 		
 		local pro = K_GetScreenCoords(v,p,cam, pos, {anglecliponly = true})
 		local x = pro.x
-		local y = pro.y
+		local y = pro.y - 90*pro.scale
 		local scale = FU/2
 		v.dointerp(va.id)
 		if not pro.onscreen

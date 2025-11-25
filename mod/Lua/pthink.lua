@@ -5,6 +5,7 @@ rawset(_G,"CA2_SQUIDFORM", 132)
 
 local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_interp)
 	local teleport = reset_interp and P_SetOrigin or P_MoveOrigin
+	local dd = pt.dodgeroll
 	
 	local wepmo = pt.weaponmobj
 	if dualieflip
@@ -32,6 +33,7 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	end
 	wepmo.dontdrawforviewmobj = me
 	wepmo.angle = fireangle
+	wepmo.aiming = p.aiming
 	local weapon_scale = cur_weapon:get(pt,"weaponstate_scale")
 	wepmo.spritexscale = FixedMul(FU + (wepmo.fireanim * FU/12), weapon_scale)
 	wepmo.spriteyscale = wepmo.spritexscale
@@ -66,17 +68,23 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	
 	if (cur_weapon.guntype == WPT_BRELLA)
 	and (firing or pt.holsteranim)
-		if (firing)
-			pt.holsteranim = min($ + 1, Paint.MAX_HOLSTER)
-		else
-			pt.holsteranim = max($-1, 0)
+	or (pt.turretmode)
+		if not dualieflip
+			if (firing or pt.turretmode)
+				pt.holsteranim = min($ + 1, Paint.MAX_HOLSTER)
+			else
+				pt.holsteranim = max($-1, 0)
+			end
+			if (cur_weapon.guntype == WPT_DUALIES)
+				pt.holsteranim = min($, Paint.MAX_HOLSTER - 2)
+			end
 		end
 		local frac = FixedDiv(pt.holsteranim*FU, Paint.MAX_HOLSTER*FU)
 		
 		offx = P_ReturnThrustX(nil, fireangle, FixedMul(me.radius, frac))
 		offy = P_ReturnThrustY(nil, fireangle, FixedMul(me.radius, frac))
-		fireangle = $ + FixedAngle(90 * frac)
-	else
+		fireangle = $ + FixedAngle(90 * frac) * (dualieflip and -1 or 1)
+	elseif not dualieflip
 		pt.holsteranim = max($-1, 0)
 	end
 	local handoffset = {Paint:getWeaponOffset(me,pt,fireangle - ANGLE_90, cur_weapon, dualieflip, false)}
@@ -93,19 +101,34 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 		wepmo.eflags = $ &~MFE_VERTICALFLIP
 	end
 	if (cur_weapon.guntype == WPT_CHARGER)
-	and (pt.charge)
-		local s = P_SpawnMobjFromMobj(wepmo,
-			P_ReturnThrustX(nil, fireangle, FixedMul(cur_weapon:get(pt,"shineoffset"), me.scale)),
-			P_ReturnThrustY(nil, fireangle, FixedMul(cur_weapon:get(pt,"shineoffset"), me.scale)),
-			0,MT_PARTICLE
-		)
-		s.state = S_PAINT_FLAIR
-		s.color = wepmo.color
-		s.fuse = 2
-		s.dispoffset = 20
-		local frac = min(FixedDiv(pt.charge, cur_weapon:get(pt,"chargetime")),FU)
-		s.alpha = clamp(0, frac-1, FU)
-		P_SetScale(s, s.scale/2, true)
+		if (pt.charge)
+			local s = P_SpawnMobjFromMobj(wepmo,
+				P_ReturnThrustX(nil, fireangle, FixedMul(cur_weapon:get(pt,"shineoffset"), me.scale)),
+				P_ReturnThrustY(nil, fireangle, FixedMul(cur_weapon:get(pt,"shineoffset"), me.scale)),
+				0,MT_PARTICLE
+			)
+			s.state = S_PAINT_FLAIR
+			s.color = wepmo.color
+			s.fuse = 2
+			s.dispoffset = 20
+			local frac = min(FixedDiv(pt.charge, cur_weapon:get(pt,"chargetime")),FU)
+			s.alpha = clamp(0, frac-1, FU)
+			P_SetScale(s, s.scale/2, true)
+		end
+		if pt.justcharged
+			local fx = P_SpawnMobjFromMobj(wepmo,
+				P_ReturnThrustX(nil, fireangle, FixedMul(cur_weapon:get(pt,"muzzleoffset"), me.scale)),
+				P_ReturnThrustY(nil, fireangle, FixedMul(cur_weapon:get(pt,"muzzleoffset"), me.scale)),
+				0,MT_PAINT_GUN
+			)
+			fx.state = S_PAINT_CHARGEDMAX
+			fx.target = wepmo
+			fx.tracer = me
+			fx.weapon_id = pt.weapon_id
+			fx.color = wepmo.color
+			fx.renderflags = $|RF_NOCOLORMAPS|RF_ALWAYSONTOP
+			fx.threshold = 1
+		end
 	end
 end
 
@@ -748,7 +771,7 @@ addHook("PlayerThink",function(p)
 			if pt.fireheld and (pt.cooldown == 0)
 				doslowdown = true
 				if not pt.charge
-					S_StartSound(nil, cur_weapon.charge_sound)
+					S_StartSound(nil, cur_weapon.charge_sound, p)
 					S_StartSound(me, charge_sound)
 					pt.oldinktank = pt.inktank
 					pt.oldinkanim = pt.oldinktank
@@ -1194,7 +1217,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 				sfx = sfx_s3kc1s
 			else
 				-- Help!
-				if (p.lifesaver)
+				if (p.lifesaver or me.deathtimer)
 					type = Paint.SIGNAL_HELP
 					sfx = sfx_s3kd6s
 				-- Ouch...
@@ -1216,7 +1239,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 			if not Paint:mobjsOnTeam(p.realmo, play.realmo) then continue end
 			
 			S_StartSound(nil, sfx, play)
-			Paint.HUD:addSignal(p, play, type)
+			Paint.HUD:addSignal(play, p, type)
 		end
 		S_StartSoundAtVolume(nil, sfx_pt_sig, 255*3/5, p)
 	end
@@ -1303,9 +1326,14 @@ addHook("PlayerHeight",function(p)
 	local pt = p.paint
 	if not pt then return end
 	if not pt.active then return end
-	if not pt.squidtime then return end
+	
 	local me = p.realmo
 	if not (me and me.valid) then return end
+	
+	if (pt.turretmode or (pt.dodgeroll.tics or pt.dodgeroll.getup))
+		return P_GetPlayerSpinHeight(p)
+	end
+	if not pt.squidtime then return end
 	
 	local frac_step = (FU/MAX_SQUIDTIME)
 	local small_height = FixedMul(Paint.SQUID_HEIGHT, me.scale)

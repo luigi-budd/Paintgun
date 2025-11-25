@@ -80,3 +80,12 @@ states[S_PAINT_FLAIR] = {
 	tics = -1,
 	nextstate = S_PAINT_FLAIR
 }
+
+freeslot("S_PAINT_CHARGEDMAX")
+states[S_PAINT_CHARGEDMAX] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 21|FF_FULLBRIGHT|FF_ADD|FF_ANIMATE,
+	tics = (10 * 2),
+	var1 = 10,
+	var2 = 2,
+}

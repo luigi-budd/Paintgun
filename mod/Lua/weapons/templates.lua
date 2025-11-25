@@ -20,6 +20,8 @@ function Paint.wtemplate_dualies(p,pt, weapon, key,value)
 		return weapon.dodgeshotcost
 	elseif (key == "endlag")
 		return weapon.realendlag or 0
+	elseif (key == "handoffset")
+		return 0
 	end
 end
 

@@ -1,8 +1,4 @@
 rawset(_G,"Paint_canHurtEnemy",function(p, mobj,flags,exclude, nobs)
-	if (CanFlingThing ~= nil)
-		return CanFlingThing(p, mobj,flags,false,exclude)
-	end
-	
 	local flingable = false
 	flags = $ or MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE
 	exclude = $ or 0

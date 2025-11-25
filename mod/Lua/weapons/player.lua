@@ -147,9 +147,11 @@ function Paint:damagePlayer(p, shot, sorp, damage, inf) -- mobj if no player
 		local mo = shot or inf
 		
 		if (mo and mo.valid)
+			/*
 			if (mo.paint_color)
 				pt.paintoverlay.color = mo.paint_color
-			elseif mo.color ~= SKINCOLOR_NONE
+			else*/
+			if mo.color ~= SKINCOLOR_NONE
 				pt.paintoverlay.color = mo.color
 			end
 		end
@@ -317,6 +319,20 @@ function Paint:doDodgeRoll(p)
 		--blob.fuse = 12
 		blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
 	end
+	local fx = P_SpawnMobjFromMobj(me, 0,0,0, MT_PAINT_SHOT)
+	fx.visualfadestupidshit = true
+	fx.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
+	fx.fuse = 9
+	fx.sprite = SPR_PAINT_MISC
+	fx.frame = ($ &~FF_FRAMEMASK)|18
+	fx.renderflags = $|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
+	fx.blendmode = AST_ADD
+	fx.colorized = true
+	fx.color = Paint:getPlayerColor(p)
+	fx.angle = ang + ANGLE_90
+	fx.destscale = fx.scale * 2
+	fx.scalespeed = FixedDiv(fx.scale, 10*FU)
+	P_Thrust(fx, ang, -5 * me.scale)
 	
 	dd.startx = me.x + me.momx
 	dd.starty = me.y + me.momy

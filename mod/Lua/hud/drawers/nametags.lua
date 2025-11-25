@@ -31,7 +31,7 @@ addHook("HUD",function(v,p,cam)
 	if not (me and me.valid) then return end
 	--if not Paint:playerIsActive(p) then return end
 	local pt = p.paint
-	
+	if not pt then return end
 	if not (CV.nametags.value) then return end
 	
 	for k,v in ipairs(HUD.memory.killtags)

@@ -48,18 +48,42 @@ states[S_SR_LIFESAVER] = {
 mobjinfo[MT_SR_LIFESAVER] = {
 	doomednum = -1,
 	spawnstate = S_SR_LIFESAVER,
+	painstate = S_SR_LIFESAVER,
+	deathstate = S_SR_LIFESAVER,
 	radius = 16*FU,
 	height = 32*FU,
-	flags = MF_NOCLIP|MF_NOCLIPTHING|MF_NOCLIPHEIGHT|MF_SCENERY|MF_NOBLOCKMAP|MF_NOGRAVITY
+	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_SCENERY|MF_NOGRAVITY
 }
 addHook("MobjThinker",function(mo)
 	if not (mo.target and mo.target.valid and mo.target.player and mo.target.player.lifesaver)
 		P_RemoveMobj(mo)
 		return
 	end
-	mo.color = mo.target.color
-	mo.shadowscale = mo.target.shadowscale
-	P_MoveOrigin(mo, mo.target.x,mo.target.y,mo.target.z)
+	local me = mo.target
+	local p = me.player
+	
+	mo.paint_lifesaver = true
+	mo.color = me.color
+	mo.shadowscale = me.shadowscale
+	P_MoveOrigin(mo, me.x,me.y,me.z)
+	
+	if not (p.lifesaver_anim)
+		mo.flags = $|MF_SHOOTABLE
+		mo.takis_flingme = true
+	end
+end,MT_SR_LIFESAVER)
+
+addHook("ShouldDamage",function(mo, inf,sor, damage)
+	if not (mo.target and mo.target.valid and mo.target.player and mo.target.player.lifesaver)
+		return
+	end
+	
+	local me = mo.target
+	local p = me.player
+	
+	p.lifesaver_hp = max($ - damage, 0)
+	S_StartSound(nil, sfx_pnt_r0, p)
+	return false
 end,MT_SR_LIFESAVER)
 
 freeslot("MT_SR_MACGUFFIN")
@@ -193,8 +217,15 @@ Salmon.setupRound = function(stage)
 		rs.intermission = INTER_TIME
 		rs.roundtime = ROUND_TIME
 		
+		local overachieve = FU
+		if (rs.eggsin >= rs.quota*2)
+			overachieve = $ + FU/2
+		elseif (rs.eggsin >= rs.quota*3/2)
+			overachieve = $ + FU/3
+		end
+		
 		rs.wavenumber = $ + 1
-		rs.hazard = min($ + HAZARD_INCREASE, FU)
+		rs.hazard = min($ + FixedMul(HAZARD_INCREASE, overachieve), FU)
 		for p in players.iterate
 			p.sr_teleported = false
 		end
@@ -306,7 +337,6 @@ Salmon.revivePlayer = function(p)
 	
 	me.paint_lifesaver = nil
 	me.paint_inactive = nil
-	me.paint_forcehit = nil
 	
 	S_StartSound(me, sfx_p_db3)
 end
@@ -539,6 +569,8 @@ addHook("ThinkFrame",do
 			
 			if rs.hazard > HAZARD_START
 				rs.hazard = max($ - HAZARD_INCREASE*2, HAZARD_START)
+			else
+				rs.hazard = HAZARD_START - HAZARD_INCREASE
 			end
 		end
 		player_time = rs.roundtime
@@ -774,11 +806,9 @@ addHook("PlayerThink",function(p)
 		if (ls and ls.valid and not p.lifesaver_anim)
 			ls.threshold = $ + 1
 			ls.rollangle = FixedAngle(5 * sin(FixedAngle(ls.threshold * FU * 4)))
-			
-			if not me.deathtimer
-				me.paint_forcehit = true
-				p.deathpos = {x = me.x, y = me.y, z = me.z}
-			end
+		end
+		if not me.deathtimer
+			p.deathpos = {x = me.x, y = me.y, z = me.z}
 		end
 		
 		if p.lifesaver_hp <= 0
@@ -977,102 +1007,6 @@ addHook("PlayerThink",function(p)
 		end
 	end
 end)
-
-local function ExplodeShot(shot)
-	P_SetOrigin(shot,shot.x,shot.y,shot.z)
-	if not (shot and shot.valid) then return end
-	local wep = Paint.weapons[shot.weapon_id]
-	local sfx = P_SpawnGhostMobj(shot)
-	sfx.flags2 = $|MF2_DONTDRAW
-	sfx.fuse = 2 * TR; sfx.tics = sfx.fuse
-	local sound = wep.blast_sounds[P_RandomRange(1,#wep.blast_sounds)]
-	S_StartSound(sfx, sound)
-	S_StartSound(sfx, sound)
-	
-	local splashrad = wep:get(shot.target.player.paint,"splashradius")
-	local px = shot.x
-	local py = shot.y
-	local br = splashrad * 7/5
-	searchBlockmap("objects",splash_blockmap, shot, px-br, px+br, py-br, py+br)
-	
-	local spr_scale = FU * 6/5
-	local tntstate = S_TNTBARREL_EXPL3
-	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
-	local bam = P_SpawnMobjFromMobj(shot, 0,0,0, MT_THOK)
-	P_SetMobjStateNF(bam, tntstate)
-	bam.spritexscale = FixedMul($, spr_scale)
-	bam.spriteyscale = bam.spritexscale
-	bam.renderflags = $|rflags
-	bam.blendmode = AST_ADD
-	bam.colorized = true
-	bam.color = shot.color
-	
-	for i = 0,2
-		local outline = P_SpawnMobjFromMobj(shot, 0,0,0, MT_PAINT_SHOT)
-		outline.visualfadestupidshit = true
-		outline.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
-		outline.fuse = 9
-		outline.radius = 40*shot.scale
-		outline.sprite = SPR_PAINT_MISC
-		outline.frame = ($ &~FF_FRAMEMASK)|18
-		outline.spritexscale = FixedDiv(splashrad, 80*FU) * 2
-		outline.spriteyscale = outline.spritexscale
-		outline.renderflags = $|rflags|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
-		outline.blendmode = AST_ADD
-		outline.colorized = true
-		outline.color = shot.color
-		outline.angle = shot.angle + (ANGLE_90 * i)
-		if i == 2
-			outline.renderflags = $|RF_FLOORSPRITE &~RF_PAPERSPRITE
-		end
-	end
-	P_KillMobj(shot)
-end
-addHook("MobjMoveCollide",function(shot,mo)
-	if not (shot and shot.valid) then return end
-	if not shot.init then return false; end
-	if shot.trail then return false; end
-	if not (mo and mo.valid) then return end
-	if not mo.health then return end
-	if not L_ZCollide(shot,mo) then return end
-
-	if not (shot.target and shot.target.valid) then return end
-	local me = shot.target
-	local p = me.player
-	local pt = p.paint
-	local wep = Paint.weapons[shot.weapon_id]
-	
-	if mo.type == MT_PLAYER
-	and mo ~= me
-		if (mo.player.lifesaver)
-		and not (mo.player.lifesaver_anim)
-			local play = mo.player
-			
-			play.lifesaver_hp = $ - shot.damage
-			Paint:doProjHitmarker(shot, mo, true)
-			S_StartSound(nil, sfx_pnt_r0, play)
-			
-			if (wep.guntype == WPT_CHARGER
-			and shot.charge >= wep:get(pt,"chargetime"))
-			or (wep.guntype == WPT_BLASTER)
-				--S_StartSound(nil, sfx_p_s2_4, p)
-				if wep.guntype == WPT_BLASTER
-					shot.donthit = mo
-					ExplodeShot(shot)
-					return
-				end
-			end
-			if (wep.guntype == WPT_CHARGER
-			and shot.pierces)
-			or (wep.pierces == -1) -- infinite pierces
-				shot.pierces = $ - 1
-			else
-				P_RemoveMobj(shot)
-			end
-			
-		end
-	end
-end,MT_PAINT_SHOT)
 
 addHook("MobjDeath",function(mo)
 	if not mo.sr_eggcarrier then return end

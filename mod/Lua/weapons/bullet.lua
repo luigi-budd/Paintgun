@@ -93,7 +93,9 @@ states[S_PAINT_WALLSPLATTER] = {
 	nextstate = S_PAINT_WALLSPLATTER
 }
 
-local REAL_SPLATRAD = 38*FU
+local REAL_SPLATRAD = 32*FU
+local SPLAT_SIZEMUL = FU * 3/2
+local SPLAT_MAXSIZE = (SPLAT_SIZEMUL)*2
 mobjinfo[MT_PAINT_SPLATTER] = {
 	doomednum = -1,
 	radius = 3*FU,
@@ -218,10 +220,7 @@ local function HandleFloorSplat(shot)
 			hole.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT
 			hole.color = shot.color
 			hole.mirrored = P_RandomChance(FU/2)
-			hole.spritexscale = ($ * 5/2) + P_RandomFixed()/5
-			hole.spriteyscale = hole.spritexscale
 			hole.angle = shot.angle
-			hole.scale = $ * 5/4
 			if CV.splatter_lifetime.value == -1
 				hole.fuse = -1
 			else
@@ -233,6 +232,7 @@ local function HandleFloorSplat(shot)
 			hole.eflags = $|(ceil and MFE_VERTICALFLIP or 0)
 			hole.revgrav = hole.eflags & MFE_VERTICALFLIP
 			hole.dispoffset = -100
+			hole.scale = FixedMul($, SPLAT_SIZEMUL)
 			P_SetOrigin(hole, shot.x, shot.y, bull_z)
 		end
 		
@@ -627,8 +627,7 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 		
 		hole.color = mo.color
 		hole.mirrored = P_RandomChance(FU/2)
-		hole.spritexscale = ($ * 5/2) + P_RandomFixed()/5
-		hole.spriteyscale = hole.spritexscale
+		hole.scale = FixedMul($, SPLAT_SIZEMUL)
 		hole.angle = angle
 		hole.tracer_player = mo.target.player
 		if CV.splatter_lifetime.value == -1
@@ -654,6 +653,28 @@ addHook("MobjThinker",function(shot)
 	if not (me and me.valid and me.health)
 		P_RemoveMobj(shot); return
 	end
+	if shot.state == S_PAINT_CHARGEDMAX
+		local udata = shot.tracer
+		if (shot.threshold)
+			udata = shot.tracer.player
+		end
+		if not udata.paint.charge
+			P_RemoveMobj(shot); return
+		end
+		local wep = Paint.weapons[shot.weapon_id]
+		local vec = SphereToCartesian(me.angle, me.aiming)
+		local dist = FixedMul(wep:get(udata.paint, "muzzleoffset"), shot.scale)
+		local offset = {
+			x = FixedMul(dist, vec.x),
+			y = FixedMul(dist, vec.y),
+			z = FixedMul(dist, vec.z),
+		}
+		P_MoveOrigin(shot,
+			me.x + offset.x,
+			me.y + offset.y,
+			me.z + offset.z
+		)
+	end
 end,MT_PAINT_GUN)
 
 addHook("MobjSpawn",function(splat)
@@ -677,9 +698,6 @@ addHook("MobjThinker",function(splat)
 	if splat.lifespan == nil
 		splat.lifespan = -1
 		splat.collided = {}
-		-- which splats check us
-		-- so we can clean up when we get removed
-		-- splat.checkedme = {}
 	end
 	splat.lifespan = $ + 1
 	
@@ -695,14 +713,21 @@ addHook("MobjThinker",function(splat)
 		end
 		if slope ~= splat.lastslope
 			SetSplatSkew(splat, slope, skew)
+			splat.height = $ + abs(slope.zdelta)*5
 		end
-	--elseif (skew and skew.valid)
-	--	P_RemoveFloorSpriteSlope(splat)
+	elseif (skew and skew.valid)
+		P_RemoveFloorSpriteSlope(splat)
 	end
 	if not (splat and splat.valid) then return end
+	if (splat.scale ~= splat.lastscale)
+	and (slope and slope.valid)
+		splat.height = $ + abs(slope.zdelta)*5
+	end
 	
 	splat.lastslope = slope
+	splat.lastscale = splat.scale
 	
+	splat.momx,splat.momy = 0,0
 	splat.eflags = $|splat.revgrav
 	if splat.lifespan == 0
 		if splat.revgrav
@@ -719,7 +744,7 @@ addHook("MobjThinker",function(splat)
 		--P_CheckPosition(splat, splat.x,splat.y,splat.z)
 	elseif splat.extravalue1 == 1
 		splat.extravalue1 = 2
-		splat.flags = $|MF_NOCLIPHEIGHT|MF_NOGRAVITY
+		splat.flags = $|MF_NOCLIP
 		splat.radius = FixedMul(REAL_SPLATRAD, splat.scale)
 	end
 end,MT_PAINT_SPLATTER)
@@ -803,8 +828,10 @@ addHook("MobjCollide",function(splat,mo)
 		--table.insert(mo.checkedme, splat)
 		
 		if friendly
-			if splat.scale < 2*FU
+			if splat.scale < SPLAT_MAXSIZE
 				splat.scale = $ + FU/4
+			else
+				splat.scale = max($, SPLAT_MAXSIZE)
 			end
 			P_RemoveMobj(mo)
 			return false

@@ -285,7 +285,7 @@ Paint.SIGNAL_TIME = 3*TR
 Paint.SIGNAL_BOOYAH		= 1
 Paint.SIGNAL_THISWAY	= 2
 Paint.SIGNAL_OUCH		= 3
-Paint.SIGNAL_HELP		= 3
+Paint.SIGNAL_HELP		= 4
 
 dofile("cvars/main.lua")
 dofile("lib/lib.lua")
