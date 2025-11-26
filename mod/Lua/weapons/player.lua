@@ -352,6 +352,8 @@ function Paint:doDodgeRoll(p)
 	dd.count = $ + 1
 	pt.firewait = dd.tics + wep:get(pt,"dodgeendlag")
 	S_StartSound(me, sfx_pt_dge)
+	
+	Paint.HUD:cameraLag(p, max(dd.tics/3, 1))
 	return true
 end
 

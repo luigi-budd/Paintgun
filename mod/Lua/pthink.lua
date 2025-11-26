@@ -505,7 +505,7 @@ addHook("PlayerThink",function(p)
 	do
 		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
 		local easing = ease.inquad
-		local oldclimbing = (pt.hidden or pt.wallink)
+		local oldclimbing = (pt.hidden and pt.wallink)
 		pt.hidden = false
 		
 		if (p.cmd.buttons & BT_SPIN)
@@ -552,13 +552,13 @@ addHook("PlayerThink",function(p)
 		p.thrustfactor = skin.thrustfactor
 		if (pt.squidtime >= MAX_SQUIDTIME)
 			p.charflags = $|SF_NOSKID
-			if (pt.inink == Paint.ININK_FRIENDLY)
+			if (pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me))
 			or (pt.wallink and p.powers[pw_pushing])
 				me.flags2 = $|MF2_DONTDRAW
 				pt.hidden = true
 				p.shieldscale = 0
 				pt.squidanim = TR/2
-				p.pflags = $ &~PF_SPINNING
+				p.pflags = $ &~(PF_SPINNING)
 				if (me.state == S_PLAY_ROLL)
 					me.state = S_PLAY_WALK
 					P_MovePlayer(p)
@@ -600,6 +600,7 @@ addHook("PlayerThink",function(p)
 				
 				me.momz = FixedMul($, FU*98/100)
 				pt.wasclimbing = true
+				p.pflags = $ &~PF_STARTJUMP
 			else
 				if pt.wasclimbing
 					me.momz = $/3
@@ -668,6 +669,7 @@ addHook("PlayerThink",function(p)
 		end
 		if me.last_hidden ~= pt.hidden
 		and me.last_hidden ~= nil
+			print((pt.wasclimbing or pt.wallink) or oldclimbing)
 			if not ((pt.wasclimbing or pt.wallink) or oldclimbing)
 				local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
 				P_SetOrigin(splash, splash.x,splash.y, me.floorz)

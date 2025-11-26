@@ -36,7 +36,7 @@ states[S_PAINT_SHOT_BIG] = {
 }
 states[S_PAINT_SHOT_PELLET] = {
 	sprite = SPR_PAINT_SHOT,
-	frame = 3,
+	frame = 3|FF_SEMIBRIGHT,
 	tics = -1,
 	nextstate = S_PAINT_SHOT_PELLET
 }

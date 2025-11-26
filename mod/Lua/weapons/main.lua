@@ -424,21 +424,23 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.color = Paint:getPlayerColor(p)
 	proj.lifespan = 0
 	proj.falloff = FixedMul(P_RandomFixedRange(-cur_weapon.falloff[1], cur_weapon.falloff[2]), proj.scale)
-	local mom_vec = {x = doinertia and me.momx or 0,y = doinertia and me.momy or 0}
+	local mom_vec = {x = me.momx,y = me.momy}
 	local handoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, nil, false)}
 	-- fire from the center
 	if (cur_weapon.guntype == WPT_BRELLA)
 		handoffset[1] = 0
 		handoffset[2] = 0
 	end
+	local aimoffset_vec = SphereToCartesian(angle,aiming)
+	local aimoffset_dist = 5 * me.scale
 	P_SetOrigin(proj,
-		me.x + handoffset[1] + mom_vec.x,
-		me.y + handoffset[2] + mom_vec.y,
-		proj.z + me.momz
+		me.x + handoffset[1] + mom_vec.x + FixedMul(aimoffset_dist, aimoffset_vec.x),
+		me.y + handoffset[2] + mom_vec.y + FixedMul(aimoffset_dist, aimoffset_vec.y),
+		proj.z + me.momz + FixedMul(aimoffset_dist, aimoffset_vec.z)
 	)
 	if not (proj and proj.valid) then return end
 	if not doinertia
-		mom_vec = {x = 0, y = 0}
+		mom_vec.x, mom_vec.y = 0, 0
 	end
 	
 	proj.p_angle = angle
