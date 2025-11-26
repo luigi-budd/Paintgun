@@ -24,7 +24,7 @@ freeslot(
 )
 states[S_PAINT_SHOT] = {
 	sprite = SPR_PAINT_SHOT,
-	frame = 0,
+	frame = 0|FF_SEMIBRIGHT,
 	tics = -1,
 	nextstate = S_PAINT_SHOT
 }
@@ -109,7 +109,7 @@ mobjinfo[MT_PAINT_WALLSPLAT] = {
 	doomednum = -1,
 	radius = 32*FU,
 	height = 55*FU,
-	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_SPECIAL|MF_SCENERY,
+	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_SPECIAL,
 	spawnstate = S_PAINT_WALLSPLATTER,
 	spawnhealth = 1,
 	deathstate = S_PAINT_WALLSPLATTER,
@@ -720,8 +720,10 @@ addHook("MobjThinker",function(splat)
 	end
 	if not (splat and splat.valid) then return end
 	if (splat.scale ~= splat.lastscale)
-	and (slope and slope.valid)
-		splat.height = $ + abs(slope.zdelta)*5
+		if (slope and slope.valid)
+			splat.height = $ + abs(slope.zdelta)*5
+		end
+		splat.collided = {}
 	end
 	
 	splat.lastslope = slope
@@ -737,6 +739,7 @@ addHook("MobjThinker",function(splat)
 		end
 		if not (splat and splat.valid) then return end
 	end
+	splat.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 	
 	if not (splat.extravalue1)
 		splat.extravalue1 = 1
@@ -755,6 +758,7 @@ end,MT_PAINT_SPLATTER)
 addHook("MobjThinker",function(splat)
 	splat.flags = $|MF_SPECIAL
 	splat.health = splat.info.spawnhealth
+	splat.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 	
 	local CV_VALUE = CV.splatter_lifetime.value * TR
 	if splat.fuse > CV_VALUE
@@ -818,9 +822,9 @@ addHook("MobjCollide",function(splat,mo)
 	if (mo.revgrav ~= splat.revgrav) then return end
 	if (splat.collided == nil) then return end
 	if (mo.splatid == nil) then return end
-	if (splat.collided[mo.splatid] ~= nil) then return end
+	--if (splat.collided[mo.splatid] ~= nil) then return end
 	
-	if R_PointToDist2(mo.x,mo.y, splat.x,splat.y) <= splat.radius * 4/5
+	do --if R_PointToDist2(mo.x,mo.y, splat.x,splat.y) <= splat.radius * 4/5
 		local friendly = Paint:mobjsOnTeam(
 			(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
 			(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
@@ -836,7 +840,7 @@ addHook("MobjCollide",function(splat,mo)
 			P_RemoveMobj(mo)
 			return false
 		elseif (mo.lifespan ~= nil and splat.lifespan ~= nil)
-		and mo.lifespan < splat.lifespan
+		and (mo.lifespan < splat.lifespan or mo.splatid > splat.splatid)
 			P_RemoveMobj(splat)
 			return false
 		end

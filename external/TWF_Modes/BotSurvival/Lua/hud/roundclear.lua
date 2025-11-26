@@ -1,6 +1,6 @@
 local fmt_string = "Wave %d Cleared!"
 local final_string = fmt_string
-local lose_string = "Wave Failed!"
+local lose_string = "Wave %d Failed!"
 
 local str_len = final_string:len()
 local usefail = false
@@ -17,12 +17,10 @@ addHook("HUD",function(v,p)
 	
 	local rs = Salmon.roundstatus
 	if rs.waveclear
-		usefail = rs.failed
-		
 		animation = anim_len
 		
-		
-		final_string = usefail and lose_string or fmt_string:format(rs.wavenumber)
+		usefail = rs.failed
+		final_string = (usefail and lose_string or fmt_string):format(rs.wavenumber)
 		str_len = final_string:len()
 		pos = {1,1}
 	end

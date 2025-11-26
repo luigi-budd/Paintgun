@@ -1,10 +1,9 @@
 local TR = TICRATE
 
 local debug = false
-local oldpr = print
-local function print(...)
+local function dprint(...)
 	if not debug then return end
-	oldpr(...)
+	print(...)
 end
 
 freeslot("TOL_BOTSURVIVAL")
@@ -147,7 +146,15 @@ local playercolors = {
 	SKINCOLOR_MIDNIGHT,
 	SKINCOLOR_PURPLE,
 	SKINCOLOR_ROSY,
-	SKINCOLOR_FUCHSIA
+	SKINCOLOR_FUCHSIA,
+	
+	SKINCOLOR_ORANGE,
+	SKINCOLOR_COPPER,
+	SKINCOLOR_TANGERINE,
+	
+	SKINCOLOR_CERULEAN,
+	SKINCOLOR_SAPPHIRE,
+	SKINCOLOR_CORNFLOWER,
 }
 
 Salmon.playercolor = SKINCOLOR_GALAXY
@@ -159,6 +166,10 @@ Salmon.playerspawns = {}
 local STAGE_START	= 1
 local STAGE_END		= 2
 
+local ROUND_PREGAME		= 1
+local ROUND_GAME		= 2
+local ROUND_POSTGAME	= 2
+
 local INTER_TIME	= 10*TR
 local POST_TIME		= 10*TR
 local ROUND_TIME	= 100*TR
@@ -169,13 +180,10 @@ local HAZARD_FRANTIC = HAZARD_START + (HAZARD_INCREASE*4)
 
 local BOSS_ALERT = 4*TR
 
-local function waveSong(hazard, down)
-	if hazard >= HAZARD_FRANTIC
-		return (down) and "FRAND" or "FRAN"
-	else
-		return (down) and "WAVED" or "WAVE"
-	end
-end
+local MAPSEC_TAG = 5050
+local MAPSEC_CLR_TAG = 5051
+local DAYTRANS_TIME = 10*TR
+local DAYTRANS_STEP = (DAYTRANS_TIME)/255
 
 Salmon.const = {
 	STAGE_START	= STAGE_START,
@@ -184,9 +192,9 @@ Salmon.const = {
 	POST_TIME	= POST_TIME,
 	ROUND_TIME	= ROUND_TIME,
 	
-	HAZARD_START = HAZARD_START,
-	HAZARD_INCREASE = HAZARD_INCREASE,
-	HAZARD_FRANTIC = HAZARD_FRANTIC,
+	HAZARD_START	= HAZARD_START,
+	HAZARD_INCREASE	= HAZARD_INCREASE,
+	HAZARD_FRANTIC	= HAZARD_FRANTIC,
 	
 	BOSS_ALERT = BOSS_ALERT,
 }
@@ -209,7 +217,50 @@ Salmon.roundstatus = {
 	enemiesspawned = 0,
 	carriersspawned = 0,
 	bossalert = 0,
+	
+	to_day = 0,
+	to_night = 0,	
 }
+
+local function waveSong(hazard, down)
+	if hazard >= HAZARD_FRANTIC
+		return (down) and "FRAND" or "FRAN"
+	else
+		return (down) and "WAVED" or "WAVE"
+	end
+end
+
+-- hardcoded but i dont give a damn
+Salmon.day_color = {
+	r = 238,
+	g = 80,
+	b = 0,
+	a = 102, -- 10 = 102 somehow
+	
+	-- fade
+	f_r = 10,
+	f_g = 11,
+	f_b = 25,
+	f_a = 255,
+	
+	l = 200, --sector light
+}
+Salmon.night_color = {
+	r = 33,
+	g = 34,
+	b = 78,
+	a = 255/10,
+	
+	-- fade
+	f_r = 22,
+	f_g = 4,
+	f_b = 76,
+	f_a = 255/13,
+	
+	l = 150, --sector light
+}
+Salmon.map_colormap = nil -- extracolormap_t
+Salmon.map_sectors = {}
 
 Salmon.setupRound = function(stage)
 	local rs = Salmon.roundstatus
@@ -217,25 +268,30 @@ Salmon.setupRound = function(stage)
 		rs.intermission = INTER_TIME
 		rs.roundtime = ROUND_TIME
 		
-		local overachieve = FU
-		if (rs.eggsin >= rs.quota*2)
-			overachieve = $ + FU/2
-		elseif (rs.eggsin >= rs.quota*3/2)
-			overachieve = $ + FU/3
+		if ((rs.wavenumber % 4)+1) == 2
+			rs.to_night = DAYTRANS_TIME
+		elseif ((rs.wavenumber % 4)+1) == 4
+			rs.to_day = DAYTRANS_TIME
+		end
+		rs.wavenumber = $ + 1
+		
+		if not rs.failed
+			local overachieve = FU
+			if (rs.eggsin >= rs.quota*2)
+				overachieve = $ + FU/2
+			elseif (rs.eggsin >= rs.quota*3/2)
+				overachieve = $ + FU/3
+			end
+			rs.hazard = min($ + FixedMul(HAZARD_INCREASE, overachieve), FU)
 		end
 		
-		rs.wavenumber = $ + 1
-		rs.hazard = min($ + FixedMul(HAZARD_INCREASE, overachieve), FU)
 		for p in players.iterate
 			p.sr_teleported = false
 		end
 		
 		local haz = ease.linear(rs.hazard, HAZARD_START, FU)
-		if (haz <= rs.hazard)
-			--haz = rs.hazard * 160/149
-		end
 		
-		print(("frac: %f -> %f"):format(rs.hazard, haz))
+		dprint(("frac: %f -> %f"):format(rs.hazard, haz))
 		local work = FixedMul(70*FU, haz)
 		local curve = Salmon.playerCurve()
 		if curve ~= FU
@@ -246,6 +302,7 @@ Salmon.setupRound = function(stage)
 		
 		rs.enemiesspawned = 0
 		rs.carriersspawned = 0
+		rs.failed = false
 	elseif stage == STAGE_END
 		for k, mo in ipairs(Paint.enemyList)
 			if mo.type == MT_PAINT_ENEMY
@@ -268,7 +325,7 @@ Salmon.setupRound = function(stage)
 		rs.postround = POST_TIME
 		rs.oldhazard = rs.hazard
 		
-		print("WAVE "..rs.wavenumber.." CLEARED: enemies spawned: "..rs.enemiesspawned.." player count: "..(Salmon.countPlayers().playing))
+		dprint("WAVE "..rs.wavenumber.." CLEARED: enemies spawned: "..rs.enemiesspawned.." player count: "..(Salmon.countPlayers().playing))
 	end
 end
 
@@ -347,6 +404,23 @@ addHook("MapLoad",do
 		return
 	end
 	
+	Salmon.map_colormap = nil
+	Salmon.map_sectors = {}
+	for sector in sectors.tagged(MAPSEC_CLR_TAG)
+		local line = sector.lines[0]
+		Salmon.map_colormap = P_GetSectorColormapAt(sector,
+			line.v1.x,
+			line.v1.y,
+			sector.floorheight
+		)
+		break
+	end
+	for sector in sectors.iterate --tagged(MAPSEC_TAG)
+		--if sector.colormap ~= Salmon.map_colormap then continue end
+		if not sector.taglist:has(MAPSEC_TAG) then continue end
+		table.insert(Salmon.map_sectors, #sector)
+	end
+	
 	Salmon.setupRound(STAGE_START)
 	
 	Salmon.spawnpoints = {}
@@ -409,7 +483,7 @@ Salmon.startEnemyWave = function()
 	
 	rs.tospawn = $ + P_RandomRange(max(spawn * 2/3, 1), spawn)
 	
-	print(
+	dprint(
 		("spawned enemy wave of %d at %d for wave %d (time diff. of %d) (%d on field)"):format(
 			rs.tospawn, (ROUND_TIME - rs.roundtime)/TR, rs.wavenumber, (rs.roundtime - old)/TR, #Paint.enemyList
 		)
@@ -436,7 +510,7 @@ Salmon.spawnEnemy = function()
 	end
 	
 	local mobj = P_SpawnMobj(spawn.x,spawn.y,spawn.z, MT_PAINT_ENEMY)
-	mobj.color = SKINCOLOR_BOTTLE
+	mobj.color = SKINCOLOR_FOREST
 	mobj.paint_color = mobj.color
 	mobj.angle = spawn.a
 	mobj.nerfed = true
@@ -471,6 +545,16 @@ Salmon.spawnEnemy = function()
 	rs.enemiesspawned = $ + 1
 end
 
+local function approach(from, to, step)
+	if from == to then return to; end
+	local tmp = from
+	if (to > from)
+		return min(from + step, to)
+	else
+		return max(from - step, to)
+	end
+end
+
 addHook("ThinkFrame",do
 	if gamestate ~= GS_LEVEL then return end
 	if gametype ~= GT_SALMONRUN then return end
@@ -480,9 +564,11 @@ addHook("ThinkFrame",do
 	local player_time = 0
 	
 	rs.waveclear = false
-	rs.failed = false
+	local wasfailed = rs.failed
+	local state = 0
 	local hazard = rs.hazard
 	if (rs.intermission ~= 0)
+		state = ROUND_PREGAME
 		rs.intermission = $ - 1
 		
 		if (rs.intermission <= 3*TR)
@@ -504,10 +590,11 @@ addHook("ThinkFrame",do
 		
 		player_time = rs.intermission
 	elseif (rs.roundtime ~= 0)
+		state = ROUND_GAME
 		rs.roundtime = $ - 1
 		
 		local interval = FixedDiv((TR*3/2)*FU, rs.hazard)
-		print("intervals:",
+		dprint("intervals:",
 			("base:   %f"):format(FixedDiv(interval, TR*FU))
 		)
 		
@@ -515,7 +602,7 @@ addHook("ThinkFrame",do
 		if curve ~= FU
 			interval = FixedDiv($, curve)
 		end
-		print("final:   "..(interval / FU)..", "..(interval/FU)/TR)
+		dprint("final:   "..(interval / FU)..", "..(interval/FU)/TR)
 		
 		interval = $ / FU
 		if (interval < 1) then interval = 1; end
@@ -536,45 +623,44 @@ addHook("ThinkFrame",do
 		end
 		
 		if rs.roundtime == 0
+			rs.waveclear = true
 			if (rs.eggsin >= rs.quota)
 				Salmon.setupRound(STAGE_END)
 				S_ChangeMusic(waveSong(hazard,true), true, nil, 0,S_GetMusicPosition(), 0,0)
 				mapmusname = waveSong(hazard,true)
 				S_StartSound(nil, sfx_p_pos)
-				rs.waveclear = true
 			else
-				S_ChangeMusic(waveSong(hazard,true), true, nil, 0,S_GetMusicPosition(), 0,0)
-				mapmusname = waveSong(hazard,true)
-				
-				rs.roundtime = 0
-				S_StartSound(nil, sfx_p_neg)
-				Salmon.setupRound(STAGE_END)
-				rs.waveclear = true
 				rs.failed = true
-				
-				rs.hazard = max($ - HAZARD_INCREASE*2, HAZARD_START)
 			end
 		end
 		
 		local count = Salmon.countPlayers()
 		if count.dead == count.playing
-			S_ChangeMusic(waveSong(hazard,true), true, nil, 0,S_GetMusicPosition(), 0,0)
-			mapmusname = waveSong(hazard,true)
-			
-			rs.roundtime = 0
-			S_StartSound(nil, sfx_p_neg)
-			Salmon.setupRound(STAGE_END)
-			rs.waveclear = true
 			rs.failed = true
-			
+		end
+		
+		if rs.failed
+			rs.roundtime = 0
+			rs.waveclear = true
 			if rs.hazard > HAZARD_START
-				rs.hazard = max($ - HAZARD_INCREASE*2, HAZARD_START)
+				rs.hazard = max($ - HAZARD_INCREASE, HAZARD_START)
 			else
 				rs.hazard = HAZARD_START - HAZARD_INCREASE
 			end
+			
+			S_ChangeMusic(waveSong(hazard,true), true, nil, 0,S_GetMusicPosition(), 0,0)
+			mapmusname = waveSong(hazard,true)
+			S_StartSound(nil, sfx_p_neg)
+			
+			Salmon.setupRound(STAGE_END)
+		end
+		if rs.waveclear
+			rs.tospawn = 0
+			rs.spawncooldown = 0
 		end
 		player_time = rs.roundtime
 	elseif (rs.postround ~= 0)
+		state = ROUND_POSTGAME
 		rs.postround = $ - 1
 		
 		Paint.HUD.memory.killtags = {}
@@ -623,8 +709,7 @@ addHook("ThinkFrame",do
 		end
 	end
 	
-	if (rs.roundtime == 0)
-	and (#Paint.enemyList)
+	if state ~= ROUND_GAME
 		for k, mo in ipairs(Paint.enemyList)
 			if not (mo and mo.valid) then continue end
 			if mo.type == MT_PAINT_ENEMY
@@ -639,6 +724,51 @@ addHook("ThinkFrame",do
 	
 	if rs.bossalert
 		rs.bossalert = $ - 1
+	end
+	
+	if rs.to_day
+	and (Salmon.map_colormap)
+	and (#Salmon.map_sectors)
+		local t = Salmon.day_color
+		local clr = Salmon.map_colormap
+		
+		for _, secnum in ipairs(Salmon.map_sectors)
+			sectors[secnum].lightlevel = approach($, t.l, DAYTRANS_STEP)
+		end
+		
+		clr.red			= approach($, t.r,   DAYTRANS_STEP)
+		clr.green		= approach($, t.g,   DAYTRANS_STEP)
+		clr.blue		= approach($, t.b,   DAYTRANS_STEP)
+		clr.alpha		= approach($, t.a,   DAYTRANS_STEP)
+		
+		clr.fade_red	= approach($, t.f_r, DAYTRANS_STEP)
+		clr.fade_green	= approach($, t.f_g, DAYTRANS_STEP)
+		clr.fade_blue	= approach($, t.f_b, DAYTRANS_STEP)
+		clr.fade_alpha	= approach($, t.f_a, DAYTRANS_STEP)
+		
+		rs.to_day = $ - 1
+	end
+	if rs.to_night
+	and (Salmon.map_colormap)
+	and (#Salmon.map_sectors)
+		local t = Salmon.night_color
+		local clr = Salmon.map_colormap
+		
+		for _, secnum in ipairs(Salmon.map_sectors)
+			sectors[secnum].lightlevel = approach($, t.l, DAYTRANS_STEP)
+		end
+		
+		clr.red			= approach($, t.r,   DAYTRANS_STEP)
+		clr.green		= approach($, t.g,   DAYTRANS_STEP)
+		clr.blue		= approach($, t.b,   DAYTRANS_STEP)
+		clr.alpha		= approach($, t.a,   DAYTRANS_STEP)
+		
+		clr.fade_red	= approach($, t.f_r, DAYTRANS_STEP)
+		clr.fade_green	= approach($, t.f_g, DAYTRANS_STEP)
+		clr.fade_blue	= approach($, t.f_b, DAYTRANS_STEP)
+		clr.fade_alpha	= approach($, t.f_a, DAYTRANS_STEP)
+		
+		rs.to_night = $ - 1
 	end
 end)
 
@@ -676,6 +806,7 @@ addHook("PlayerThink",function(p)
 	
 	p.skincolor = Salmon.playercolor
 	me.color = Salmon.playercolor
+	me.renderflags = $|RF_SEMIBRIGHT
 	
 	if me.deathtimer == nil
 		me.deathtimer = 0
@@ -1031,6 +1162,8 @@ addHook("NetVars",function(n)
 	Salmon.playerspawns = n($)
 	Salmon.playercolor = n($)
 	Salmon.roundstatus = n($)
+	Salmon.map_colormap = n($)
+	Salmon.map_sectors = n($)
 end)
 
 TurfWar.registerGamemode(GT_SALMONRUN, {

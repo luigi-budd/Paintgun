@@ -107,6 +107,7 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 				P_ReturnThrustY(nil, fireangle, FixedMul(cur_weapon:get(pt,"shineoffset"), me.scale)),
 				0,MT_PARTICLE
 			)
+			s.renderflags = $|RF_NOCOLORMAPS
 			s.state = S_PAINT_FLAIR
 			s.color = wepmo.color
 			s.fuse = 2
@@ -152,6 +153,7 @@ local function makeBlob(p,me,pt, rad,hei)
 	blob.fuse = TR*3/4
 	
 	blob.color = Paint:getPlayerColor(p)
+	blob.renderflags = $|RF_NOCOLORMAPS|RF_SEMIBRIGHT
 	return blob
 end
 addHook("PlayerThink",function(p)
@@ -252,7 +254,8 @@ addHook("PlayerThink",function(p)
 			sel = $ - 1
 		end
 		if sel ~= 0
-		and not (pt.endlag or pt.shieldlag or pt.lastslowdown)
+		and not ((pt.endlag or pt.shieldlag or pt.lastslowdown)
+		or (pt.turretmode or pt.dodgeroll.tics or pt.dodgeroll.getup))
 			pt.inventory.curslot = $ + sel
 			if pt.inventory.curslot > pt.inventory.slots
 				pt.inventory.curslot = 1
@@ -1037,6 +1040,7 @@ addHook("PlayerThink",function(p)
 			tn.radius = 2*me.scale
 			tn.height = 4*me.scale
 			tn.dontdrawforviewmobj = me
+			tn.renderflags = $|RF_NOCOLORMAPS
 			tn.target = me
 			
 			local mid = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
@@ -1051,6 +1055,7 @@ addHook("PlayerThink",function(p)
 			mid.color = SKINCOLOR_SUPERSILVER1
 			mid.colorized = true
 			mid.target = me
+			mid.renderflags = $|RF_NOCOLORMAPS
 			tn.target = mid
 			
 			local back = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
