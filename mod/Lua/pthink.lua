@@ -547,9 +547,9 @@ addHook("PlayerThink",function(p)
 		if pt.squidlag then pt.squidlag = $ - 1; end
 		pt.justfired = false
 		
-		p.charflags = ($ &~SF_NOSKID)|(skins[p.skin].flags & SF_NOSKID)
-		p.normalspeed = skins[p.skin].normalspeed * 4/5
-		p.thrustfactor = skins[p.skin].thrustfactor
+		p.charflags = ($ &~SF_NOSKID)|(skin.flags & SF_NOSKID)
+		p.normalspeed = skin.normalspeed * 60 / 100
+		p.thrustfactor = skin.thrustfactor
 		if (pt.squidtime >= MAX_SQUIDTIME)
 			p.charflags = $|SF_NOSKID
 			if (pt.inink == Paint.ININK_FRIENDLY)
@@ -564,7 +564,7 @@ addHook("PlayerThink",function(p)
 					P_MovePlayer(p)
 				end
 				
-				p.normalspeed = skins[p.skin].normalspeed * 9/10
+				p.normalspeed = skin.normalspeed
 				p.thrustfactor = $*6/4
 				me.friction = FixedMul($, FU*97/100)
 				if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
@@ -879,10 +879,12 @@ addHook("PlayerThink",function(p)
 				dd.momx = 0;dd.momx = 0
 			end
 			p.pflags = $|PF_FULLSTASIS
+			p.jumpfactor = 0
 			dd.oldx = me.x
 			dd.oldy = me.y
 		elseif pt.firewait or dd.getup or inpain
 			p.pflags = $|PF_FULLSTASIS
+			p.jumpfactor = 0
 			
 			local redid = false
 			if not (pt.firewait > cur_weapon:get(pt,"dodgelength"))
@@ -930,6 +932,7 @@ addHook("PlayerThink",function(p)
 			dd.count = 0
 			dd.leave = 0
 			pt.turretmode = false
+			p.jumpfactor = skin.jumpfactor
 		end
 		/*
 		print("dd = {")
@@ -977,9 +980,19 @@ addHook("PlayerThink",function(p)
 		if (pt.deployshield or pt.shieldlag)
 			slowdown = cur_weapon:get(pt,"shieldingspeed")
 		end
-		p.normalspeed = FixedMul(skins[p.skin].normalspeed * 4/5, slowdown)
+		p.normalspeed = FixedMul(skin.normalspeed * 60 / 100, slowdown)
 	end
 	pt.lastslowdown = doslowdown
+	
+	if not P_IsObjectOnGround(me)
+	and FixedHypot(me.momx,me.momy) > FixedMul(p.normalspeed, me.scale)
+		local speed = FixedHypot(me.momx,me.momy)
+		local div = 18*FU
+		
+		local newspeed = speed - FixedDiv(speed - FixedMul(p.normalspeed, me.scale),div)
+		me.momx = FixedMul(FixedDiv(me.momx,speed), newspeed)
+		me.momy = FixedMul(FixedDiv(me.momy,speed), newspeed)
+	end
 	
 	do
 		if pt.hp ~= 100*FU
@@ -1092,6 +1105,7 @@ addHook("PlayerThink",function(p)
 			tank.angle = $ - ANGLE_90
 			tank.destscale = me.scale
 			tank.scalespeed = tank.destscale + 1
+			tank.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
 			
 			local back = tank.tracer
 			back.angle = tank.angle
@@ -1103,6 +1117,7 @@ addHook("PlayerThink",function(p)
 			)
 			back.destscale = me.scale
 			back.scalespeed = back.destscale + 1
+			back.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
 			
 			local mid = tank.target
 			mid.angle = tank.angle
@@ -1121,6 +1136,7 @@ addHook("PlayerThink",function(p)
 			)
 			mid.destscale = me.scale
 			mid.scalespeed = mid.destscale + 1
+			mid.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
 			
 			tank.pitch,tank.roll = 0,0
 			back.pitch,back.roll = 0,0

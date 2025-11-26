@@ -36,7 +36,7 @@ local weapon_meta = {
 	startlag = 0,
 	endlag = 0,
 	squidlag = 0, -- wait this many frames before being able to swim
-	shootspeed = FU/2, --how much to slow down when shooting
+	shootspeed = FU*78/100, --how much to slow down when shooting
 	inertia = false,
 	tapfire = false,
 	
