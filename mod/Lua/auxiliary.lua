@@ -67,7 +67,7 @@ end
 freeslot("S_PAINT_SPLASH")
 states[S_PAINT_SPLASH] = {
 	sprite = SPR_PAINT_MISC,
-	frame = 6|FF_ANIMATE,
+	frame = 6|FF_ANIMATE|FF_SEMIBRIGHT,
 	var1 = 14 - 6,
 	var2 = 2,
 	tics = (14 - 6)*2,

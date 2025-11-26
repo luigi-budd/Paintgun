@@ -100,7 +100,7 @@ addHook("MobjThinker",function(mo)
 	if not (mo.health) then return end
 	
 	mo.shadowscale = FU*3/4
-	mo.renderflags = $|RF_SEMIBRIGHT
+	mo.renderflags = $|RF_FULLBRIGHT
 	local flip = P_MobjFlip(mo)
 	if mo.momz*flip <= -5*mo.scale
 		mo.flags = $|MF_NOGRAVITY
@@ -515,6 +515,7 @@ Salmon.spawnEnemy = function()
 	mobj.angle = spawn.a
 	mobj.nerfed = true
 	mobj.destination = {x = dest.x, y = dest.y, tag = dest.tag}
+	mobj.renderflags = $|RF_SEMIBRIGHT
 	
 	mobj.paint_maxhp = 110*FU
 	mobj.paint_hp = mobj.paint_maxhp
@@ -648,8 +649,8 @@ addHook("ThinkFrame",do
 				rs.hazard = HAZARD_START - HAZARD_INCREASE
 			end
 			
-			S_ChangeMusic(waveSong(hazard,true), true, nil, 0,S_GetMusicPosition(), 0,0)
-			mapmusname = waveSong(hazard,true)
+			S_ChangeMusic(waveSong(rs.hazard,true), true, nil, 0,S_GetMusicPosition(), 0,0)
+			mapmusname = waveSong(rs.hazard,true)
 			S_StartSound(nil, sfx_p_neg)
 			
 			Salmon.setupRound(STAGE_END)
