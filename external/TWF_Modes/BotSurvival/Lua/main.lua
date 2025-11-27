@@ -27,6 +27,7 @@ sfxinfo[freeslot("sfx_p_db3")] = {
 sfxinfo[freeslot("sfx_p_db4")].caption = "Jump"
 sfxinfo[freeslot("sfx_p_ge0")].caption = "Token appears"
 sfxinfo[freeslot("sfx_p_ge1")].caption = "Token in!"
+sfxinfo[freeslot("sfx_p_ge2")].caption = "\x82Quota met!\x80"
 sfxinfo[freeslot("sfx_p_boss")].caption = "\x85".."Boss appears!\x80"
 
 freeslot("MT_BOTSURV_SPAWNPOINT")
@@ -132,10 +133,10 @@ addHook("MobjDeath",function(mo)
 	mo.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY
 	
 	Salmon.roundstatus.eggsin = $ + 1
-	S_StartSound(nil, sfx_p_ge1)
 	if (Salmon.roundstatus.eggsin >= Salmon.roundstatus.quota)
-		S_StartSound(nil, sfx_ncitem)
-		S_StartSoundAtVolume(nil, sfx_ncitem, 255/2)
+		S_StartSound(nil, sfx_p_ge2)
+	else
+		S_StartSound(nil, sfx_p_ge1)
 	end
 end,MT_SR_MACGUFFIN)
 
