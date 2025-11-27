@@ -114,7 +114,7 @@ local weapon_meta = {
 	dodgelength = 10,
 	dodgedist = 190*FU,
 	dodgeendlag = 3, -- wait this many tics AFTER rolling to start firing
-	dodgegetup = 32, -- you can get up after this many tics
+	dodgegetup = TR/2, -- you can get up after this many tics
 	dodgeinkcost = 8*FU, -- use this much ink for dodge rolls
 	dodgeshotcost = nil,
 	turret_range = nil,
@@ -453,7 +453,8 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		proj.momx = $ + mom_vec.x
 		proj.momy = $ + mom_vec.y
 	end
-	proj.damage = cur_weapon:get(pt,"damage")
+	local wep_damage = cur_weapon:get(pt,"damage")
+	proj.damage = wep_damage
 	proj.charge = pt.charge
 	proj.pierces = cur_weapon.pierces
 	proj.powerful = false
@@ -502,23 +503,25 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		if (p == displayplayer or p == secondarydisplayplayer)
 			P_StartQuake(15 * max(chargeprogress, FU/5), 12)
 		end
-		pt.cooldown = (firerate + (FixedMul((cur_weapon.maxfirerate - firerate)*FU, chargeprogress)/FU)) + 1
+		pt.cooldown = (firerate + (FixedMul((cur_weapon:get(pt,"maxfirerate") - firerate)*FU, chargeprogress)/FU)) + 1
 		pt.endlag = pt.cooldown
 		
 		proj.falloff = FixedMul(cur_weapon.falloff[2], proj.scale)
 		proj.progress = chargeprogress
 		if (chargeprogress >= FU)
-			proj.damage = cur_weapon.maxdamage
+			proj.damage = cur_weapon:get(pt,"maxdamage")
 		else
-			proj.damage = cur_weapon.damage + FixedMul(cur_weapon.partialdamage - cur_weapon.damage, ease.inexpo(chargeprogress,0,FU))
+			proj.damage = wep_damage + FixedMul(cur_weapon:get(pt,"partialdamage") - wep_damage, ease.linear(chargeprogress,0,FU))
 		end
 	elseif not pt.calledbacks.onfire
 		S_StartSoundAtVolume(me, cur_weapon.sounds[P_RandomRange(1, #cur_weapon.sounds)], cur_weapon.soundvolume)
 	end
 	if cur_weapon.guntype == WPT_BRELLA
-		proj.damage = cur_weapon.damage + FixedMul(cur_weapon.maxdamage - cur_weapon.damage, P_RandomFixed())
+		proj.damage = wep_damage + FixedMul(cur_weapon:get(pt,"maxdamage") - wep_damage, P_RandomFixed())
 		proj.pellet = true
 	end
+	proj.basedamage = proj.damage
+	proj.falloffdamage = cur_weapon:get(pt, "falloffdamage")
 	
 	pt.anglefix = pt.cooldown
 	if (pt.weaponmobj and pt.weaponmobj.valid)

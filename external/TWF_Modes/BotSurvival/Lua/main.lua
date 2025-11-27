@@ -279,12 +279,20 @@ Salmon.setupRound = function(stage)
 		
 		if not rs.failed
 			local overachieve = FU
-			if (rs.eggsin >= rs.quota*2)
+			if (rs.eggsin >= rs.quota*5/2)
+				overachieve = $ + FU * 3/4
+			elseif (rs.eggsin >= rs.quota*2)
 				overachieve = $ + FU/2
 			elseif (rs.eggsin >= rs.quota*3/2)
-				overachieve = $ + FU/3
+				overachieve = $ + FU/4
 			end
 			rs.hazard = min($ + FixedMul(HAZARD_INCREASE, overachieve), FU)
+		else
+			if rs.hazard > HAZARD_START
+				rs.hazard = max($ - HAZARD_INCREASE, HAZARD_START)
+			else
+				rs.hazard = HAZARD_START - HAZARD_INCREASE
+			end
 		end
 		
 		for p in players.iterate
@@ -596,7 +604,7 @@ addHook("ThinkFrame",do
 		
 		if (rs.roundtime <= 3*TR)
 			if rs.roundtime % TR == 0
-			and rs.roundtime > TR
+			and rs.roundtime > 0
 				S_StartSound(nil, sfx_s3ka7)
 			end
 		end
@@ -650,11 +658,6 @@ addHook("ThinkFrame",do
 		if rs.failed
 			rs.roundtime = 0
 			rs.waveclear = true
-			if rs.hazard > HAZARD_START
-				rs.hazard = max($ - HAZARD_INCREASE, HAZARD_START)
-			else
-				rs.hazard = HAZARD_START - HAZARD_INCREASE
-			end
 			
 			S_ChangeMusic(waveSong(rs.hazard,true), true, nil, 0,S_GetMusicPosition(), 0,0)
 			mapmusname = waveSong(rs.hazard,true)

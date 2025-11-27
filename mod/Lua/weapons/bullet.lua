@@ -516,11 +516,11 @@ addHook("MobjThinker",function(shot)
 		end
 		shot.momz = $ + dropoff_grav
 		
-		shot.damage = wep.falloffdamage + ease.linear(
+		shot.damage = shot.falloffdamage + ease.linear(
 			min(
 				abs((FU/wep.fallofftime) * (shot.fallofftime - shot.lifespan)),
 			FU),
-			wep.damage - wep.falloffdamage, 0 
+			shot.basedamage - shot.falloffdamage, 0 
 		)
 		
 		local drag = wep.dragmul
