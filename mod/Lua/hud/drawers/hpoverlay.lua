@@ -37,7 +37,7 @@ addHook("HUD",function(v,p,cam)
 		if pt.paintoverlay and pt.paintoverlay.valid
 			color = pt.paintoverlay.color
 		end
-		local clrmp = v.getColormap(TC_RAINBOW,color)
+		local clrmp = v.getColormap(TC_DEFAULT,color)
 		
 		fade = (10*$)/FU
 		fade = max($, 2)

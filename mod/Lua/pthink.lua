@@ -669,7 +669,6 @@ addHook("PlayerThink",function(p)
 		end
 		if me.last_hidden ~= pt.hidden
 		and me.last_hidden ~= nil
-			print((pt.wasclimbing or pt.wallink) or oldclimbing)
 			if not ((pt.wasclimbing or pt.wallink) or oldclimbing)
 				local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
 				P_SetOrigin(splash, splash.x,splash.y, me.floorz)
