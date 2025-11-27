@@ -461,6 +461,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.progress = 0
 	proj.spritexscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
 	proj.spriteyscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
+	proj.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 	local new_state = cur_weapon:get(pt,"shotstate")
 	if (new_state ~= nil)
 		proj.state = new_state

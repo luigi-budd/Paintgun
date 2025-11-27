@@ -19,10 +19,10 @@ addHook("HUD",function(v,p,cam)
 		
 		local fadeprogress = ease.insine(FixedDiv(hp, 100*FU), FU, 0)
 		local fade = fadeprogress
-		local scale = FU --+ (FixedMul(FU/10, FU - fade))
+		local scale = FU
 		local patch_progress = (FixedMul(8*FU, fadeprogress)/FU) + 1
 		patch_progress = clamp(1,$,8)
-		local patch = v.cachePatch("PAINT_OVERLAY" .. patch_progress )
+		local patch = v.cachePatch("PAINT_OVERLAY" .. patch_progress)
 		local wid = (v.width() / v.dupx()) + 1
 		local hei = (v.height() / v.dupy()) + 1
 		local p_w = patch.width
@@ -38,6 +38,7 @@ addHook("HUD",function(v,p,cam)
 			color = pt.paintoverlay.color
 		end
 		local clrmp = v.getColormap(TC_DEFAULT,color)
+		--local white = v.getColormap(TC_DEFAULT, SKINCOLOR_WHITE, "Grayscale")
 		
 		fade = (10*$)/FU
 		fade = max($, 2)
@@ -62,6 +63,17 @@ addHook("HUD",function(v,p,cam)
 						0, ifrac, p_w*FU, FU
 					)
 				end
+				
+				/*
+				v.drawCropped(160*FU + shift, YPOS + FixedMul(ifrac,Y_STR),
+					X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp,
+					0, ifrac, p_w*FU, FU
+				)
+				v.drawCropped(160*FU + shift, YPOS + FixedMul(ifrac,Y_STR),
+					X_STR,Y_STR, patch, V_MODULATE, white,
+					0, ifrac, p_w*FU, FU
+				)
+				*/
 			end
 		else
 			v.drawStretched(160*FU, YPOS, X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp)

@@ -375,6 +375,7 @@ local function CreateTrail(shot)
 	return drop
 end
 addHook("MobjThinker",function(shot)
+	shot.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 	if shot.visualfadestupidshit then
 		if shot.fuse < 10
 			shot.alpha = $ - (FU/10) 

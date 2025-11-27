@@ -105,6 +105,7 @@ addHook("ThinkFrame",do
 				ov.colorized = true
 				ov.blendmode = AST_TRANSLUCENT
 				ov.color = mo.paint_color
+				ov.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 				overlay = ov
 				mo.paint_overlay = ov
 			end

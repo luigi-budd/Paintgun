@@ -135,6 +135,7 @@ addHook("MobjDeath",function(mo)
 	Salmon.roundstatus.eggsin = $ + 1
 	if (Salmon.roundstatus.eggsin >= Salmon.roundstatus.quota)
 		S_StartSound(nil, sfx_p_ge2)
+		Paint.HUD:quotaLight()
 	else
 		S_StartSound(nil, sfx_p_ge1)
 	end
@@ -547,14 +548,12 @@ Salmon.spawnEnemy = function()
 	rs.enemiesspawned = $ + 1
 end
 
+-- just a lerp function now
 local function approach(from, to, step)
-	if from == to then return to; end
-	local tmp = from
-	if (to > from)
-		return min(from + step, to)
-	else
-		return max(from - step, to)
+	if step <= 1
+		return to
 	end
+	return from + (FixedMul((to - from)*FU, FU - FixedDiv(step*FU, DAYTRANS_TIME*FU))/FU)
 end
 
 addHook("ThinkFrame",do
@@ -594,6 +593,13 @@ addHook("ThinkFrame",do
 	elseif (rs.roundtime ~= 0)
 		state = ROUND_GAME
 		rs.roundtime = $ - 1
+		
+		if (rs.roundtime <= 3*TR)
+			if rs.roundtime % TR == 0
+			and rs.roundtime > TR
+				S_StartSound(nil, sfx_s3ka7)
+			end
+		end
 		
 		local interval = FixedDiv((TR*3/2)*FU, rs.hazard)
 		dprint("intervals:",
@@ -732,43 +738,45 @@ addHook("ThinkFrame",do
 	and (Salmon.map_colormap)
 	and (#Salmon.map_sectors)
 		local t = Salmon.day_color
+		local n = Salmon.night_color
 		local clr = Salmon.map_colormap
 		
 		for _, secnum in ipairs(Salmon.map_sectors)
-			sectors[secnum].lightlevel = approach($, t.l, DAYTRANS_STEP)
+			sectors[secnum].lightlevel = approach(n.l, t.l, rs.to_day)
 		end
 		
-		clr.red			= approach($, t.r,   DAYTRANS_STEP)
-		clr.green		= approach($, t.g,   DAYTRANS_STEP)
-		clr.blue		= approach($, t.b,   DAYTRANS_STEP)
-		clr.alpha		= approach($, t.a,   DAYTRANS_STEP)
+		clr.red			= approach(n.r, t.r,   rs.to_day)
+		clr.green		= approach(n.g, t.g,   rs.to_day)
+		clr.blue		= approach(n.b, t.b,   rs.to_day)
+		clr.alpha		= approach(n.a, t.a,   rs.to_day)
 		
-		clr.fade_red	= approach($, t.f_r, DAYTRANS_STEP)
-		clr.fade_green	= approach($, t.f_g, DAYTRANS_STEP)
-		clr.fade_blue	= approach($, t.f_b, DAYTRANS_STEP)
-		clr.fade_alpha	= approach($, t.f_a, DAYTRANS_STEP)
+		clr.fade_red	= approach(n.f_r, t.f_r, rs.to_day)
+		clr.fade_green	= approach(n.f_g, t.f_g, rs.to_day)
+		clr.fade_blue	= approach(n.f_b, t.f_b, rs.to_day)
+		clr.fade_alpha	= approach(n.f_a, t.f_a, rs.to_day)
 		
 		rs.to_day = $ - 1
 	end
 	if rs.to_night
 	and (Salmon.map_colormap)
 	and (#Salmon.map_sectors)
+		local n = Salmon.day_color
 		local t = Salmon.night_color
 		local clr = Salmon.map_colormap
 		
 		for _, secnum in ipairs(Salmon.map_sectors)
-			sectors[secnum].lightlevel = approach($, t.l, DAYTRANS_STEP)
+			sectors[secnum].lightlevel = approach(n.l, t.l, rs.to_night)
 		end
 		
-		clr.red			= approach($, t.r,   DAYTRANS_STEP)
-		clr.green		= approach($, t.g,   DAYTRANS_STEP)
-		clr.blue		= approach($, t.b,   DAYTRANS_STEP)
-		clr.alpha		= approach($, t.a,   DAYTRANS_STEP)
+		clr.red			= approach(n.r, t.r,   rs.to_night)
+		clr.green		= approach(n.g, t.g,   rs.to_night)
+		clr.blue		= approach(n.b, t.b,   rs.to_night)
+		clr.alpha		= approach(n.a, t.a,   rs.to_night)
 		
-		clr.fade_red	= approach($, t.f_r, DAYTRANS_STEP)
-		clr.fade_green	= approach($, t.f_g, DAYTRANS_STEP)
-		clr.fade_blue	= approach($, t.f_b, DAYTRANS_STEP)
-		clr.fade_alpha	= approach($, t.f_a, DAYTRANS_STEP)
+		clr.fade_red	= approach(n.f_r, t.f_r, rs.to_night)
+		clr.fade_green	= approach(n.f_g, t.f_g, rs.to_night)
+		clr.fade_blue	= approach(n.f_b, t.f_b, rs.to_night)
+		clr.fade_alpha	= approach(n.f_a, t.f_a, rs.to_night)
 		
 		rs.to_night = $ - 1
 	end

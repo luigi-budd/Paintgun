@@ -319,6 +319,7 @@ addHook("PlayerThink",function(p)
 			s.paint_overlay.tics, s.paint_overlay.fuse = -1,-1
 			s.paint_overlay.dontdrawforviewmobj = me
 			s.paint_overlay.colorized = true
+			s.paint_overlay.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 			
 			pt.shield = s
 			sh = s
@@ -674,6 +675,7 @@ addHook("PlayerThink",function(p)
 				P_SetOrigin(splash, splash.x,splash.y, me.floorz)
 				splash.state = S_PAINT_SPLASH
 				splash.color = Paint:getPlayerColor(p)
+				splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 				P_SetScale(splash, splash.scale + P_RandomFixed()/2, true)
 			end
 			S_StartSound(me, sfx_splish)
@@ -1286,6 +1288,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 			ov.dontdrawforviewmobj = me
 			ov.colorized = true
 			ov.blendmode = AST_TRANSLUCENT
+			ov.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 			if Paint:getPlayerColor(p) ~= SKINCOLOR_NONE
 				ov.color = ColorOpposite(Paint:getPlayerColor(p))
 			else

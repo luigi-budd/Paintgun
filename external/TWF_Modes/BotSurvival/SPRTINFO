@@ -6,4 +6,10 @@ Sprite LFSR
 		YPivot 57
 		RotAxis Z
 	}
+	Frame B
+	{
+		XPivot 17
+		YPivot 17
+		RotAxis Z
+	}
 }
