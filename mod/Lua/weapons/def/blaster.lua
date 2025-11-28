@@ -21,7 +21,7 @@ Paint:registerWeapon({
 	firerate = 28,
 	shootspeed = tofixed("0.45"),
 	startlag = 7,
-	endlag = 29,
+	endlag = 14,
 	lifespan = 6,
 	inertia = false,
 	falloff = {0,0},

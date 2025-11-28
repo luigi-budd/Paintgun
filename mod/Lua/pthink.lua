@@ -510,8 +510,8 @@ addHook("PlayerThink",function(p)
 		pt.hidden = false
 		
 		if (p.cmd.buttons & BT_SPIN)
-		and not ((pt.endlag or pt.shieldlag or pt.firewait or pt.cooldown or pt.justfired or (pt.charge ~= 0))
-		or (pt.cooldown))
+		and not ((pt.endlag or pt.shieldlag or pt.firewait /*or pt.cooldown*/ or pt.justfired or (pt.charge ~= 0))
+		/*or (pt.cooldown)*/)
 		and (p.charability2 == CA2_SQUIDFORM)
 		and not (pt.dodgeroll.tics or pt.dodgeroll.getup)
 		and not (pt.squidlag)
@@ -548,7 +548,7 @@ addHook("PlayerThink",function(p)
 		if pt.squidlag then pt.squidlag = $ - 1; end
 		pt.justfired = false
 		
-		p.charflags = ($ &~SF_NOSKID)|(skin.flags & SF_NOSKID)
+		p.charflags = ($ &~(SF_NOSKID|SF_NOJUMPSPIN))|(skin.flags & (SF_NOSKID|SF_NOJUMPSPIN))
 		p.normalspeed = skin.normalspeed * 60 / 100
 		p.thrustfactor = skin.thrustfactor
 		if (pt.squidtime >= MAX_SQUIDTIME)
@@ -947,8 +947,13 @@ addHook("PlayerThink",function(p)
 	end
 	
 	if pt.cooldown
-		doslowdown = true
+		--doslowdown = true
 		pt.cooldown = $ - 1
+	end
+	if (p.cmd.buttons & BT_ATTACK)
+	or pt.firewait
+		doslowdown = true
+		p.charflags = $|SF_NOJUMPSPIN
 	end
 	if pt.firewait --startlag
 		doslowdown = true

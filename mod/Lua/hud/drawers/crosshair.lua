@@ -306,11 +306,10 @@ local function drawCrosshair(v,p,cam, y, dflip)
 	
 	local pt = p.paint
 	cross_x,cross_y = result.x,result.y
-	drawCharger(v,p,cam);
 	v.dointerp(6 + interptag)
 	
 	drawReticle(v, MID_X,y, p, CRTYPE_BASEONLY)
-	
+	drawCharger(v,p,cam);
 	drawReticle(v, result.x,result.y, p, CRTYPE_BLOCKED)
 	return true
 end
@@ -480,7 +479,6 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 	
 	cross_x,cross_y = MID_X,y
 	local crosshair_result = drawCrosshair(v,p,cam, y, dflip)
-	if crosshair_result == -1 then return end
 	if not crosshair_result
 		v.dointerp(5 + interptag)
 		drawReticle(v,MID_X,y, p, CRTYPE_STANDBY)
