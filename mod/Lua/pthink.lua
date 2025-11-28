@@ -451,6 +451,11 @@ addHook("PlayerThink",function(p)
 		p.cmd.buttons = $ &~BT_ATTACK
 	end
 	if not p.exiting
+		if pt.store_lag
+			pt.buttons = $ &~BT_SPIN
+			p.cmd.buttons = $ &~BT_SPIN
+		end
+		
 		if (pt.buttons & BT_SPIN)
 			pt.spinheld = $ + 1
 		else
@@ -469,10 +474,27 @@ addHook("PlayerThink",function(p)
 			end
 			pt.fireheld = $ + 1
 			p.cmd.buttons = $|BT_ATTACK
+			
 			if (pt.spinheld and pt.spinheld < pt.fireheld)
 				pt.fireheld = 0
 				p.cmd.buttons = $ &~BT_ATTACK
 				pt.nofiring = true
+				
+				if (cur_weapon.guntype == WPT_CHARGER)
+					if (cur_weapon:get(pt,"storecharges")
+					and (cur_weapon:get(pt,"partialstorage") or (pt.charge >= cur_weapon:get(pt,"chargetime"))))
+						pt.storedcharge = pt.charge
+					end
+					pt.charge = 0
+					local charge_sound = cur_weapon:get(pt,"charging_sound", p)
+					local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound", p)
+					S_StopSoundByID(me, charge_sound)
+					S_StopSoundByID(me, slow_charge_sound)
+					
+					pt.maxcharged = false
+					pt.justcharged = false
+					pt.wasfastcharging = false
+				end
 			end
 		else
 			pt.fireheld = 0
@@ -534,6 +556,15 @@ addHook("PlayerThink",function(p)
 				if pt.fireheld ~= 0
 					pt.fireheld = 1
 					justpressedfire = true
+				end
+				if pt.storedcharge
+					S_StartSound(nil, sfx_pt_kth, p)
+					pt.charge = pt.storedcharge
+					pt.store_lag = cur_weapon:get(pt,"storagelag")
+					pt.store_firelag = cur_weapon:get(pt,"storagelaserlag")
+					
+					pt.storedcharge = 0
+					pt.store_time = 0
 				end
 				pt.nofiring = false
 			end
@@ -660,6 +691,30 @@ addHook("PlayerThink",function(p)
 				S_StopSoundByID(me,sfx_pt_swm)
 			end
 			pt.wallink = max($ - 1, 0)
+			
+			if pt.storedcharge
+				local maxtime = cur_weapon:get(pt,"storagetime")
+				local g = P_SpawnMobjFromMobj(me, 0,0,2*FU, MT_PARTICLE)
+				g.sprite = SPR_PAINT_MISC
+				g.frame = 32|FF_FULLBRIGHT|FF_ADD
+				g.renderflags = $|RF_NOCOLORMAPS
+				if (pt.hidden)
+					g.renderflags = $|RF_FLOORSPRITE
+				end
+				g.color = Paint:getPlayerColor(p)
+				g.fuse = 2
+				if pt.store_time > maxtime - TR/2
+					g.alpha = FU - FixedDiv((pt.store_time - (maxtime - TR/2))*FU, (TR/2)*FU)
+				end
+				
+				pt.store_time = $ + 1
+				if pt.store_time >= maxtime
+				or not (p.cmd.buttons & BT_ATTACK)
+					pt.storedcharge = 0
+				end
+			else
+				pt.store_time = 0
+			end
 		else
 			pt.wallink = 0
 			
@@ -706,6 +761,36 @@ addHook("PlayerThink",function(p)
 		end
 	end
 	
+	if pt.store_lag
+		pt.fireheld = max($, 1)
+		p.cmd.buttons = $|BT_ATTACK
+		pt.store_lag = $ - 1
+		
+		if pt.store_lag == 0
+			if P_IsObjectOnGround(me)
+				me.state = S_PLAY_WALK
+				P_MovePlayer(p)
+			else
+				if (me.momz * P_MobjFlip(me) > 0)
+					me.state = S_PLAY_SPRING
+				else
+					me.state = S_PLAY_FALL
+				end
+			end
+			
+			local charge_sound = cur_weapon:get(pt,"charging_sound", p)
+			local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound", p)
+			if pt.charge < cur_weapon:get(pt,"chargetime")
+				S_StartSound(me,charge_sound)
+			end
+		elseif me.state ~= S_PLAY_ROLL
+			me.state = S_PLAY_ROLL
+		end
+	end
+	if pt.store_firelag
+		pt.store_firelag = $ - 1
+	end
+	
 	if pt.inkdelay
 		if not pt.fireheld
 			pt.inkdelay = $ - 1
@@ -713,6 +798,7 @@ addHook("PlayerThink",function(p)
 		pt.oldinkanim = ease.linear(FU - FixedDiv(pt.inkdelay*FU, (pt.maxinkdelay or 1)*FU), pt.oldinktank, pt.inktank)
 	elseif pt.inktank ~= 100*FU
 	and not pt.fireheld
+	and not pt.inkqueue
 		pt.maxinkdelay = 0
 		if (pt.inink == Paint.ININK_FRIENDLY)
 		and pt.hidden
@@ -771,9 +857,27 @@ addHook("PlayerThink",function(p)
 			pt.charge = 0
 			pt.maxcharged = false
 		elseif (cur_weapon.guntype == WPT_CHARGER)
+		and not pt.store_firelag
 			local charge_sound = cur_weapon:get(pt,"charging_sound", p)
 			local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound", p)
 			local charge_time = cur_weapon:get(pt,"chargetime")
+			local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "inkcost")+1)
+			
+			if not pt.fireheld
+			and (pt.charge > 0 and pt.charge < cur_weapon:get(pt,"mincharge"))
+				if not lowink
+					pt.fireheld = 1
+					p.cmd.buttons = $|BT_ATTACK
+				else
+					pt.charge = 0
+					pt.maxcharged = false
+					pt.justcharged = false
+					pt.wasfastcharging = false
+					S_StopSoundByID(me, charge_sound)
+					S_StopSoundByID(me, slow_charge_sound)
+				end
+			end
+			
 			if pt.fireheld and (pt.cooldown == 0)
 				doslowdown = true
 				if not pt.charge
@@ -783,7 +887,6 @@ addHook("PlayerThink",function(p)
 					pt.oldinkanim = pt.oldinktank
 				end
 				
-				local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "inkcost")+1)
 				local slowcharge = lowink
 				if (me.jumptime and cur_weapon:get(pt,"slowwhenjumping"))
 				or lowink
@@ -831,13 +934,19 @@ addHook("PlayerThink",function(p)
 				pt.charge = min($, charge_time)
 				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 				pt.charge = 0
+				pt.justcharged = false
 				pt.maxcharged = false
-				pt.wasfastcharging = true
+				pt.wasfastcharging = false
 				S_StopSoundByID(me, charge_sound)
 				S_StopSoundByID(me, slow_charge_sound)
 			end
 			Paint:chargerSightline(p)
 		end
+	end
+	if (pt.store_lag or pt.storedcharge)
+		local mincost = cur_weapon:get(pt,"mininkcost")
+		local chargeprogress = min(FixedDiv(max(pt.storedcharge, pt.charge), cur_weapon.chargetime), FU)
+		pt.inkqueue = mincost + FixedMul(cur_weapon.inkcost - mincost, chargeprogress)
 	end
 	--print("lag", pt.firewait, pt.endlag, pt.cooldown, "firerate = "..cur_weapon:get(pt,"firerate"))
 	
@@ -965,6 +1074,7 @@ addHook("PlayerThink",function(p)
 	end
 	if pt.anglefix
 	or (pt.firewait or pt.shieldlag)
+	or (pt.store_lag)
 		p.drawangle = fireangle
 		if pt.anglefix
 			pt.anglefix = $ - 1
@@ -981,6 +1091,9 @@ addHook("PlayerThink",function(p)
 		pt.spreadcooldown = $ - 1
 	else
 		pt.spread = max($ - cur_weapon:get(pt,"spread_decay"), 0)
+	end
+	if (pt.hidden)
+		doslowdown = false
 	end
 	
 	if doslowdown
@@ -1114,6 +1227,7 @@ addHook("PlayerThink",function(p)
 			tank.destscale = me.scale
 			tank.scalespeed = tank.destscale + 1
 			tank.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+			tank.alpha = me.alpha
 			
 			local back = tank.tracer
 			back.angle = tank.angle
@@ -1126,6 +1240,7 @@ addHook("PlayerThink",function(p)
 			back.destscale = me.scale
 			back.scalespeed = back.destscale + 1
 			back.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+			back.alpha = me.alpha
 			
 			local mid = tank.target
 			mid.angle = tank.angle
@@ -1145,6 +1260,7 @@ addHook("PlayerThink",function(p)
 			mid.destscale = me.scale
 			mid.scalespeed = mid.destscale + 1
 			mid.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+			mid.alpha = me.alpha
 			
 			tank.pitch,tank.roll = 0,0
 			back.pitch,back.roll = 0,0

@@ -38,6 +38,7 @@ sfxinfo[freeslot("sfx_pt_sig")].caption = "Signal"
 sfxinfo[freeslot("sfx_pt_toh")].caption = "/"
 sfxinfo[freeslot("sfx_pt_tos")].caption = "/"
 sfxinfo[freeslot("sfx_pt_swm")].caption = "Swimming"
+sfxinfo[freeslot("sfx_pt_kth")].caption = "/" -- charge restore
 
 --srb2 edit flags
 rawset(_G, "MFE_NOPITCHROLLEASING", MFE_NOPITCHROLLEASING or (1<<14))
@@ -141,6 +142,10 @@ function Paint:initPlayer(p)
 		spreadjump = 0,
 		
 		charge = 0, -- in fixed_t
+		storedcharge = 0,
+		store_time = 0,
+		store_lag = 0,
+		store_firelag = 0,
 		maxcharged = false,
 		justcharged = true,
 		wasfastcharging = false,

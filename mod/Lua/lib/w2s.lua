@@ -23,6 +23,8 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	if not cv_fov
 		cv_fov = CV_FindVar("fov")
 	end
+	local my_fov = (cv_fov.value) + (p.fovadd)
+	
 	local x,y,scale
 	local targx,targy,targz
 	
@@ -36,7 +38,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	local onscreen = true
 	if not (p and p.valid and point)
 		onscreen = false
-		return {x=0,y=0,onscreen=onscreen, camAngle = 0, camAiming = 0, camPos = {x=0,y=0,z=0}}
+		return {x=0,y=0,onscreen=onscreen}
 	end
 	
 	if (takis_custombuild and interpmobj)
@@ -107,7 +109,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		xres = (vid.width()/vid.dupx()) << (FRACBITS-1)
 		yres = (vid.height()/vid.dupy()) << (FRACBITS-1)
 	end
-	fov = FixedDiv(xres, tan(FixedAngle(cv_fov.value/2)))
+	fov = FixedDiv(xres, tan(FixedAngle(my_fov/2)))
 	viewroll = (p and p.valid) and p.viewrollangle or 0
 	
 	-- flipping
@@ -150,7 +152,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		y = FixedMul(tan(-y), fov) + yres -- project the angle to get our final Y coordinate
 		dist = R_PointToDist2(0, 0, R_PointToDist2(targx,targy,camPos.x,camPos.y), targz - camPos.z)
 	else
-		local fovratio = FixedDiv(90*FU, 180*FU - FixedMul(cv_fov.value, 4*FU/3)-FU*-30)
+		local fovratio = FixedDiv(90*FU, 180*FU - FixedMul(my_fov, 4*FU/3)-FU*-30)
 		y = FixedDiv(y, FixedMul(dist or 1,distfact))
 		if scrflip
 			y = -y
@@ -170,7 +172,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		y = $ + offset
 	end
 	
-	dist = FixedMul($, FixedDiv(cv_fov.value, 90*FU))
+	dist = FixedMul($, FixedDiv(my_fov, 90*FU))
 	scale = FixedDiv(yres, dist + 1)
 	
 	-- project the angle to get our final X coordinate
@@ -201,7 +203,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	end
 	-- now clip in screenspace
 	if not dontclip
-		if abs(camAngle - R_PointToAngle2(camPos.x,camPos.y, targx,targy)) > FixedAngle(cv_fov.value)
+		if abs(camAngle - R_PointToAngle2(camPos.x,camPos.y, targx,targy)) > FixedAngle(my_fov)
 			onscreen = false
 		end
 		if x < 0 or x > (2*xres) then
@@ -211,7 +213,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 			onscreen = false
 		end
 	elseif anglecliponly
-		if abs(camAngle - R_PointToAngle2(camPos.x,camPos.y, targx,targy)) > FixedAngle(cv_fov.value)
+		if abs(camAngle - R_PointToAngle2(camPos.x,camPos.y, targx,targy)) > FixedAngle(my_fov)
 			onscreen = false
 		end
 	end

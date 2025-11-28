@@ -81,6 +81,7 @@ local weapon_meta = {
 	
 	--charger specific
 	chargetime = TR*FU,
+	mincharge = 5*FU, -- 5 tics
 	minrange = 140*FU,
 	mininkcost = 2*FU + (FU/4),
 	charge_sound = sfx_p_s2_0,
@@ -100,6 +101,11 @@ local weapon_meta = {
 	shineoffset = -12*FU, --offset the shine vfx this much from fireangle
 	muzzleoffset = 40*FU, --for the max-charge effect
 	slowwhenjumping = true, -- slow charging when jumping
+	storecharges = true,
+	partialstorage = false, -- allow charge storage even when not fully charged
+	storagetime = TR*5/4,
+	storagelag = TR/2,
+	storagelaserlag = 15,
 	
 	--blaster specific
 	splashradius = 132*FU,
