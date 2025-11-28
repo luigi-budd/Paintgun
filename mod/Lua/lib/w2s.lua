@@ -70,7 +70,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	if (p.awayviewmobj and p.awayviewmobj.valid and p.awayviewtics > 0)
 		local away = p.awayviewmobj
 		--not on our camera?
-		if not (away.x == camPos.x and away.y == camPos.y and away.z + 20*FU == camPos.z)
+		do --if not (away.x == camPos.x and away.y == camPos.y and away.z + 20*FU == camPos.z)
 			camPos = {x = away.x, y = away.y, z = away.z + 20*FU}
 			camAngle = away.angle
 			camAiming = p.awayviewaiming
@@ -173,7 +173,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	end
 	
 	dist = FixedMul($, FixedDiv(my_fov, 90*FU))
-	scale = FixedDiv(yres, dist + 1)
+	scale = FixedDiv(yres, dist + 1) * 3/2
 	
 	-- project the angle to get our final X coordinate
 	x = FixedMul(tan(x), fov)
