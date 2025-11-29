@@ -17,7 +17,7 @@ addHook("HUD",function(v,p,cam)
 	
 	local result = K_GetScreenCoords(v,p,cam, me, {anglecliponly = true})
 	if not result.onscreen then return end
-	result.scale = $ * 3/2
+	--result.scale = $ * 3/2
 	result.x = $ + 27*result.scale
 	
 	local animprogress = FixedDiv(anim*FU, MAXANIM*FU)
