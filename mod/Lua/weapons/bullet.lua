@@ -641,7 +641,7 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 		P_SetOrigin(hole,
 			bull_x - P_ReturnThrustX(nil, mo.angle, mo.scale),
 			bull_y - P_ReturnThrustY(nil, mo.angle, mo.scale),
-			bull_z
+			bull_z - mo.height/2
 		)
 	end
 	
