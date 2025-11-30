@@ -296,6 +296,7 @@ addHook("PlayerThink",function(p)
 		doslowdown = true
 	end
 	
+	-- handle shield / brella canopy here
 	local shieldout = false
 	pt.deployshield = false
 	if (cur_weapon.guntype == WPT_BRELLA)
@@ -349,6 +350,7 @@ addHook("PlayerThink",function(p)
 		and (pt.fireheld >= cur_weapon:get(pt,"deploydelay"))
 		and (pt.shotsfired)
 		and (sh.paint_hp > 0)
+		and not (cur_weapon:get(pt,"nocanopy"))
 			pt.deployshield = true
 			if not pt.wasdeployed
 				S_StartSound(me, cur_weapon:get(pt,"deploysound") or sfx_none)
@@ -356,7 +358,6 @@ addHook("PlayerThink",function(p)
 				P_SetOrigin(sh, sh.x,sh.y,sh.z)
 			end
 		end
-		
 		if not pt.deployshield
 		and pt.wasdeployed
 			local dlag = cur_weapon:get(pt,"deployend")
@@ -468,8 +469,11 @@ addHook("PlayerThink",function(p)
 				justpressedfire = true
 				pt.firewait = cur_weapon.startlag
 				if (cur_weapon.guntype == WPT_BRELLA)
-				and not (pt.cooldown or pt.endlag or pt.shieldlag)
-					S_StartSound(me, cur_weapon:get(pt,"readysound") or sfx_none)
+					if not (pt.cooldown or pt.endlag or pt.shieldlag)
+						S_StartSound(me, cur_weapon:get(pt,"readysound") or sfx_none)
+					elseif (pt.cooldown < cur_weapon:get(pt,"firerate") * 3/4)
+						pt.firequeued = true
+					end
 				end
 			end
 			pt.fireheld = $ + 1
@@ -506,6 +510,17 @@ addHook("PlayerThink",function(p)
 			justpressedfire = true
 			pt.fireheld = $ + 1
 			p.cmd.buttons = $|BT_ATTACK
+		end
+		if pt.firequeued
+			if pt.cooldown == 1
+				p.cmd.buttons = $ &~BT_ATTACK
+				pt.fireheld = 0
+			elseif pt.cooldown == 0
+				p.cmd.buttons = $|BT_ATTACK
+				pt.fireheld = $ + 1
+				pt.firequeued = false
+				justpressedfire = true
+			end
 		end
 		
 		if (pt.buttons & BT_JUMP)
@@ -833,7 +848,13 @@ addHook("PlayerThink",function(p)
 					spread = false
 				end
 				
-				if not shieldout
+				local donotfire = shieldout
+				if shieldout
+				and cur_weapon:get(pt,"shootwhiledeployed")
+					donotfire = false
+				end
+				
+				if not donotfire
 					Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 					local bps = cur_weapon:get(pt,"bulletspershot")
 					if bps ~= 1
@@ -842,12 +863,18 @@ addHook("PlayerThink",function(p)
 							Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 						end
 					end
-				else
+				end
+				
+				if shieldout
 					pt.cooldown = (cur_weapon:get(pt,"firerate")) + 1
 					pt.endlag = max($, cur_weapon.endlag)
 					pt.squidlag = max($, cur_weapon:get(pt,"squidlag"))
 					pt.justfired = true
 					pt.anglefix = pt.cooldown
+					
+					if cur_weapon:get(pt,"shootwhiledeployed")
+						pt.shieldwait = 0
+					end
 				end
 				doslowdown = true
 			end

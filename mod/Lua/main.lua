@@ -176,6 +176,7 @@ function Paint:initPlayer(p)
 		deployshield = false,
 		wasdeployed = false,
 		shieldjustbroke = false, -- ugh
+		firequeued = false, -- pressing fire again shortly after a tapfire will queue another shot up
 		
 		oldinktank = 100*FU,
 		oldinkanim = 100*FU,
@@ -252,6 +253,7 @@ function Paint:resetPlayer(p)
 	pt.shieldwait = 0
 	pt.deployshield = false
 	pt.shieldjustbroke = false
+	pt.firequeued = false
 	
 	pt.spread = 0
 	pt.spreadcooldown = 0

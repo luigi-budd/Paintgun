@@ -138,7 +138,7 @@ local weapon_meta = {
 	deployend = nil, -- use endlag if nil
 	deploydelay = 11, -- hold fire for this long before deploying
 	releasetime = 64, -- wait this long AFTER deploying the canopy to release it
-	shieldingspeed = (FU/2)*7/10, -- `shootspeed` but for when you shield
+	shieldingspeed = (FU*78/100)*7/10, -- `shootspeed` but for when you shield
 	readysound = nil,
 	deploysound = nil,
 	stowsound = nil,
@@ -154,6 +154,8 @@ local weapon_meta = {
 	shieldregen = 150*FU, -- heal this much hp per second
 	shieldrecover = 5*TR + (TR/2), -- wait this much before "respawning" the shield (either launched or destroyed)
 	shieldlifetime = 5*TR, -- released canopies last for this long
+	shootwhiledeployed = false, -- undercover brella
+	nocanopy = false, -- brella has no canopy (grizzco brella)
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
@@ -550,4 +552,5 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 end
 
 dofile("weapons/templates.lua")
+dofile("weapons/callback_templates.lua")
 dofile("weapons/def/FREESLOT.lua")

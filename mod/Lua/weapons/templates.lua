@@ -37,3 +37,24 @@ function Paint.wtemplate_charger(p,pt, weapon, key,value)
 	end
 end
 
+function Paint.wtemplate_brella(p,pt, weapon, key,value)
+	local firing = false
+	if (pt.fireheld or p.cmd.buttons & BT_ATTACK)
+		firing = true
+	end
+	if (pt.deployshield or pt.shieldlag)
+	or (pt.firewait or pt.fireheld or pt.endlag)
+		firing = true
+	end
+	if not (pt.anglefix) then firing = false; end
+	
+	if (key == "handoffset")
+	and firing
+		return 0
+	end
+	if (key == "tapfire")
+	and (pt.shield and pt.shield.paint_hp <= 0)
+	and not (weapon:get(pt,"nocanopy"))
+		return true
+	end
+end
