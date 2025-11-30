@@ -31,7 +31,7 @@ rawset(_G, "SUB_BURST", 2)
 
 Paint.weapons = {}
 local weapon_meta = {
-	range = 425 * FU, --about 2.3 distance units
+	range = 405 * FU, --about 2.3 distance units
 	damage = 24*FU,
 	startlag = 0,
 	endlag = 0,
@@ -114,12 +114,13 @@ local weapon_meta = {
 	explode_sounds = {}, -- hit geometry
 	
 	--dualie specific
-	shotoffset = -2*FU, -- how far from the center are we offset?
+	shotoffset = 2*FU, -- how far from the center are we offset?
 	dodgerolls = 2, -- use endlag variable
 	dodgeslide = false, -- dualie squelchers
 	dodgelength = 10,
 	dodgedist = 190*FU,
 	dodgeendlag = 3, -- wait this many tics AFTER rolling to start firing
+	dodgecamlag = 4,
 	dodgegetup = TR/2, -- you can get up after this many tics
 	dodgeinkcost = 8*FU, -- use this much ink for dodge rolls
 	dodgeshotcost = nil,
@@ -361,7 +362,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	proj.angle = R_PointToAngle2(proj.x,proj.y, point.x,point.y) - h_spread
 	
 	/*
-	P_SpawnMobj(point.x,point.y,point.z, MT_THOK).color = (dospread and SKINCOLOR_RED or SKINCOLOR_GREEN)
+	P_SpawnMobj(point.x,point.y,point.z, MT_THOK).color = (dualieflip and SKINCOLOR_RED or SKINCOLOR_GREEN)
 	P_SpawnMobj(point.x,point.y, me.z, MT_THOK)
 	P_SpawnMobj(
 		me.x + P_ReturnThrustX(nil,angle,FixedMul(weap.dropoff, me.scale)),

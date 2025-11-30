@@ -4,15 +4,18 @@ local HUD = Paint.HUD
 
 local lagtics = 0
 local oldangle = 0
+local oldaiming = 0
 
 function HUD:cameraLag(p, tics)
 	if p ~= displayplayer then return end
 	
 	lagtics = tics
 	oldangle = camera.angle
+	oldaiming = camera.aiming
 	
 	camera.momx, camera.momy, camera.momz = 0,0,0
 	camera.angle = oldangle
+	camera.aiming = oldaiming
 end
 
 addHook("ThinkFrame",do
@@ -20,5 +23,6 @@ addHook("ThinkFrame",do
 	
 	camera.momx, camera.momy, camera.momz = 0,0,0
 	camera.angle = oldangle
+	camera.aiming = oldaiming
 	lagtics = $ - 1
 end)

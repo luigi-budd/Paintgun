@@ -40,14 +40,27 @@ rawset(_G, "local_raycasts", {
 	hitcast = nil,
 	dhitcast = nil
 })
+local function getrange(ray, pt, cur_weapon, chargerdupe)
+	local range = cur_weapon:get(pt,"range")
+	if chargerdupe
+		range = cur_weapon.range
+	end
+	local drop = FixedMul(cur_weapon:get(pt,"dropoff") - cur_weapon:get(pt,"range"), ray.scale)
+	if drop < 0 then drop = 0; end
+	local drag = FixedMul(cur_weapon:get(pt,"dragmul"), cur_weapon:get(pt,"dragmul"))
+	drop = $ + FixedMul(FixedMul(range, drag) - 40*FU, ray.scale)
+	if drop < 0 then drop = 0; end
+	if cur_weapon.guntype == WPT_BLASTER
+		drop = 0
+	end
+	
+	return range + drop
+end
+
 local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 	local workray = r_raycast
 	if (dualieflip or chargerdupe)
 		workray = d_raycast
-	end
-	local range = cur_weapon:get(pt,"range")
-	if chargerdupe
-		range = cur_weapon.range
 	end
 	if not (workray and workray.valid)
 		local angle = p.cmd.angleturn << 16
@@ -56,12 +69,14 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 			41*FixedDiv(p.mo.height,p.mo.scale)/48 - 8*FU,
 			MT_THOK
 		)
+		local range = getrange(ray, pt, cur_weapon, chargerdupe)
 		ray.flags = $ &~(MF_SLIDEME)
 		ray.target = me
 		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		ray.weapon_id = pt.weapon_id
 		local weaponoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, dualieflip, false)}
 		if (pt.turretmode and (cur_weapon.guntype == WPT_DUALIES))
+		or (cur_weapon.guntype == WPT_BRELLA)
 			weaponoffset[1],weaponoffset[2] = 0,0
 		end
 		P_SetOrigin(ray,
@@ -71,6 +86,11 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 		)
 		P_InstaThrust(ray, angle, FixedMul(FixedDiv(range, cur_weapon:get(pt,"lifespan") * FU), ray.scale))
 		ray.finalpos = Paint:aimProjectile(p,ray, angle, p.aiming, false,nil, dualieflip, true, nil,nil, chargerdupe)
+		local aimvec = SphereToCartesian(ray.angle, p.aiming)
+		ray.finalpos.x = ray.x + FixedMul(range, aimvec.x)
+		ray.finalpos.y = ray.y + FixedMul(range, aimvec.y)
+		ray.finalpos.z = ray.z + FixedMul(range, aimvec.z)
+		ray.range = range
 		
 		ray.radius = FixedMul(mobjinfo[MT_PAINT_SHOT].radius, ray.scale)
 		ray.height = FixedMul(mobjinfo[MT_PAINT_SHOT].height, ray.scale)
@@ -89,7 +109,7 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 	end
 	if (workray and workray.valid)
 		local ray = workray
-		range = FixedMul($, ray.scale)
+		local range = ray.range
 		
 		for i = 0,25 do
 			for j = 0,5
@@ -158,11 +178,15 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 			41*FixedDiv(p.mo.height,p.mo.scale)/48 - 8*FU,
 			MT_THOK
 		)
+		local range = getrange(ray, pt, cur_weapon, false)
 		ray.flags = $ &~(MF_NOCLIP|MF_NOCLIPTHING|MF_NOBLOCKMAP|MF_SLIDEME)
 		ray.target = me
 		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		ray.weapon_id = pt.weapon_id
 		local weaponoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, dualieflip, false)}
+		if (cur_weapon.guntype == WPT_BRELLA)
+			weaponoffset[1],weaponoffset[2] = 0,0
+		end
 		P_SetOrigin(ray,
 			me.x + weaponoffset[1],
 			me.y + weaponoffset[2],
@@ -170,6 +194,11 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		)
 		P_InstaThrust(ray, angle, FixedMul(FixedDiv(cur_weapon:get(pt,"range"), cur_weapon:get(pt,"lifespan") * FU), ray.scale))
 		ray.finalpos = Paint:aimProjectile(p,ray, angle, p.aiming, false,nil,dualieflip, true)
+		local aimvec = SphereToCartesian(angle, p.aiming)
+		ray.finalpos.x = ray.x + FixedMul(range, aimvec.x)
+		ray.finalpos.y = ray.y + FixedMul(range, aimvec.y)
+		ray.finalpos.z = ray.z + FixedMul(range, aimvec.z)
+		ray.range = range
 		
 		ray.radius = FixedMul(mobjinfo[MT_PAINT_SHOT].radius, ray.scale)
 		ray.height = FixedMul(mobjinfo[MT_PAINT_SHOT].height, ray.scale)
@@ -188,10 +217,9 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 	end
 	if (workray and workray.valid)
 		local ray = workray
-		local wep = Paint.weapons[ray.weapon_id]
 		local doblockmap = Paint.CV.directhit_crosshair.value
 		
-		local range = FixedMul(wep:get(pt,"range"), ray.scale)
+		local range = ray.range
 		
 		local br = ray.radius + 16*ray.scale
 		for i = 0,25 do
@@ -349,7 +377,7 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 	or (wep.guntype == WPT_BRELLA)
 		--local fov_fact = FixedDiv(240*FU - cv_fov.value, 27*FU)
 		local fov_fact = 5*FU + (FU/2)
-		local range = wep:get(pt,"range")
+		local range = getrange(p.realmo, pt, wep, false)
 		local L_hspread, R_hspread
 		local B_vspread, T_vspread
 		if not (range_cache[range] and range_cache[range][pt.spreadadd])
