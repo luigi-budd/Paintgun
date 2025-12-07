@@ -53,7 +53,7 @@ function Paint.wtemplate_brella(p,pt, weapon, key,value)
 		return 0
 	end
 	if (key == "tapfire")
-	and (pt.shield and pt.shield.paint_hp <= 0)
+	and (pt.shield and pt.shield.paint_hp <= 0 or pt.shieldlost)
 	and not (weapon:get(pt,"nocanopy"))
 		return true
 	end

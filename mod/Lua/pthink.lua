@@ -297,6 +297,7 @@ addHook("PlayerThink",function(p)
 	end
 	
 	-- handle shield / brella canopy here
+	-- brella thinker / shield thinker
 	local shieldout = false
 	pt.deployshield = false
 	if (cur_weapon.guntype == WPT_BRELLA)
@@ -350,7 +351,7 @@ addHook("PlayerThink",function(p)
 		and (pt.fireheld >= cur_weapon:get(pt,"deploydelay"))
 		and (pt.shotsfired)
 		and (sh.paint_hp > 0)
-		and not (cur_weapon:get(pt,"nocanopy"))
+		and not (cur_weapon:get(pt,"nocanopy") or pt.shieldlost)
 			pt.deployshield = true
 			if not pt.wasdeployed
 				S_StartSound(me, cur_weapon:get(pt,"deploysound") or sfx_none)
@@ -376,11 +377,13 @@ addHook("PlayerThink",function(p)
 		
 		if (pt.deployshield or pt.shieldlag)
 		and (sh.paint_hp > 0)
+		and not pt.shieldlost
 			-- visible
 			sh.flags2 = $ &~MF2_DONTDRAW
 			sh.flags = $|MF_SHOOTABLE &~(MF_NOCLIP|MF_NOCLIPTHING)
 			if (pt.shotsfired >= 1)
 				shieldout = true
+				pt.shieldtime = $ + 1
 			end
 			if (P_IsObjectOnGround(me))
 			and (leveltime % 3 == 0)
@@ -401,6 +404,7 @@ addHook("PlayerThink",function(p)
 			-- hidden
 			sh.flags2 = $|MF2_DONTDRAW
 			sh.flags = $|MF_NOCLIP|MF_NOCLIPTHING &~MF_SHOOTABLE
+			pt.shieldtime = 0
 			if not sh.paint_destroyed
 				if sh.paint_hp ~= sh.paint_maxhp
 					sh.paint_hp = min($ + FixedDiv(cur_weapon:get(pt,"shieldregen"), TR*FU), sh.paint_maxhp)

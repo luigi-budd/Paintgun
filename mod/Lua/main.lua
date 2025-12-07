@@ -173,6 +173,9 @@ function Paint:initPlayer(p)
 		shield = nil, -- shield mobj for brellas
 		shieldwait = 0, -- dont deploy for this long
 		shieldlag = 0, -- keep deployed for this long
+		shieldregen = 0, -- timer until regen
+		shieldtime = 0, -- timer until canopy release
+		shieldlost = true, -- lost is only used when you shoot off the canopy, not when it is destroyed
 		deployshield = false,
 		wasdeployed = false,
 		shieldjustbroke = false, -- ugh

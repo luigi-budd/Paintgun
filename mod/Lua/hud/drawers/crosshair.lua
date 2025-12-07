@@ -364,7 +364,7 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 	end
 	
 	--120 fov == 4 mult
-	if (old_fov ~= cv_fov.value)
+	if (old_fov ~= cv_fov.value + p.fovadd)
 	or (old_camdist ~= cv_camdist.value)
 	or (old_chase ~= cam.chase)
 	or (old_scale ~= p.mo.scale)
@@ -375,8 +375,6 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 	or (wep.guntype == WPT_BLASTER)
 	or (wep.guntype == WPT_DUALIES)
 	or (wep.guntype == WPT_BRELLA)
-		--local fov_fact = FixedDiv(240*FU - cv_fov.value, 27*FU)
-		local fov_fact = 5*FU + (FU/2)
 		local range = getrange(p.realmo, pt, wep, false)
 		local L_hspread, R_hspread
 		local B_vspread, T_vspread
@@ -453,18 +451,18 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 		B_vspread = FixedMul(range_cache[range][pt.spreadadd].bottom, SCALE)
 		T_vspread = FixedMul(range_cache[range][pt.spreadadd].top, SCALE)
 		
-		old_fov = cv_fov.value
+		old_fov = cv_fov.value + p.fovadd
 		old_spreadadd = pt.spreadadd
 		old_camdist = cv_camdist.value
 		old_chase = cam.chase
 		old_scale = p.mo.scale
 		old_weapon = pt.weapon_id
-
+		
 		local dual = wep.guntype == WPT_DUALIES
 		v.dointerp(5 + interptag)
-		do
+		local clr = v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p))
+		if false
 			local suffix = (dh_workray.direct and "H" or (dh_workray.hit and "B" or "N"))
-			local clr = v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p))
 			local prefix = (wep.guntype == WPT_BRELLA) and "PAINT_CR_B_" or "PAINT_CR_S_"
 			if (not dual) or (dual and dflip)
 				v.drawScaled(
@@ -495,6 +493,31 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 				)
 			end
 		end
+		/*
+		-- this is for eventual splatana stuff
+		do
+			local prefix = "PAINT_CR_K_"
+			local suffix = (dh_workray.direct and "B" or "N")
+			local sections = 3
+			local pad = 4 * SCALE
+			local l_sprd = min(FixedDiv(L_hspread, sections*FU) + pad, 0)
+			local r_sprd = max(FixedDiv(R_hspread, sections*FU) - pad, 0)
+			for i = 1, sections
+				v.drawScaled(
+					MID_X - pad + (l_sprd * i),
+					y,
+					FU/4, v.cachePatch(prefix.."UNC_"..suffix), V_FLIP,
+					clr
+				)
+				v.drawScaled(
+					MID_X + pad + (r_sprd * i),
+					y,
+					FU/4, v.cachePatch(prefix.."UNC_"..suffix), V_FLIP,
+					clr
+				)
+			end
+		end
+		*/
 	end
 	
 	--if cv_crosshair.value == 0 then return end
