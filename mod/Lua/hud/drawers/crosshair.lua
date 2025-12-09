@@ -461,7 +461,7 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 		local dual = wep.guntype == WPT_DUALIES
 		v.dointerp(5 + interptag)
 		local clr = v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p))
-		if false
+		do
 			local suffix = (dh_workray.direct and "H" or (dh_workray.hit and "B" or "N"))
 			local prefix = (wep.guntype == WPT_BRELLA) and "PAINT_CR_B_" or "PAINT_CR_S_"
 			if (not dual) or (dual and dflip)

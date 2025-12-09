@@ -879,8 +879,8 @@ addHook("PlayerThink",function(p)
 					if cur_weapon:get(pt,"shootwhiledeployed")
 						pt.shieldwait = 0
 					end
+					doslowdown = true
 				end
-				doslowdown = true
 			end
 			if (cur_weapon.guntype ~= WPT_DUALIES)
 				pt.dodgeroll.count = 0
@@ -1086,14 +1086,14 @@ addHook("PlayerThink",function(p)
 		*/
 	end
 	
+	if ((p.cmd.buttons & BT_ATTACK)
+	or pt.firewait)
+	and pt.cooldown
+		doslowdown = true
+	end
 	if pt.cooldown
 		--doslowdown = true
 		pt.cooldown = $ - 1
-	end
-	if (p.cmd.buttons & BT_ATTACK)
-	or pt.firewait
-		doslowdown = true
-		p.charflags = $|SF_NOJUMPSPIN
 	end
 	if pt.firewait --startlag
 		doslowdown = true
@@ -1133,6 +1133,7 @@ addHook("PlayerThink",function(p)
 			slowdown = cur_weapon:get(pt,"shieldingspeed")
 		end
 		p.normalspeed = FixedMul(skin.normalspeed * 60 / 100, slowdown)
+		p.charflags = $|SF_NOJUMPSPIN
 	end
 	pt.lastslowdown = doslowdown
 	

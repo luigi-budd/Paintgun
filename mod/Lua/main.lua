@@ -175,7 +175,7 @@ function Paint:initPlayer(p)
 		shieldlag = 0, -- keep deployed for this long
 		shieldregen = 0, -- timer until regen
 		shieldtime = 0, -- timer until canopy release
-		shieldlost = true, -- lost is only used when you shoot off the canopy, not when it is destroyed
+		shieldlost = false, -- lost is only used when you shoot off the canopy, not when it is destroyed
 		deployshield = false,
 		wasdeployed = false,
 		shieldjustbroke = false, -- ugh

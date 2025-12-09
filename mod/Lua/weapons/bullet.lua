@@ -950,7 +950,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 	or mo.type == MT_TNTBARREL
 		if not sh.cooldown
 			P_DamageMobj(mo,sh,me, damage)
-			P_DamageMobj(sh,mo,mo, damage*5) --debug
+			--P_DamageMobj(sh,mo,mo, damage*5) --debug
 			Paint:doProjHitmarker(sh, mo, true)
 			sh.cooldown = cooldown
 			Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
