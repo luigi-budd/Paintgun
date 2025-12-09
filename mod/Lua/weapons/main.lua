@@ -81,7 +81,7 @@ local weapon_meta = {
 	
 	--charger specific
 	chargetime = TR*FU,
-	mincharge = 5*FU, -- 5 tics
+	mincharge = 5, -- 5 tics
 	minrange = 140*FU,
 	mininkcost = 2*FU + (FU/4),
 	charge_sound = sfx_p_s2_0,

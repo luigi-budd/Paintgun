@@ -898,7 +898,7 @@ addHook("PlayerThink",function(p)
 			local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "inkcost")+1)
 			
 			if not pt.fireheld
-			and (pt.charge > 0 and pt.charge < cur_weapon:get(pt,"mincharge"))
+			and (pt.chargetics > 0 and pt.chargetics < cur_weapon:get(pt,"mincharge"))
 				if not lowink
 					pt.fireheld = 1
 					p.cmd.buttons = $|BT_ATTACK
@@ -946,6 +946,7 @@ addHook("PlayerThink",function(p)
 					step = $ / 3
 				end
 				pt.charge = min($ + step, charge_time)
+				pt.chargetics = $ + 1
 				if pt.charge >= charge_time
 					if not pt.maxcharged
 						S_StartSound(nil, cur_weapon.charged_sound, p)
@@ -981,6 +982,9 @@ addHook("PlayerThink",function(p)
 		local mincost = cur_weapon:get(pt,"mininkcost")
 		local chargeprogress = min(FixedDiv(max(pt.storedcharge, pt.charge), cur_weapon.chargetime), FU)
 		pt.inkqueue = mincost + FixedMul(cur_weapon.inkcost - mincost, chargeprogress)
+	end
+	if not pt.charge
+		pt.chargetics = 0
 	end
 	--print("lag", pt.firewait, pt.endlag, pt.cooldown, "firerate = "..cur_weapon:get(pt,"firerate"))
 	

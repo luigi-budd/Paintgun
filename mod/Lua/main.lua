@@ -142,6 +142,7 @@ function Paint:initPlayer(p)
 		spreadjump = 0,
 		
 		charge = 0, -- in fixed_t
+		chargetics = 0, -- how many tics we've been charging, slowdowns do NOT apply
 		storedcharge = 0,
 		store_time = 0,
 		store_lag = 0,
