@@ -131,6 +131,9 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 			fx.threshold = 1
 		end
 	end
+	if reset_interp
+		wepmo.resetinterp = true
+	end
 end
 
 -- takes about 11 seconds to fully refill passively with no ink-related abilities...
