@@ -50,8 +50,11 @@ local function getrange(ray, pt, cur_weapon, chargerdupe)
 	local drag = FixedMul(cur_weapon:get(pt,"dragmul"), cur_weapon:get(pt,"dragmul"))
 	drop = $ + FixedMul(FixedMul(range, drag) - 40*FU, ray.scale)
 	if drop < 0 then drop = 0; end
+	
 	if cur_weapon.guntype == WPT_BLASTER
 		drop = 0
+	elseif cur_weapon.guntype == WPT_CHARGER
+		drop = FixedMul(cur_weapon.falloff[2], ray.scale)
 	end
 	
 	return range + drop
@@ -218,6 +221,7 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 	if (workray and workray.valid)
 		local ray = workray
 		local doblockmap = Paint.CV.directhit_crosshair.value
+		local accurate = Paint.CV.directhit_crosshair.value == 1
 		
 		local range = ray.range
 		
@@ -233,11 +237,16 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 					ray.hit = true
 					break 2
 				end
-				if doblockmap
+				if accurate
 					local px = ray.x
 					local py = ray.y
 					searchBlockmap("objects",directhit_blockmap, ray, px-br, px+br, py-br, py+br)
 				end
+			end
+			if doblockmap
+				local px = ray.x
+				local py = ray.y
+				searchBlockmap("objects",directhit_blockmap, ray, px-br, px+br, py-br, py+br)
 			end
 			if not (ray and ray.valid)
 				break

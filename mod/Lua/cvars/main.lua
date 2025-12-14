@@ -37,9 +37,9 @@ CV.paintnerfs = CV_RegisterVar({
 -- local cvars
 CV.directhit_crosshair = CV_RegisterVar({
 	name = "paint_hitcrosshair",
-	defaultvalue = "On",
+	defaultvalue = "Accurate",
 	flags = CV_SHOWMODIF,
-	PossibleValue = CV_OnOff 
+	PossibleValue = {Accurate = 1, Performance = 2, Off = 0} 
 })
 CV.nametags = CV_RegisterVar({
 	name = "paint_nametags",

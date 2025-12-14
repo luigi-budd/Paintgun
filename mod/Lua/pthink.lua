@@ -46,7 +46,7 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	and cur_weapon:get(pt,"dualie_weaponstate") ~= nil
 		finalstate = cur_weapon:get(pt,"dualie_weaponstate")
 	elseif (cur_weapon.guntype == WPT_BRELLA)
-		if (pt.deployshield or pt.shieldlag or (pt.shield and pt.shield.paint_hp <= 0))
+		if (pt.deployshield or pt.shieldlag or (pt.shield and pt.shield.paint_hp <= 0) or pt.shieldlost)
 		and cur_weapon:get(pt,"open_weaponstate") ~= nil
 			finalstate = cur_weapon:get(pt,"open_weaponstate")
 		end
@@ -378,6 +378,20 @@ addHook("PlayerThink",function(p)
 			p.cmd.buttons = $ &~BT_ATTACK
 		end
 		
+		if (pt.shieldlost)
+		or sh.paint_destroyed
+			pt.shieldlosttime = $ + 1
+			
+			if pt.shieldlosttime == cur_weapon:get(pt,"shieldrecover")
+				S_StartSound(nil, cur_weapon:get(pt,"recoversound") or sfx_p_s5_8, p)
+				pt.shieldlost = false
+				sh.paint_hp = sh.paint_maxhp
+				pt.shieldlosttime = 0
+			end
+		else
+			pt.shieldlosttime = 0
+		end
+		
 		if (pt.deployshield or pt.shieldlag)
 		and (sh.paint_hp > 0)
 		and not pt.shieldlost
@@ -388,6 +402,16 @@ addHook("PlayerThink",function(p)
 				shieldout = true
 				pt.shieldtime = $ + 1
 			end
+			
+			-- release the shield / canopy
+			if pt.shieldtime == cur_weapon:get(pt,"shieldrelease")
+				pt.shieldlost = true
+				pt.fireheld = 0
+				p.cmd.buttons = $ &~BT_ATTACK
+				pt.shieldjustbroke = true
+				S_StartSound(nil, cur_weapon:get(pt,"releasesound") or sfx_p_s5_9, p)
+			end
+			
 			if (P_IsObjectOnGround(me))
 			and (leveltime % 3 == 0)
 				local trail = P_SpawnMobjFromMobj(sh, 0,0,FU, MT_PAINT_SHOT)
@@ -414,11 +438,11 @@ addHook("PlayerThink",function(p)
 				else
 					sh.paint_color = nil
 				end
-			-- if the brella is destroyed/launched, wait however long it lasts launched to regen
-			else
-			
 			end
 		end
+		
+		print(pt.shieldtime)
+		
 		local move = me.radius + 16*me.scale
 		P_MoveOrigin(sh,
 			me.x + P_ReturnThrustX(nil,fireangle,move) + me.momx,

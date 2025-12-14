@@ -144,6 +144,7 @@ local weapon_meta = {
 	stowsound = nil,
 	breaksound = nil,
 	recoversound = nil,
+	releasesound = nil,
 	contactdamage = 30*FU,
 	contactcooldown = TR/2,
 	releasedmultiplier = FU/2, -- damage mulitiplier when released
@@ -154,6 +155,7 @@ local weapon_meta = {
 	shieldregen = 150*FU, -- heal this much hp per second
 	shieldrecover = 5*TR + (TR/2), -- wait this much before "respawning" the shield (either launched or destroyed)
 	shieldlifetime = 5*TR, -- released canopies last for this long
+	shieldrelease = 64, -- release canopies this many tics after opening
 	shootwhiledeployed = false, -- undercover brella
 	nocanopy = false, -- brella has no canopy (grizzco brella)
 	

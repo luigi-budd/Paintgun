@@ -1,4 +1,4 @@
-for i = 0,8
+for i = 0,9
 	sfxinfo[freeslot("sfx_p_s5_"..i)].caption = "Paint fired"
 end
 sfxinfo[sfx_p_s5_4].caption = "/"
@@ -6,6 +6,8 @@ sfxinfo[sfx_p_s5_5].caption = "Brella deployed"
 sfxinfo[sfx_p_s5_6].caption = "/"
 sfxinfo[sfx_p_s5_7].caption = "Brella breaks"
 sfxinfo[sfx_p_s5_8].caption = "Brella recovered!"
+sfxinfo[sfx_p_s5_9].caption = "Brella released"
+sfxinfo[freeslot("sfx_p_s5_a")].caption = "/" -- canopy flying
 
 freeslot("S_PAINT_GUN_BRELLA_CLS")
 states[S_PAINT_GUN_BRELLA_CLS] = {
