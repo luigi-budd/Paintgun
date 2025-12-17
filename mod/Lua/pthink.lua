@@ -173,7 +173,9 @@ addHook("PlayerThink",function(p)
 				me.state = S_PLAY_DEAD
 			end
 			Paint:resetPlayer(p)
-			me.spriteyscale = FU
+			if (me and me.valid)
+				me.spriteyscale = FU
+			end
 		end
 		return
 	end
@@ -441,7 +443,7 @@ addHook("PlayerThink",function(p)
 			end
 		end
 		
-		print(pt.shieldtime)
+		--print(pt.shieldtime)
 		
 		local move = me.radius + 16*me.scale
 		P_MoveOrigin(sh,
@@ -1420,7 +1422,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 		
 		if p.cmd.buttons & BT_CUSTOM1
 			-- This way!
-			if (me.health and not p.lifesaver)
+			if (me and me.valid and me.health and not p.lifesaver)
 				type = Paint.SIGNAL_THISWAY
 				sfx = sfx_s3kc1s
 			else
@@ -1429,6 +1431,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 					type = Paint.SIGNAL_HELP
 					sfx = sfx_s3kd6s
 				-- Ouch...
+				--TODO: maybe find a better sound for this?
 				else
 					type = Paint.SIGNAL_OUCH
 					sfx = sfx_kc3e
