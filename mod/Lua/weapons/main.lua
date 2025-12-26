@@ -298,8 +298,8 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	
 	local h_spread,v_spread = 0,0
 	if not crosshair
-		h_spread = P_RandomFixedRange(-weap.h_spread[1], weap.h_spread[2])
-		v_spread = P_RandomFixedRange(-weap.v_spread[1], weap.v_spread[2])
+		h_spread = P_RandomFixedRange(-weap.h_spread[1]*FU, weap.h_spread[2]*FU)
+		v_spread = P_RandomFixedRange(-weap.v_spread[1]*FU, weap.v_spread[2]*FU)
 		if (weap.guntype == WPT_DUALIES and pt.turretmode)
 		or not dospread
 			h_spread = FixedDiv($, FU*5/2)
@@ -434,7 +434,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.weapon_id = pt.weapon_id
 	proj.color = Paint:getPlayerColor(p)
 	proj.lifespan = 0
-	proj.falloff = FixedMul(P_RandomFixedRange(-cur_weapon.falloff[1], cur_weapon.falloff[2]), proj.scale)
+	proj.falloff = FixedMul(P_RandomFixedRange(-cur_weapon.falloff[1]*FU, cur_weapon.falloff[2]*FU), proj.scale)
 	local mom_vec = {x = me.momx,y = me.momy}
 	local handoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, nil, false)}
 	-- fire from the center

@@ -527,7 +527,7 @@ Salmon.spawnEnemy = function()
 	mobj.destination = {x = dest.x, y = dest.y, tag = dest.tag}
 	mobj.renderflags = $|RF_SEMIBRIGHT
 	
-	mobj.paint_maxhp = 110*FU
+	mobj.paint_maxhp = 75*FU
 	mobj.paint_hp = mobj.paint_maxhp
 	
 	local chance = FU/5
@@ -546,7 +546,7 @@ Salmon.spawnEnemy = function()
 		
 		mobj.scale = $ * 7/5
 		
-		mobj.paint_maxhp = 530*FU
+		mobj.paint_maxhp = 430*FU
 		mobj.paint_hp = mobj.paint_maxhp
 		rs.carriersspawned = $ + 1
 		

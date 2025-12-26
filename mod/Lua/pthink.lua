@@ -3,7 +3,10 @@ local MAX_SQUIDTIME = 3
 
 rawset(_G,"CA2_SQUIDFORM", 132)
 
-local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_interp)
+Paint.basePlayer = {}
+local BP = Paint.basePlayer
+
+BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_interp)
 	local teleport = reset_interp and P_SetOrigin or P_MoveOrigin
 	local dd = pt.dodgeroll
 	
@@ -136,6 +139,117 @@ local function doWeaponMobj(p,me,pt, cur_weapon, fireangle, dualieflip, reset_in
 	end
 end
 
+-- ink tank mobj
+BP.doInkTank = function(p)
+	local me = p.realmo
+	local pt = p.paint
+	
+	local tank = pt.tankmobj
+	local teleport = P_MoveOrigin
+	if not (tank and tank.valid)
+		local tn = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
+		tn.sprite = SPR_PAINT_MISC
+		tn.frame = 3|FF_SEMIBRIGHT|FF_PAPERSPRITE
+		tn.fuse = -1
+		tn.tics = -1
+		tn.dispoffset = 10
+		tn.radius = 2*me.scale
+		tn.height = 4*me.scale
+		tn.dontdrawforviewmobj = me
+		tn.renderflags = $|RF_NOCOLORMAPS
+		tn.target = me
+		
+		local mid = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
+		mid.sprite = SPR_PAINT_MISC
+		mid.frame = 3|FF_SEMIBRIGHT|FF_PAPERSPRITE|FF_TRANS50
+		mid.fuse = -1
+		mid.tics = -1
+		mid.dispoffset = 8
+		mid.radius = 2*me.scale
+		mid.height = 4*me.scale
+		mid.dontdrawforviewmobj = me
+		mid.color = SKINCOLOR_SUPERSILVER1
+		mid.colorized = true
+		mid.target = me
+		mid.renderflags = $|RF_NOCOLORMAPS
+		tn.target = mid
+		
+		local back = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
+		back.sprite = SPR_PAINT_MISC
+		back.frame = 2|FF_SEMIBRIGHT|FF_PAPERSPRITE
+		back.fuse = -1
+		back.tics = -1
+		back.dispoffset = 7
+		back.radius = 2*me.scale
+		back.height = 4*me.scale
+		back.dontdrawforviewmobj = me
+		back.target = me
+		tn.tracer = back
+		
+		teleport = P_SetOrigin
+		pt.tankmobj = tn
+		tank = tn
+	end
+	if not (tank.tracer and tank.tracer.valid)
+		P_RemoveMobj(tank)
+	end
+	if tank and tank.valid
+		local hide = pt.hidden
+		tank.flags2 = ($ &~MF2_DONTDRAW)|((pt.inktank <= 0 or hide) and MF2_DONTDRAW or 0)
+		tank.angle = p.drawangle + ANGLE_180
+		local angle = tank.angle
+		tank.spriteyscale = FixedDiv(max(pt.inktank - pt.inkqueue, 0), 100*FU)
+		tank.color = Paint:getPlayerColor(p)
+		teleport(tank,
+			me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale),
+			me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale),
+			me.z + me.height*2/5
+		)
+		tank.angle = $ - ANGLE_90
+		tank.destscale = me.scale
+		tank.scalespeed = tank.destscale + 1
+		tank.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+		tank.alpha = me.alpha
+		
+		local back = tank.tracer
+		back.angle = tank.angle
+		back.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
+		teleport(back,
+			me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/32)),
+			me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale - (me.scale/32)),
+			me.z + me.height*2/5
+		)
+		back.destscale = me.scale
+		back.scalespeed = back.destscale + 1
+		back.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+		back.alpha = me.alpha
+		
+		local mid = tank.target
+		mid.angle = tank.angle
+		mid.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
+		local shouldihide = true
+		if (pt.inkdelay > 0)
+		or (pt.inktank - pt.inkqueue < pt.oldinktank)
+			shouldihide = false
+		end
+		mid.flags2 = $|(shouldihide and MF2_DONTDRAW or 0)
+		mid.spriteyscale = FixedDiv(pt.oldinkanim, 100*FU)
+		teleport(mid,
+			me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
+			me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
+			me.z + me.height*2/5
+		)
+		mid.destscale = me.scale
+		mid.scalespeed = mid.destscale + 1
+		mid.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+		mid.alpha = me.alpha
+		
+		tank.pitch,tank.roll = 0,0
+		back.pitch,back.roll = 0,0
+		mid.pitch,mid.roll = 0,0
+	end
+end
+
 -- takes about 11 seconds to fully refill passively with no ink-related abilities...
 local ink_refill_rate = FixedDiv(100*FU, 11*TR*FU)
 -- ...and 3 seconds when submerged
@@ -247,7 +361,7 @@ addHook("PlayerThink",function(p)
 	
 	local doslowdown = false
 	local fireangle = p.cmd.angleturn << 16
-	local old_weaponid = pt.weapon_id
+	pt.old_weaponid = pt.weapon_id
 	do
 		local sel = 0
 		if (p.cmd.buttons & BT_WEAPONNEXT)
@@ -698,14 +812,14 @@ addHook("PlayerThink",function(p)
 					P_SetOrigin(blob, me.x+me.momx, me.y+me.momy, blob.z)
 					if (pt.wasclimbing)
 						local h_ang = Paint:controlDir(p)
-						local v_ang = FixedAngle(P_RandomFixedRange(-25,25))
+						local v_ang = FixedAngle(P_RandomFixedRange(-25*FU,25*FU))
 						local v_speed = P_RandomRange(5,10)*me.scale
 						P_Thrust(blob,h_ang, -P_RandomRange(1,3)*me.scale)
 						P_Thrust(blob,h_ang+ANGLE_90, FixedMul(v_speed, sin(v_ang)) )
 						
 						blob.momz = $ + me.momz/2
 					else
-						local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomFixedRange(-25,25))
+						local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomFixedRange(-25*FU,25*FU))
 						P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
 						P_Thrust(blob,ang, -P_RandomRange(6,15)*me.scale)
 						
@@ -1224,123 +1338,6 @@ addHook("PlayerThink",function(p)
 			pt.hitlist = {}
 		end
 	end
-	
-	-- ink tank mobj
-	do
-		local tank = pt.tankmobj
-		local teleport = P_MoveOrigin
-		if not (tank and tank.valid)
-			local tn = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
-			tn.sprite = SPR_PAINT_MISC
-			tn.frame = 3|FF_SEMIBRIGHT|FF_PAPERSPRITE
-			tn.fuse = -1
-			tn.tics = -1
-			tn.dispoffset = 10
-			tn.radius = 2*me.scale
-			tn.height = 4*me.scale
-			tn.dontdrawforviewmobj = me
-			tn.renderflags = $|RF_NOCOLORMAPS
-			tn.target = me
-			
-			local mid = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
-			mid.sprite = SPR_PAINT_MISC
-			mid.frame = 3|FF_SEMIBRIGHT|FF_PAPERSPRITE|FF_TRANS50
-			mid.fuse = -1
-			mid.tics = -1
-			mid.dispoffset = 8
-			mid.radius = 2*me.scale
-			mid.height = 4*me.scale
-			mid.dontdrawforviewmobj = me
-			mid.color = SKINCOLOR_SUPERSILVER1
-			mid.colorized = true
-			mid.target = me
-			mid.renderflags = $|RF_NOCOLORMAPS
-			tn.target = mid
-			
-			local back = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
-			back.sprite = SPR_PAINT_MISC
-			back.frame = 2|FF_SEMIBRIGHT|FF_PAPERSPRITE
-			back.fuse = -1
-			back.tics = -1
-			back.dispoffset = 7
-			back.radius = 2*me.scale
-			back.height = 4*me.scale
-			back.dontdrawforviewmobj = me
-			back.target = me
-			tn.tracer = back
-			
-			teleport = P_SetOrigin
-			pt.tankmobj = tn
-			tank = tn
-		end
-		if not (tank.tracer and tank.tracer.valid)
-			P_RemoveMobj(tank)
-		end
-		if tank and tank.valid
-			local hide = pt.hidden
-			tank.flags2 = ($ &~MF2_DONTDRAW)|((pt.inktank <= 0 or hide) and MF2_DONTDRAW or 0)
-			tank.angle = p.drawangle + ANGLE_180
-			local angle = tank.angle
-			tank.spriteyscale = FixedDiv(max(pt.inktank - pt.inkqueue, 0), 100*FU)
-			tank.color = Paint:getPlayerColor(p)
-			teleport(tank,
-				me.x+me.momx + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale),
-				me.y+me.momy + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale),
-				me.z+me.momz + me.height*2/5
-			)
-			tank.angle = $ - ANGLE_90
-			tank.destscale = me.scale
-			tank.scalespeed = tank.destscale + 1
-			tank.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
-			tank.alpha = me.alpha
-			
-			local back = tank.tracer
-			back.angle = tank.angle
-			back.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
-			teleport(back,
-				me.x+me.momx + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/32)),
-				me.y+me.momy + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale - (me.scale/32)),
-				me.z+me.momz + me.height*2/5
-			)
-			back.destscale = me.scale
-			back.scalespeed = back.destscale + 1
-			back.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
-			back.alpha = me.alpha
-			
-			local mid = tank.target
-			mid.angle = tank.angle
-			mid.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
-			local shouldihide = true
-			if (pt.inkdelay > 0)
-			or (pt.inktank - pt.inkqueue < pt.oldinktank)
-				shouldihide = false
-			end
-			mid.flags2 = $|(shouldihide and MF2_DONTDRAW or 0)
-			mid.spriteyscale = FixedDiv(pt.oldinkanim, 100*FU)
-			teleport(mid,
-				me.x+me.momx + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
-				me.y+me.momy + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
-				me.z+me.momz + me.height*2/5
-			)
-			mid.destscale = me.scale
-			mid.scalespeed = mid.destscale + 1
-			mid.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
-			mid.alpha = me.alpha
-			
-			tank.pitch,tank.roll = 0,0
-			back.pitch,back.roll = 0,0
-			mid.pitch,mid.roll = 0,0
-		end
-	end
-	
-	-- weapon mobjs
-	do
-		local reset_interp = pt.weapon_id ~= old_weaponid
-		doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
-		if (cur_weapon.guntype == WPT_DUALIES)
-			doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
-		end
-	end
 end)
 
 addHook("JumpSpecial",function(p)
@@ -1507,6 +1504,40 @@ addHook("PostThinkFrame",do for p in players.iterate
 			overlay.flags2 = $ &~MF2_DONTDRAW
 		end
 	end
+	
+	local cur_weapon = Paint.weapons[pt.weapon_id]
+	BP.doInkTank(p)
+	if pt.weapon_id ~= nil
+		local reset_interp = pt.weapon_id ~= pt.old_weaponid
+		BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
+		if (cur_weapon.guntype == WPT_DUALIES)
+			BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
+		end
+	end
+	
+	/*
+	local changed = false
+	me.superready = $ or false
+	if (p.cmd.buttons & BT_CUSTOM3)
+	and not (p.lastbuttons & BT_CUSTOM3)
+		me.superready = not $
+		changed = true
+	end
+	if me.superready
+		me.renderflags = $|RF_FULLBRIGHT
+		me.eflags = $|MFE_FORCESUPER
+		
+		me.color = (Paint:getPlayerColor(p)) - abs( ((leveltime>>1) % 9) - 4 )
+	else
+		me.renderflags = $ &~RF_FULLBRIGHT
+		me.eflags = $ &~MFE_FORCESUPER
+		me.color = Paint:getPlayerColor(p)
+	end
+	if changed
+		P_MovePlayer(p)
+		me.state = $
+	end
+	*/
 end; end)
 
 addHook("SeenPlayer",function(p, p2)

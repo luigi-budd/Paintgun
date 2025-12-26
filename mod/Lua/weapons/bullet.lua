@@ -516,12 +516,14 @@ addHook("MobjThinker",function(shot)
 		end
 		shot.momz = $ + dropoff_grav
 		
-		shot.damage = shot.falloffdamage + ease.linear(
-			min(
-				abs((FU/wep.fallofftime) * (shot.fallofftime - shot.lifespan)),
-			FU),
-			shot.basedamage - shot.falloffdamage, 0 
-		)
+		if (shot.fallofftime - shot.lifespan >= 3)
+			shot.damage = shot.falloffdamage + ease.linear(
+				min(
+					abs((FU/wep.fallofftime) * (shot.fallofftime - (shot.lifespan-3))),
+				FU),
+				shot.basedamage - shot.falloffdamage, 0 
+			)
+		end
 		
 		local drag = wep.dragmul
 		shot.momx = FixedMul($, drag)
@@ -919,7 +921,7 @@ local function brella_pain(mo, inf,sor, damage)
 			)
 			dust.colorized = true
 			dust.color = Paint:getPlayerColor(p)
-			P_Thrust(dust, FixedAngle(P_RandomFixedRange(0,360)), 5 * P_RandomFixed())
+			P_Thrust(dust, FixedAngle(P_RandomFixedRange(0,360*FU)), 5 * P_RandomFixed())
 			P_SetObjectMomZ(dust, 2 * P_RandomFixed())
 		end
 		pt.shieldjustbroke = true

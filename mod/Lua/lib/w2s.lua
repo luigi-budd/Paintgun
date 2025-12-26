@@ -151,7 +151,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		if splitscreen
 			y = $ + ($/4)
 		end
-		if scrflip
+		if srcflip
 			y = -$
 		end
 		y = FixedMul(tan(-y), fov) + yres -- project the angle to get our final Y coordinate
@@ -159,7 +159,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	else
 		local fovratio = FixedDiv(90*FU, 180*FU - FixedMul(my_fov, 4*FU/3)-FU*-30)
 		y = FixedDiv(y, FixedMul(dist or 1,distfact))
-		if scrflip
+		if srcflip
 			y = -y
 		end
 		if y ~= INT32_MIN
@@ -171,7 +171,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 			offset = 17*$/120
 		end
 		offset = FixedDiv($, fovratio)
-		if (scrflip)
+		if (srcflip)
 			offset = -$
 		end
 		y = $ + offset
