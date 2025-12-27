@@ -677,6 +677,9 @@ addHook("MobjThinker",function(shot)
 			me.y + offset.y,
 			me.z + offset.z
 		)
+		local scaleadd = FixedDiv(R_PointToDist(shot.x,shot.y), 512*FU)
+		shot.spritexscale = FU + scaleadd
+		shot.spriteyscale = FU + scaleadd
 	end
 end,MT_PAINT_GUN)
 

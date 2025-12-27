@@ -34,6 +34,7 @@ for i = 0,12
 end
 sfxinfo[freeslot("sfx_pt_noi")].caption = "Low ink!"
 sfxinfo[freeslot("sfx_pt_sig")].caption = "Signal"
+sfxinfo[freeslot("sfx_pt_srd")].caption = "Sub ready!"
 
 sfxinfo[freeslot("sfx_pt_toh")].caption = "/"
 sfxinfo[freeslot("sfx_pt_tos")].caption = "/"
@@ -163,7 +164,12 @@ function Paint:initPlayer(p)
 			getup = 0,
 			count = 0, -- how many have we performed?
 			leave = 0, -- count UP when we want to exit turret
-		},
+		}, -- also for dualies
+		
+		aimingsub = false,
+		aimingtime = 0,
+		substrafe = 0,
+		fovadd = 0,
 		
 		endlag = 0,
 		anglefix = 0,

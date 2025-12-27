@@ -203,6 +203,11 @@ function Paint:chargerSightline(p)
 	if not pt.charge then return end
 	--if leveltime & 1 then return end
 	
+	local dummy = P_SpawnMobjFromMobj(me, 0,0,0, MT_RAY)
+	dummy.flags = $|MF_NOCLIPTHING &~(MF_NOCLIP|MF_NOCLIPHEIGHT)
+	dummy.radius = FixedMul(mobjinfo[MT_PAINT_SHOT].radius, dummy.scale)
+	dummy.height = FixedMul(mobjinfo[MT_PAINT_SHOT].height, dummy.scale)
+	
 	local range = wep:get(pt,"range") + (wep:get(pt,"falloff"))[2]*FU
 	range = FixedMul($, me.scale)
 	local dots = 50
@@ -218,6 +223,7 @@ function Paint:chargerSightline(p)
 					me.y + offsets[2] + me.momy,
 					me.z + (41*(me.height)/48 - 8*me.scale) + me.momz
 	local ticker = (leveltime/4)
+	local blocked = false
 	for i = 1,dots
 		local dist = step * i
 		local dx = x + FixedMul(dist, vec.x)
@@ -227,25 +233,35 @@ function Paint:chargerSightline(p)
 		local cz = P_CeilingzAtPos(dx,dy,dz, 4*FU)
 		if (dz <= fz
 		or dz >= cz)
-			break
+		or not P_TryMove(dummy, dx,dy,true)
+			blocked = true
+			if (p ~= displayplayer)
+				break
+			end
 		end
 		if ((i-ticker) % 4 == 0) then continue end
-
+		
 		local dot = P_SpawnMobj(
 			dx,dy,dz,
 			MT_PARTICLE
 		)
-		dot.color = me.color
 		dot.state = S_THOK
 		dot.tics = -1
 		dot.fuse = 2
-		dot.blendmode = AST_ADD
 		dot.frame = $ &~FF_TRANSMASK
 		dot.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 		dot.scale = FU/5
+		if blocked
+			dot.color = SKINCOLOR_GREY
+		else
+			dot.color = me.color
+			dot.blendmode = AST_ADD
+		end
 		--dot.dontdrawforviewmobj = me
 		P_SetOrigin(dot, dot.x,dot.y,dot.z)
-		
+	end
+	if (dummy and dummy.valid)
+		P_RemoveMobj(dummy)
 	end
 end
 

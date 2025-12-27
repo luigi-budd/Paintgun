@@ -1,4 +1,5 @@
 dofile("weapons/bullet.lua")
+dofile("weapons/bomb.lua")
 
 for i = 0,6
 	sfxinfo[freeslot("sfx_p_s0_"..i)].caption = "Paint fired"
@@ -18,6 +19,47 @@ sfxinfo[sfx_p_s2_2].flags = SF_X2AWAYSOUND|SF_X4AWAYSOUND
 
 sfxinfo[freeslot("sfx_pt_dge")].caption = "Dodge roll"
 
+rawset(_G, "SUBMOVE_LATERAL", 65*FU)
+rawset(_G, "SUBMOVE_VERTICAL", 45*FU)
+rawset(_G, "SUBMOVE_OFFSET", 0)
+
+Paint.subs = {}
+local sub_meta = {
+	airdrag = FU * 9/10,
+	gravmul = FU,
+	slowspeed = 15*FU,
+	
+	inkcost = 70*FU,
+	inkdelay = TR,
+	offset = 6*FU,
+	fuse = 40,
+	explodesound = sfx_pb_exp,
+	
+	inner_radius = 140*FU,
+	inner_damage = 180*FU,
+	outer_radius = 256*FU,
+	outer_damage = 30*FU,
+}
+registerMetatable(sub_meta)
+
+function Paint:registerSubWeapon(props)
+	assert(props.name, "Properties table must have a name field")
+	props.get = function(self, paint, key)
+		local value = self[key]
+		if self.abilitywrap ~= nil
+			local temp = self.abilitywrap(paint.player, paint, self, key, value)
+			if temp ~= nil
+				value = temp
+			end
+		end
+		return value
+	end
+	setmetatable(props, {
+		__index = sub_meta,
+	})
+	Paint.subs[props.name] = props
+end
+
 rawset(_G, "WPT_SHOOTER", 1)
 rawset(_G, "WPT_CHARGER", 2)
 rawset(_G, "WPT_KATANA", 3)
@@ -25,9 +67,6 @@ rawset(_G, "WPT_BRUSH", 4)
 rawset(_G, "WPT_BLASTER", 5)
 rawset(_G, "WPT_DUALIES", 6)
 rawset(_G, "WPT_BRELLA", 7)
-
-rawset(_G, "SUB_BOMB", 1)
-rawset(_G, "SUB_BURST", 2)
 
 Paint.weapons = {}
 local weapon_meta = {
@@ -40,7 +79,7 @@ local weapon_meta = {
 	inertia = false,
 	tapfire = false,
 	
-	subtype = SUB_BOMB,
+	subtype = "splatbomb",
 	
 	shottype = MT_PAINT_SHOT,
 	shotscale = FU, -- visual scale
@@ -108,7 +147,7 @@ local weapon_meta = {
 	storagelaserlag = 15,
 	
 	--blaster specific
-	splashradius = 132*FU,
+	splashradius = 112*FU,
 	splashdamage = {50*FU,70*FU}, -- min, max splash damage (damage field is direct hit)
 	blast_sounds = {}, -- end of range
 	explode_sounds = {}, -- hit geometry
@@ -232,9 +271,14 @@ end
 --returns x,y
 -- DONT FORGET to wrap the results, `{Paint:getWeaponOffset(me, me.angle - ANGLE_90, wep)}` for example
 -- aimit: use shotoffset for aimProjectile, handoffset otherwise
-function Paint:getWeaponOffset(me,pt, angle, cur_weapon, doflip, aimit)
+-- submode: use suboffset
+function Paint:getWeaponOffset(me,pt, angle, cur_weapon, doflip, aimit, submode)
 	local flipped = false
-	local offset = (cur_weapon.guntype == WPT_DUALIES and aimit) and cur_weapon:get(pt,"shotoffset") or cur_weapon:get(pt,"handoffset")
+	local offset = (cur_weapon.guntype == WPT_DUALIES or aimit) and cur_weapon:get(pt,"shotoffset") or cur_weapon:get(pt,"handoffset")
+	if submode
+		offset = Paint.subs[cur_weapon.subtype]:get(pt,"offset")
+	end
+	
 	if ((cur_weapon.guntype == WPT_DUALIES) and (pt.shotsfired % 2) and (doflip == nil))
 	or doflip
 		angle = $ - ANGLE_180
@@ -405,7 +449,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 				pt.weaponmobjdupe.fireanim = 4
 			end
 			
-			S_StartSound(me, sfx_pt_dr0, sfx_pt_dr3)
+			S_StartSound(me, P_RandomRange(sfx_pt_dr0, sfx_pt_dr3), p)
 			pt.oldinktank = min(max(pt.oldinkanim, pt.inktank), 100*FU)
 			return
 		end
@@ -553,6 +597,85 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	return proj
 end
 
+function Paint:throwSub(p, wep, angle, aiming, aimline)
+	local me = p.realmo
+	local pt = p.paint
+	local sub_t = Paint.subs[wep.subtype]
+	
+	if (pt.inktank < sub_t:get(pt,"inkcost") - 1)
+		--pt.cooldown = firerate + 1
+		--pt.endlag = max($, cur_weapon.endlag)
+		--pt.shotsfired = $ + 1
+		--pt.squidlag = max($, cur_weapon:get(pt,"squidlag"))
+		
+		Paint.HUD:lowInkWarning(p, TR / 2)
+		return
+	end
+	if not aimline
+		pt.inkdelay = max($, sub_t:get(pt,"inkdelay"))
+		
+		pt.oldinktank = min(max(pt.oldinkanim, pt.inktank), 100*FU)
+		if pt.maxinkdelay == 0
+			pt.oldinkanim = pt.oldinktank
+		end
+		pt.maxinkdelay = max($, pt.inkdelay)
+		
+		pt.inktank = max($ - sub_t:get(pt,"inkcost"), 0)
+	end
+	
+	local flip = P_MobjFlip(me)
+	local handoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, wep, nil, false, true)}
+	local bomb = P_SpawnMobjFromMobj(me,
+		0,0,
+		41*FixedDiv(p.mo.height,p.mo.scale)/48 - 8*FU,
+		(aimline) and MT_RAY or MT_PAINT_BOMB
+	)
+	P_SetOrigin(bomb,
+		bomb.x + handoffset[1] + me.momx,
+		bomb.y + handoffset[2] + me.momy,
+		bomb.z + me.momz
+	)
+	local vec = SphereToCartesian(angle, aiming)
+	bomb.momx = FixedMul(FixedMul(SUBMOVE_LATERAL, me.scale), vec.x * 8/5)
+	bomb.momy = FixedMul(FixedMul(SUBMOVE_LATERAL, me.scale), vec.y * 8/5)
+	bomb.momz = FixedMul(FixedMul(SUBMOVE_VERTICAL, me.scale), vec.z) + FixedMul(SUBMOVE_OFFSET, me.scale)
+	bomb.momz = $ * flip
+	bomb.shadowscale = 2*FU
+	bomb.fuse = 5 * TR
+	bomb.subtype = wep.subtype
+	bomb.target = me
+	bomb.color = Paint:getPlayerColor(p)
+	bomb.airdrag = sub_t:get(pt,"airdrag")
+	bomb.gravmul = sub_t:get(pt,"gravmul")
+	bomb.slowspeed = FixedMul(sub_t:get(pt,"slowspeed"), bomb.scale)
+	bomb.fusetimer = sub_t:get(pt,"fuse")
+	if aimline
+		bomb.flags = MF_NOCLIPTHING|MF_NOSECTOR|MF_NOGRAVITY
+		bomb.flags2 = $|MF2_DONTDRAW
+		bomb.tics = -1
+		bomb.fuse = -1
+		bomb.radius = FixedMul(mobjinfo[MT_PAINT_BOMB].radius, me.scale)
+		bomb.height = FixedMul(mobjinfo[MT_PAINT_BOMB].height, me.scale)
+	else
+		S_StartSoundAtVolume(bomb, sfx_pb_fly, 255 * 3/4)
+	end
+	
+	local momzadd = 3 * ((me.momz * flip) / me.scale) * 3/4
+	momzadd = $ * me.scale
+	if momzadd < 0 then momzadd = 0; end
+	bomb.momz = $ + momzadd
+	
+	local sidefact = FixedDiv(p.cmd.sidemove*FU, 50*FU)
+	local sideangle = FixedAngle(15 * sidefact)
+	P_InstaThrust(bomb, angle - sideangle, R_PointToDist2(0,0, bomb.momx,bomb.momy))
+	
+	local backfact = FixedDiv(p.cmd.forwardmove*FU, 50*FU)
+	if backfact > 0 then backfact = 0; end
+	P_Thrust(bomb, angle, 15 * backfact)
+	return bomb
+end
+
 dofile("weapons/templates.lua")
 dofile("weapons/callback_templates.lua")
-dofile("weapons/def/FREESLOT.lua")
+dofile("weapons/def/_FREESLOT.lua")
+dofile("weapons/bombdef/_FREESLOT.lua")

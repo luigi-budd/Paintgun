@@ -3,6 +3,16 @@ local MAX_SQUIDTIME = 3
 
 rawset(_G,"CA2_SQUIDFORM", 132)
 
+local ANGLE_CAP = FixedAngle(70*FU) >> 16
+addHook("PlayerCmd",function(p,cmd)
+	if not (p.paint and p.paint.active) then return end
+	if cmd.aiming > ANGLE_CAP
+		cmd.aiming = ANGLE_CAP
+	elseif cmd.aiming < -ANGLE_CAP
+		cmd.aiming = -ANGLE_CAP
+	end
+end)
+
 Paint.basePlayer = {}
 local BP = Paint.basePlayer
 
@@ -93,9 +103,9 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 	local handoffset = {Paint:getWeaponOffset(me,pt,fireangle - ANGLE_90, cur_weapon, dualieflip, false)}
 	local zoffset = (41*me.height)/48 - (12 * me.scale)
 	teleport(wepmo,
-		me.x + handoffset[1] + me.momx + offx,
-		me.y + handoffset[2] + me.momy + offy,
-		me.z + zoffset       + me.momz
+		me.x + handoffset[1] + offx,
+		me.y + handoffset[2] + offy,
+		me.z + zoffset
 	)
 	if (P_MobjFlip(me) == -1)
 		wepmo.z = $ - wepmo.height
@@ -744,6 +754,8 @@ addHook("PlayerThink",function(p)
 		p.charflags = ($ &~(SF_NOSKID|SF_NOJUMPSPIN))|(skin.flags & (SF_NOSKID|SF_NOJUMPSPIN))
 		p.normalspeed = skin.normalspeed * 60 / 100
 		p.thrustfactor = skin.thrustfactor
+		p.accelstart = skin.accelstart
+		p.acceleration = skin.acceleration
 		if (pt.squidtime >= MAX_SQUIDTIME)
 			p.charflags = $|SF_NOSKID
 			if (pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me))
@@ -760,6 +772,11 @@ addHook("PlayerThink",function(p)
 				
 				p.normalspeed = skin.normalspeed
 				p.thrustfactor = $*6/4
+				if pt.substrafe
+					p.accelstart = $ * 4
+					p.acceleration = $ * 2
+				end
+				
 				me.friction = FixedMul($, FU*97/100)
 				if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
 					local fric = FU * 9/10
@@ -1233,6 +1250,86 @@ addHook("PlayerThink",function(p)
 		*/
 	end
 	
+	-- sub stuff
+	-- AIMING
+	local wasaiming = pt.aimingsub
+	if (not pt.fireheld)
+	and (p.cmd.buttons & BT_FIRENORMAL)
+		pt.aimingsub = true
+	else
+		pt.aimingsub = false
+	end
+	if pt.aimingsub
+		pt.aimingtime = $ + 1
+		if (pt.aimingtime >= TR/2)
+			pt.fovadd = ease.inoutquad(
+				min((FU/(TR*3/2)) * (pt.aimingtime - TR/2), FU),
+				0, -30*FU
+			)
+		end
+		if (p == displayplayer)
+			local test = Paint:throwSub(p, cur_weapon, fireangle, p.aiming + (ANG2*2 + ANG1), true)
+			if test and test.valid
+				local pos = {
+					x = test.x,
+					y = test.y,
+					z = test.z
+				}
+				local sub_t = Paint.subs[cur_weapon.subtype]
+				while (true)
+					Paint:bombPhysics(test, cur_weapon.subtype)
+					if not P_TryMove(test, test.x + test.momx, test.y + test.momy, true)
+						pos.x = test.x; pos.y = test.y; pos.z = test.z
+						break
+					end
+					pos.x = test.x; pos.y = test.y; pos.z = test.z
+					if not P_ZMovement(test) then break end
+					pos.x = test.x; pos.y = test.y; pos.z = test.z
+					
+					if test.z <= test.floorz then break end
+					
+					local dot = P_SpawnMobj(
+						test.x,test.y,test.z,
+						MT_PARTICLE
+					)
+					dot.state = S_THOK
+					dot.tics = -1
+					dot.fuse = 2
+					dot.frame = $ &~FF_TRANSMASK
+					dot.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
+					dot.scale = FU/5
+					dot.color = me.color
+					dot.blendmode = AST_ADD
+					--dot.dontdrawforviewmobj = me
+					P_SetOrigin(dot, dot.x,dot.y,dot.z)
+				end
+				local lock = P_SpawnMobj(pos.x,pos.y,pos.z, MT_PARTICLE)
+				lock.state = S_LOCKON1
+				lock.tics = 2
+				lock.fuse = 2
+				lock.scale = $ * 2
+				lock.shadowscale = 4*FU
+				if (test and test.valid)
+					P_RemoveMobj(test)
+				end
+			end
+		end
+		
+		p.normalspeed = $ / 2
+		p.drawangle = fireangle
+		pt.substrafe = 10
+	else
+		if wasaiming
+			Paint:throwSub(p, cur_weapon, fireangle, p.aiming + (ANG2*2 + ANG1), false)
+		end
+		if pt.substrafe
+			pt.substrafe = $ - 1
+		end
+		pt.fovadd = $ * 4/5
+		pt.aimingtime = 0
+	end
+	p.fovadd = $ + pt.fovadd
+	
 	if ((p.cmd.buttons & BT_ATTACK)
 	or pt.firewait)
 	and pt.cooldown
@@ -1261,6 +1358,7 @@ addHook("PlayerThink",function(p)
 			pt.anglestand = p.drawangle
 		end
 	elseif p.panim == PA_IDLE
+	and not pt.aimingsub
 		p.drawangle = pt.anglestand
 	else
 		pt.anglestand = p.drawangle

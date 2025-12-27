@@ -1,0 +1,3 @@
+Paint:registerSubWeapon({
+	name = "splatbomb",
+})
