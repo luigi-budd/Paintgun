@@ -219,82 +219,110 @@ BP.doInkTank = function(p)
 	end
 	if not (tank.tracer and tank.tracer.valid)
 		P_RemoveMobj(tank)
+		return
 	end
-	if tank and tank.valid
-		local hide = pt.hidden
-		tank.flags2 = ($ &~MF2_DONTDRAW)|((pt.inktank <= 0 or hide) and MF2_DONTDRAW or 0)
-		tank.angle = p.drawangle + ANGLE_180
-		local angle = tank.angle
-		tank.spriteyscale = FixedDiv(max(pt.inktank - pt.inkqueue, 0), 100*FU)
-		tank.color = Paint:getPlayerColor(p)
-		teleport(tank,
-			me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale),
-			me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale),
-			me.z + me.height*2/5
-		)
-		tank.angle = $ - ANGLE_90
-		tank.destscale = me.scale
-		tank.scalespeed = tank.destscale + 1
-		tank.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
-		tank.alpha = me.alpha
-		
-		local back = tank.tracer
-		back.angle = tank.angle
-		back.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
-		teleport(back,
-			me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/32)),
-			me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale - (me.scale/32)),
-			me.z + me.height*2/5
-		)
-		back.destscale = me.scale
-		back.scalespeed = back.destscale + 1
-		back.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
-		back.alpha = me.alpha
-		
-		local mid = tank.target
-		mid.angle = tank.angle
-		mid.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
-		local shouldihide = true
-		if (pt.inkdelay > 0)
-		or (pt.inktank - pt.inkqueue < pt.oldinktank)
-			shouldihide = false
-		end
-		mid.flags2 = $|(shouldihide and MF2_DONTDRAW or 0)
-		mid.spriteyscale = FixedDiv(pt.oldinkanim, 100*FU)
-		teleport(mid,
-			me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
-			me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
-			me.z + me.height*2/5
-		)
-		mid.destscale = me.scale
-		mid.scalespeed = mid.destscale + 1
-		mid.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
-		mid.alpha = me.alpha
-		
-		local line = tank.linemobj
-		line.angle = tank.angle
-		line.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
-		line.color = ColorOpposite(tank.color)
-		if sub_t
-			line.spriteyoffset = FixedMul(23*FU, FixedDiv(sub_t:get(pt,"inkcost"), 100*FU))
-		else
-			line.flags2 = $|MF2_DONTDRAW
-		end
-		teleport(line,
-			me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale + (me.scale/32)),
-			me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale + (me.scale/32)),
-			me.z + me.height*2/5
-		)
-		line.destscale = me.scale
-		line.scalespeed = line.destscale + 1
-		line.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
-		line.alpha = me.alpha
-		
-		tank.pitch,tank.roll = 0,0
-		back.pitch,back.roll = 0,0
-		mid.pitch,mid.roll = 0,0
-		line.pitch,line.roll = 0,0
+	local sparkmove = P_MoveOrigin
+	if pt.justrestored
+		local spark = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
+		spark.state = S_PAINT_CHARGEDMAX
+		spark.dispoffset = 10
+		spark.color = SKINCOLOR_RED
+		spark.dontdrawforviewmobj = me
+		spark.drawonlyforplayer = p
+		spark.renderflags = $|RF_NOCOLORMAPS|RF_ALWAYSONTOP
+		spark.target = me
+		spark.threshold = 1
+		spark.scale = $ / 2
+		tank.sparkfx = spark
+		sparkmove = P_SetOrigin
 	end
+	
+	local hide = pt.hidden
+	
+	tank.flags2 = ($ &~MF2_DONTDRAW)|((pt.inktank <= 0 or hide) and MF2_DONTDRAW or 0)
+	tank.angle = p.drawangle + ANGLE_180
+	local angle = tank.angle
+	tank.spriteyscale = FixedDiv(max(pt.inktank - pt.inkqueue, 0), 100*FU)
+	tank.color = Paint:getPlayerColor(p)
+	teleport(tank,
+		me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale),
+		me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale),
+		me.z + me.height*2/5
+	)
+	tank.angle = $ - ANGLE_90
+	tank.destscale = me.scale
+	tank.scalespeed = tank.destscale + 1
+	tank.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+	tank.alpha = me.alpha
+	if (tank.sparkfx and tank.sparkfx.valid)
+		sparkmove(tank.sparkfx,
+			tank.x, tank.y,
+			tank.z + 29*tank.scale
+		)
+		tank.sparkfx.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
+	end
+	
+	local back = tank.tracer
+	back.angle = tank.angle
+	back.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
+	teleport(back,
+		me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/32)),
+		me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale - (me.scale/32)),
+		me.z + me.height*2/5
+	)
+	back.destscale = me.scale
+	back.scalespeed = back.destscale + 1
+	back.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+	back.alpha = me.alpha
+	if sub_t
+		back.frame = ($ &~FF_FRAMEMASK)|((pt.inktank < sub_t:get(pt,"inkcost")) and 6 or 0)
+	else
+		back.frame = ($ &~FF_FRAMEMASK)|6
+	end
+	
+	local mid = tank.target
+	mid.angle = tank.angle
+	mid.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
+	local shouldihide = true
+	if (pt.inkdelay > 0)
+	or (pt.inktank - pt.inkqueue < pt.oldinktank)
+		shouldihide = false
+	end
+	mid.flags2 = $|(shouldihide and MF2_DONTDRAW or 0)
+	mid.spriteyscale = FixedDiv(pt.oldinkanim, 100*FU)
+	teleport(mid,
+		me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
+		me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale - (me.scale/16)),
+		me.z + me.height*2/5
+	)
+	mid.destscale = me.scale
+	mid.scalespeed = mid.destscale + 1
+	mid.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+	mid.alpha = me.alpha
+	
+	local line = tank.linemobj
+	line.angle = tank.angle
+	line.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
+	line.color = SKINCOLOR_RED
+	if sub_t
+		line.spriteyoffset = FixedMul(23*FU, FixedDiv(sub_t:get(pt,"inkcost"), 100*FU))
+	else
+		line.flags2 = $|MF2_DONTDRAW
+	end
+	teleport(line,
+		me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale + (me.scale/32)),
+		me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale + (me.scale/32)),
+		me.z + me.height*2/5
+	)
+	line.destscale = me.scale
+	line.scalespeed = line.destscale + 1
+	line.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+	line.alpha = me.alpha
+	
+	tank.pitch,tank.roll = 0,0
+	back.pitch,back.roll = 0,0
+	mid.pitch,mid.roll = 0,0
+	line.pitch,line.roll = 0,0
 end
 
 -- takes about 11 seconds to fully refill passively with no ink-related abilities...
@@ -1021,8 +1049,7 @@ addHook("PlayerThink",function(p)
 	and not pt.inkqueue
 		pt.maxinkdelay = 0
 		local oldtank = pt.inktank
-		if (pt.inink == Paint.ININK_FRIENDLY)
-		and pt.hidden
+		if pt.hidden
 			pt.inktank = $ + fast_ink_refill_rate
 		else
 			pt.inktank = $ + ink_refill_rate
@@ -1030,6 +1057,7 @@ addHook("PlayerThink",function(p)
 		if oldtank < sub_t:get(pt,"inkcost")
 		and pt.inktank >= sub_t:get(pt,"inkcost")
 			S_StartSound(nil, sfx_pt_srd, p)
+			pt.justrestored = true
 		end
 		pt.inktank = min($, 100*FU)
 	end
@@ -1669,6 +1697,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 			end
 		end
 	end
+	pt.justrestored = false
 	
 	/*
 	local changed = false

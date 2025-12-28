@@ -4,6 +4,7 @@ Paint:registerSubWeapon({
 	
 	explodeoncontact = true,
 	fuse = 100*TR,
+	allowhitmarkers = true,
 	
 	inkcost = 45*FU,
 	

@@ -35,6 +35,7 @@ Paint:registerWeapon({
 	fallofftime = 6,
 	inkcost = FU*6/5,
 	range = 430*FU,
+	firerate = 2,
 	
 	spread_base = (FU * 4), -- chance to spread, similar to accelstart
 	spread_pershot = (FU * 2), -- add this much chance to spread per shot

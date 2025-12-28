@@ -37,6 +37,7 @@ local sub_meta = {
 	fuse = 40,
 	explodeoncontact = false,
 	explodesound = sfx_pb_exp,
+	allowhitmarkers = false,
 	
 	inner_radius = 175*FU,
 	inner_damage = 180*FU,
@@ -668,6 +669,7 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 	bomb.slowspeed = FixedMul(sub_t:get(pt,"slowspeed"), bomb.scale)
 	bomb.fusetimer = sub_t:get(pt,"fuse")
 	bomb.explodeoncontact = sub_t:get(pt,"explodeoncontact")
+	bomb.allowhitmarkers = sub_t:get(pt,"allowhitmarkers")
 	
 	if aimline
 		bomb.flags = MF_NOCLIPTHING|MF_NOSECTOR|MF_NOGRAVITY

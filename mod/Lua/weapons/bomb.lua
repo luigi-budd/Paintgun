@@ -60,6 +60,9 @@ local function splash_blockmap(ray, mo)
 	if Paint_canHurtEnemy(ray.target.player, mo)
 	or mo.type == MT_TNTBARREL
 		P_DamageMobj(mo, ray, ray.target, damage)
+		if ray.allowhitmarkers
+			Paint:doProjHitmarker(ray, mo, false)
+		end
 		return
 	end
 	
@@ -71,9 +74,13 @@ local function splash_blockmap(ray, mo)
 		if Paint_canHurtPlayer(p, mo.player)
 			Paint:damagePlayer(mo.player, ray, p, damage)
 			Paint:playHurtSound(mo.player)
+			if ray.allowhitmarkers
+				Paint:doProjHitmarker(ray, mo, false)
+			end
 		elseif Paint_canHurtPlayer(p, mo.player, true)
 		and not Paint:isFriendlyFire(p,mo.player)
-			--Paint:doProjHitmarker(ray, mo, false, true)
+		and ray.allowhitmarkers
+			Paint:doProjHitmarker(ray, mo, false, true)
 		end
 	end
 end

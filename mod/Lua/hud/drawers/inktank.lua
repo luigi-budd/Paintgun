@@ -49,11 +49,19 @@ addHook("HUD",function(v,p,cam)
 		0,cropheight, patch.width*FU, patch.height*FU
 	)
 	if sub_t
+		local color = Paint:getPlayerColor(p) + 1
+		local blend = 0
+		color = clamp(SKINCOLOR_WHITE, $, SKINCOLOR_VOLCANIC - 1)
+		if color <= SKINCOLOR_BLACK
+			color = SKINCOLOR_WHITE
+			blend = V_SUBTRACT
+		end
+		
 		v.drawStretched(result.x,
 			result.y - FixedMul(23 * FixedMul(result.scale, animprogress), FixedDiv(sub_t:get(pt,"inkcost"), 100*FU)),
 			result.scale, FixedMul(result.scale, animprogress),
-			v.getSpritePatch(SPR_PAINT_INKTANK,4,0),
-			0,v.getColormap(TC_DEFAULT, ColorOpposite(Paint:getPlayerColor(p)), nil)
+			v.getSpritePatch(SPR_PAINT_INKTANK,5,0),
+			blend,v.getColormap(TC_DEFAULT, color, nil)
 		)
 	end
 	/*

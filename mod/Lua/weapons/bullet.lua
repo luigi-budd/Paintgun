@@ -187,7 +187,7 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 	}
 	
 	local rollangle = FixedAngle(360 * P_RandomFixed())
-	Paint.HUD:hitMarker(shot.target.player, pos, rollangle, (shot.pellet and FU/2 or FU), shot.powerful, nil, nullify)
+	Paint.HUD:hitMarker(shot.target.player, pos, rollangle, (shot.pellet and FU/2 or FU), shot.powerful, nullify)
 end
 
 local function SetSplatSkew(splat,slope,skew)

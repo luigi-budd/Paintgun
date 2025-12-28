@@ -168,10 +168,12 @@ function Paint:initPlayer(p)
 			leave = 0, -- count UP when we want to exit turret
 		}, -- also for dualies
 		
+		-- substuff
 		aimingsub = false,
 		aimingtime = 0,
 		substrafe = 0,
 		fovadd = 0,
+		justrestored = false,
 		
 		endlag = 0,
 		anglefix = 0,
