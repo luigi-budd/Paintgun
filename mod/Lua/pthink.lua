@@ -1353,7 +1353,8 @@ addHook("PlayerThink",function(p)
 				local pos = {
 					x = test.x,
 					y = test.y,
-					z = test.z
+					z = test.z,
+					ceiling = false,
 				}
 				while (true)
 					Paint:bombPhysics(test, cur_weapon.subtype)
@@ -1366,6 +1367,10 @@ addHook("PlayerThink",function(p)
 					pos.x = test.x; pos.y = test.y; pos.z = test.z
 					
 					if test.z <= test.floorz then break end
+					if test.z + test.momz + test.height >= test.ceilingz
+						pos.ceiling = true
+						break
+					end
 					
 					local dot = P_SpawnMobj(
 						test.x,test.y,test.z,
@@ -1379,7 +1384,6 @@ addHook("PlayerThink",function(p)
 					dot.scale = FU/5
 					dot.color = me.color
 					dot.blendmode = AST_ADD
-					--dot.dontdrawforviewmobj = me
 					P_SetOrigin(dot, dot.x,dot.y,dot.z)
 				end
 				local lock = P_SpawnMobj(pos.x,pos.y,pos.z, MT_PARTICLE)
@@ -1388,6 +1392,9 @@ addHook("PlayerThink",function(p)
 				lock.fuse = 2
 				lock.scale = $ * 2
 				lock.shadowscale = 4*FU
+				if pos.ceiling
+					lock.renderflags = $|RF_VERTICALFLIP
+				end
 				if (test and test.valid)
 					P_RemoveMobj(test)
 				end

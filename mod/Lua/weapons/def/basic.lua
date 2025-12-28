@@ -2,6 +2,7 @@ Paint:registerWeapon({
 	realname = "Splattershot",
 	
 	name = "basic",
+	subtype = "suctionbomb",
 	handoffset = 8*FU,
 	h_spread = {6, 6},
 	v_spread = {3, 3},

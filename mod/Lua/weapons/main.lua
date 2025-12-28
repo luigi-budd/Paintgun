@@ -26,7 +26,8 @@ rawset(_G, "SUBMOVE_OFFSET", 0)
 Paint.subs = {}
 local sub_meta = {
 	realname = "Sub Weapon",
-	
+	spawnstate = nil,
+
 	airdrag = FU * 9/10,
 	gravmul = FU,
 	slowspeed = 15*FU,
@@ -38,6 +39,7 @@ local sub_meta = {
 	explodeoncontact = false,
 	explodesound = sfx_pb_exp,
 	allowhitmarkers = false,
+	guidedrot = false,
 	
 	inner_radius = 175*FU,
 	inner_damage = 180*FU,
@@ -45,7 +47,7 @@ local sub_meta = {
 	outer_damage = 30*FU,
 	quakeforce = 10*FU,
 	
-	-- function(mobj_t "sub", [mobj_t "tmthing", line_t "line"])
+	-- function(mobj_t "sub", boolean "hitceiling", [line_t "line"])
 	blockedfunc = nil,
 }
 registerMetatable(sub_meta)
@@ -670,6 +672,7 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 	bomb.fusetimer = sub_t:get(pt,"fuse")
 	bomb.explodeoncontact = sub_t:get(pt,"explodeoncontact")
 	bomb.allowhitmarkers = sub_t:get(pt,"allowhitmarkers")
+	bomb.guidedrot = sub_t:get(pt,"guidedrot")
 	
 	if aimline
 		bomb.flags = MF_NOCLIPTHING|MF_NOSECTOR|MF_NOGRAVITY
@@ -680,6 +683,9 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 		bomb.height = FixedMul(mobjinfo[MT_PAINT_BOMB].height, me.scale)
 	else
 		S_StartSoundAtVolume(bomb, sfx_pb_fly, 255 * 3/4)
+		if sub_t.spawnstate ~= nil
+			bomb.state = sub_t.spawnstate
+		end
 	end
 	
 	local momzadd = 3 * ((me.momz * flip) / me.scale) * 3/4

@@ -1,3 +1,4 @@
+sfxinfo[freeslot("sfx_pb_ep2")].caption = "Explosion"
 Paint:registerSubWeapon({
 	realname = "Burst Bomb",
 	name = "burstbomb",
@@ -5,6 +6,7 @@ Paint:registerSubWeapon({
 	explodeoncontact = true,
 	fuse = 100*TR,
 	allowhitmarkers = true,
+	explodesound = sfx_pb_ep2,
 	
 	inkcost = 45*FU,
 	

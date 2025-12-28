@@ -22,6 +22,7 @@ sfxinfo[freeslot("sfx_pb_fly")] = {
 for i = 0,4
 	sfxinfo[freeslot("sfx_pb_ht"..i)].caption = "Clatter"
 end
+
 sfxinfo[freeslot("sfx_pb_alm")].caption = "/"
 sfxinfo[freeslot("sfx_pb_exp")].caption = "Explosion"
 
@@ -172,7 +173,6 @@ function Paint:bombExplosion(mo, subtype)
 		drop.tracer_player = mo.target.player
 	end
 	
-	/*
 	for i = -1,1,2
 		local z = splashrad * i
 		P_SpawnMobjFromMobj(mo, splashrad, splashrad, z, MT_THOK)
@@ -204,7 +204,6 @@ function Paint:bombExplosion(mo, subtype)
 			part.color = mo.color
 		end
 	end
-	*/
 	local px = mo.x
 	local py = mo.y
 	local br = splashrad * 7/5
@@ -216,6 +215,7 @@ function Paint:bombPhysics(mo, subtype)
 	local sub_t = Paint.subs[subtype]
 
 	if not P_IsObjectOnGround(mo)
+	and not mo.nophysics
 		mo.momx = FixedMul($, mo.airdrag)
 		mo.momy = FixedMul($, mo.airdrag)
 		mo.momz = $ - (FixedMul(mo.scale, mo.gravmul) * P_MobjFlip(mo))
@@ -237,7 +237,7 @@ addHook("MobjThinker",function(sub)
 	if not (sub and sub.valid) then return end
 	local sub_t = Paint.subs[sub.subtype]
 	
-	P_ButteredSlope(sub)
+	--P_ButteredSlope(sub)
 	Paint:bombPhysics(sub, sub.subtype)
 	if sub.fusetimer <= 32
 		local timer = sub.fusetimer
@@ -253,13 +253,34 @@ addHook("MobjThinker",function(sub)
 		end
 	end
 	
-	sub.angle = $ + FixedAngle(R_PointToDist2(0,0, sub.momx,sub.momy))
+	if not sub.guidedrot
+		sub.angle = $ + FixedAngle(R_PointToDist2(0,0, sub.momx,sub.momy))
+	end
+	
+	local dofuse = sub.forcefuse
+	if sub.z + sub.momz + sub.height >= sub.ceilingz
+		if sub_t.blockedfunc ~= nil
+			if sub_t.blockedfunc(sub, true)
+				return
+			end
+			if not (sub and sub.valid) then return end
+		end
+		if sub.explodeoncontact
+			Paint:bombExplosion(sub, sub.subtype)
+			P_KillMobj(sub)
+			return
+		end
+		
+		clattersound(sub)
+		sub.momz = -$
+	end
 	
 	if P_IsObjectOnGround(sub)
 		sub.flags = $ &~MF_NOGRAVITY
 		if not sub.wasgrounded
 			if sub_t.blockedfunc ~= nil
-				if sub_t.blockedfunc(sub)
+				if sub_t.blockedfunc(sub, false)
+					sub.wasgrounded = true
 					return
 				end
 				if not (sub and sub.valid) then return end
@@ -279,22 +300,41 @@ addHook("MobjThinker",function(sub)
 			sub.momy = $ / 3
 		else
 			if R_PointToDist2(0,0, sub.momx,sub.momy) < 10 * sub.scale
-				if sub.fusetimer <= TR
-				and not sub.playedalarm
-					S_StartSound(sub, sfx_pb_alm)
-					sub.playedalarm = true
-				elseif sub.fusetimer == 0
-					Paint:bombExplosion(sub, sub.subtype)
-					P_KillMobj(sub)
-					return
-				end
-				
-				sub.fusetimer = $ - 1
+				dofuse = true
 			end
 		end
 	else
 		sub.flags = $|MF_NOGRAVITY
-		sub.rollangle = $ + FixedAngle(abs(sub.momz) + 10*FU)
+		if not sub.nophysics
+			if sub.guidedrot
+				sub.rollangle = 0
+				local angle = R_PointToAngle2(0,0, sub.momx,sub.momy)
+				local mang = R_PointToAngle2(0,0, FixedHypot(sub.momx, sub.momy), sub.momz)
+				mang = InvAngle($)
+				
+				sub.roll = FixedMul(mang, sin(angle))
+				sub.pitch = FixedMul(mang, cos(angle))
+			else
+				sub.rollangle = $ + FixedAngle(abs(sub.momz) + 10*FU)
+			end
+		else
+			sub.roll = 0
+			sub.pitch = 0
+		end
+	end
+
+	if dofuse
+		if sub.fusetimer <= TR
+		and not sub.playedalarm
+			S_StartSound(sub, sfx_pb_alm)
+			sub.playedalarm = true
+		elseif sub.fusetimer == 0
+			Paint:bombExplosion(sub, sub.subtype)
+			P_KillMobj(sub)
+			return
+		end
+		
+		sub.fusetimer = $ - 1
 	end
 	
 	sub.wasgrounded = P_IsObjectOnGround(sub)
@@ -337,7 +377,7 @@ end,MT_PAINT_BOMB)
 addHook("MobjMoveBlocked",function(me, thing,line)
 	local sub_t = Paint.subs[me.subtype]
 	if sub_t.blockedfunc ~= nil
-		if sub_t.blockedfunc(me, thing,line)
+		if sub_t.blockedfunc(me, false, line)
 			return
 		end
 		if not (me and me.valid) then return end
@@ -367,15 +407,6 @@ addHook("MobjMoveBlocked",function(me, thing,line)
 			line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
 			-speed / 4
 		)
-		return true
-	elseif (thing and thing.valid)
-		local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
-		local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + (R_PointToDist2(0,0,me.momx,me.momy)/2) + FixedMul(
-			20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
-		)
-		if P_IsObjectOnGround(me) then speed = FixedDiv($, me.friction) end
-		
-		P_InstaThrust(me, ang, -speed)
 		return true
 	end
 	P_BounceMove(me)
