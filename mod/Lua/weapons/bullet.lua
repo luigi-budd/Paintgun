@@ -516,7 +516,7 @@ addHook("MobjThinker",function(shot)
 		end
 		shot.momz = $ + dropoff_grav
 		
-		if (shot.fallofftime - shot.lifespan >= 3)
+		if (shot.lifespan - shot.fallofftime >= 3)
 			shot.damage = shot.falloffdamage + ease.linear(
 				min(
 					abs((FU/wep.fallofftime) * (shot.fallofftime - (shot.lifespan-3))),
@@ -611,6 +611,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 			Paint:doProjHitmarker(shot, mo, true, true)
 			P_RemoveMobj(shot)
 		end
+		P_RemoveMobj(shot)
 	end
 end,MT_PAINT_SHOT)
 
