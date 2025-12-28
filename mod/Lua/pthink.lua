@@ -1,6 +1,7 @@
 local CV = Paint.CV
 local MAX_SQUIDTIME = 3
 
+freeslot("SPR_PAINT_INKTANK")
 rawset(_G,"CA2_SQUIDFORM", 132)
 
 local ANGLE_CAP = FixedAngle(70*FU) >> 16
@@ -153,13 +154,18 @@ end
 BP.doInkTank = function(p)
 	local me = p.realmo
 	local pt = p.paint
+	local weapon_t = Paint.weapons[pt.weapon_id]
+	local sub_t
+	if weapon_t
+		sub_t = Paint.subs[weapon_t.subtype]
+	end
 	
 	local tank = pt.tankmobj
 	local teleport = P_MoveOrigin
 	if not (tank and tank.valid)
 		local tn = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
-		tn.sprite = SPR_PAINT_MISC
-		tn.frame = 3|FF_SEMIBRIGHT|FF_PAPERSPRITE
+		tn.sprite = SPR_PAINT_INKTANK
+		tn.frame = 1|FF_SEMIBRIGHT|FF_PAPERSPRITE
 		tn.fuse = -1
 		tn.tics = -1
 		tn.dispoffset = 10
@@ -167,11 +173,10 @@ BP.doInkTank = function(p)
 		tn.height = 4*me.scale
 		tn.dontdrawforviewmobj = me
 		tn.renderflags = $|RF_NOCOLORMAPS
-		tn.target = me
 		
 		local mid = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
-		mid.sprite = SPR_PAINT_MISC
-		mid.frame = 3|FF_SEMIBRIGHT|FF_PAPERSPRITE|FF_TRANS50
+		mid.sprite = SPR_PAINT_INKTANK
+		mid.frame = 1|FF_SEMIBRIGHT|FF_PAPERSPRITE|FF_TRANS50
 		mid.fuse = -1
 		mid.tics = -1
 		mid.dispoffset = 8
@@ -185,8 +190,8 @@ BP.doInkTank = function(p)
 		tn.target = mid
 		
 		local back = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
-		back.sprite = SPR_PAINT_MISC
-		back.frame = 2|FF_SEMIBRIGHT|FF_PAPERSPRITE
+		back.sprite = SPR_PAINT_INKTANK
+		back.frame = 0|FF_SEMIBRIGHT|FF_PAPERSPRITE
 		back.fuse = -1
 		back.tics = -1
 		back.dispoffset = 7
@@ -195,6 +200,18 @@ BP.doInkTank = function(p)
 		back.dontdrawforviewmobj = me
 		back.target = me
 		tn.tracer = back
+		
+		local line = P_SpawnMobjFromMobj(me,0,0,0,MT_PAINT_GUN)
+		line.sprite = SPR_PAINT_INKTANK
+		line.frame = 4|FF_SEMIBRIGHT|FF_PAPERSPRITE
+		line.fuse = -1
+		line.tics = -1
+		line.dispoffset = 11
+		line.radius = 2*me.scale
+		line.height = 4*me.scale
+		line.dontdrawforviewmobj = me
+		line.target = me
+		tn.linemobj = line
 		
 		teleport = P_SetOrigin
 		pt.tankmobj = tn
@@ -254,9 +271,29 @@ BP.doInkTank = function(p)
 		mid.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
 		mid.alpha = me.alpha
 		
+		local line = tank.linemobj
+		line.angle = tank.angle
+		line.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
+		line.color = ColorOpposite(tank.color)
+		if sub_t
+			line.spriteyoffset = FixedMul(23*FU, FixedDiv(sub_t:get(pt,"inkcost"), 100*FU))
+		else
+			line.flags2 = $|MF2_DONTDRAW
+		end
+		teleport(line,
+			me.x + P_ReturnThrustX(nil, angle, me.radius + 4*me.scale + (me.scale/32)),
+			me.y + P_ReturnThrustY(nil, angle, me.radius + 4*me.scale + (me.scale/32)),
+			me.z + me.height*2/5
+		)
+		line.destscale = me.scale
+		line.scalespeed = line.destscale + 1
+		line.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+		line.alpha = me.alpha
+		
 		tank.pitch,tank.roll = 0,0
 		back.pitch,back.roll = 0,0
 		mid.pitch,mid.roll = 0,0
+		line.pitch,line.roll = 0,0
 	end
 end
 
@@ -366,6 +403,7 @@ addHook("PlayerThink",function(p)
 		p.wasmode = nil
 	end
 	
+	me.alpha = FU
 	me.jumptime = $ or 0
 	pt.spreadadd = 0
 	
@@ -410,6 +448,8 @@ addHook("PlayerThink",function(p)
 		end
 		return
 	end
+	local sub_t = Paint.subs[cur_weapon.subtype]
+	
 	if G_RingSlingerGametype()
 		p.weapondelay = max($, 5)
 	end
@@ -440,6 +480,7 @@ addHook("PlayerThink",function(p)
 			s.paint_delay = 0
 			s.paint_shield = true
 			s.paint_destroyed = false
+			s.paint_explodebombs = true
 			s.cooldown = 0
 			s.weapon_id = pt.weapon_id
 			s.dontdrawforviewmobj = me
@@ -979,11 +1020,16 @@ addHook("PlayerThink",function(p)
 	and not pt.fireheld
 	and not pt.inkqueue
 		pt.maxinkdelay = 0
+		local oldtank = pt.inktank
 		if (pt.inink == Paint.ININK_FRIENDLY)
 		and pt.hidden
 			pt.inktank = $ + fast_ink_refill_rate
 		else
 			pt.inktank = $ + ink_refill_rate
+		end
+		if oldtank < sub_t:get(pt,"inkcost")
+		and pt.inktank >= sub_t:get(pt,"inkcost")
+			S_StartSound(nil, sfx_pt_srd, p)
 		end
 		pt.inktank = min($, 100*FU)
 	end
@@ -1251,9 +1297,9 @@ addHook("PlayerThink",function(p)
 	end
 	
 	-- sub stuff
-	-- AIMING
+	-- AIMING A SUB / AIMING SUB
 	local wasaiming = pt.aimingsub
-	if (not pt.fireheld)
+	if not (pt.fireheld or pt.squidtoggle)
 	and (p.cmd.buttons & BT_FIRENORMAL)
 		pt.aimingsub = true
 	else
@@ -1261,13 +1307,19 @@ addHook("PlayerThink",function(p)
 	end
 	if pt.aimingsub
 		pt.aimingtime = $ + 1
+		local easefrac = 0
 		if (pt.aimingtime >= TR/2)
+			easefrac = min((FU/(TR*3/2)) * (pt.aimingtime - TR/2), FU)
 			pt.fovadd = ease.inoutquad(
-				min((FU/(TR*3/2)) * (pt.aimingtime - TR/2), FU),
+				easefrac,
 				0, -30*FU
 			)
 		end
 		if (p == displayplayer)
+			me.alpha = ease.inoutquad(
+				easefrac,
+				$, FU/2
+			)
 			local test = Paint:throwSub(p, cur_weapon, fireangle, p.aiming + (ANG2*2 + ANG1), true)
 			if test and test.valid
 				local pos = {
@@ -1275,7 +1327,6 @@ addHook("PlayerThink",function(p)
 					y = test.y,
 					z = test.z
 				}
-				local sub_t = Paint.subs[cur_weapon.subtype]
 				while (true)
 					Paint:bombPhysics(test, cur_weapon.subtype)
 					if not P_TryMove(test, test.x + test.momx, test.y + test.momy, true)
@@ -1320,6 +1371,7 @@ addHook("PlayerThink",function(p)
 		pt.substrafe = 10
 	else
 		if wasaiming
+		and not (pt.fireheld or pt.squidtoggle)
 			Paint:throwSub(p, cur_weapon, fireangle, p.aiming + (ANG2*2 + ANG1), false)
 		end
 		if pt.substrafe
@@ -1471,6 +1523,7 @@ addHook("PlayerSpawn",function(p)
 	Paint:resetPlayer(p)
 end)
 
+local move_lerp = FU / 3
 addHook("PreThinkFrame",do for p in players.iterate
 	local me = p.mo
 	local pt = p.paint
@@ -1479,6 +1532,8 @@ addHook("PreThinkFrame",do for p in players.iterate
 	pt.forwardmove = p.cmd.forwardmove
 	pt.sidemove = p.cmd.sidemove
 	pt.buttons = p.cmd.buttons
+	pt.fixed_fmove = $ + FixedMul((pt.forwardmove*FU) - $, move_lerp)
+	pt.fixed_smove = $ + FixedMul((pt.sidemove*FU) - $, move_lerp)
 	
 	if not pt.active then continue end
 	
@@ -1603,13 +1658,15 @@ addHook("PostThinkFrame",do for p in players.iterate
 		end
 	end
 	
-	local cur_weapon = Paint.weapons[pt.weapon_id]
-	BP.doInkTank(p)
-	if pt.weapon_id ~= nil
-		local reset_interp = pt.weapon_id ~= pt.old_weaponid
-		BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
-		if (cur_weapon.guntype == WPT_DUALIES)
-			BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
+	if not me.paint_inactive
+		local cur_weapon = Paint.weapons[pt.weapon_id]
+		BP.doInkTank(p)
+		if pt.weapon_id ~= nil
+			local reset_interp = pt.weapon_id ~= pt.old_weaponid
+			BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
+			if (cur_weapon.guntype == WPT_DUALIES)
+				BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
+			end
 		end
 	end
 	

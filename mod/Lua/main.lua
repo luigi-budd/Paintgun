@@ -126,6 +126,8 @@ function Paint:initPlayer(p)
 		weaponmobjdupe = nil, -- for dualies
 		
 		forwardmove = 0, sidemove = 0,buttons = 0,
+		-- fixed varients of forward/sidemoves for sub stuff
+		fixed_fmove = 0, fixed_smove = 0,
 		
 		jumpheld = 0,
 		spinheld = 0,

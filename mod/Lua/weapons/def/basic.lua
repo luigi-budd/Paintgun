@@ -1,4 +1,6 @@
 Paint:registerWeapon({
+	realname = "Splattershot",
+	
 	name = "basic",
 	handoffset = 8*FU,
 	h_spread = {6, 6},

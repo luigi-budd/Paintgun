@@ -10,7 +10,10 @@ for i = 0,6
 end
 
 Paint:registerWeapon({
+	realname = "Aerospray MG",
+	
 	name = "rapid",
+	subtype = "burstbomb",
 	handoffset = 6*FU,
 	range = 188*FU,
 	dropoff = 103*FU,

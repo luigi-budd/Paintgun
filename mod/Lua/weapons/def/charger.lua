@@ -7,6 +7,8 @@ states[S_PAINT_GUN_CHARGER] = {
 }
 
 Paint:registerWeapon({
+	realname = "Splat Charger",
+	
 	name = "charger",
 	handoffset = 6*FU,
 	range = 1224*FU,

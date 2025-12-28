@@ -14,7 +14,10 @@ sfxinfo[sfx_p_s3_0] = {
 }
 
 Paint:registerWeapon({
+	realname = "Blaster",
+	
 	name = "blaster",
+	--subtype = "autobomb",
 	handoffset = 10*FU,
 	range = 400*FU,
 	damage = 125*FU,

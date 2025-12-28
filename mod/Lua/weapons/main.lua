@@ -25,6 +25,8 @@ rawset(_G, "SUBMOVE_OFFSET", 0)
 
 Paint.subs = {}
 local sub_meta = {
+	realname = "Sub Weapon",
+	
 	airdrag = FU * 9/10,
 	gravmul = FU,
 	slowspeed = 15*FU,
@@ -33,12 +35,17 @@ local sub_meta = {
 	inkdelay = TR,
 	offset = 6*FU,
 	fuse = 40,
+	explodeoncontact = false,
 	explodesound = sfx_pb_exp,
 	
-	inner_radius = 140*FU,
+	inner_radius = 175*FU,
 	inner_damage = 180*FU,
-	outer_radius = 256*FU,
+	outer_radius = 290*FU,
 	outer_damage = 30*FU,
+	quakeforce = 10*FU,
+	
+	-- function(mobj_t "sub", [mobj_t "tmthing", line_t "line"])
+	blockedfunc = nil,
 }
 registerMetatable(sub_meta)
 
@@ -60,6 +67,7 @@ function Paint:registerSubWeapon(props)
 	Paint.subs[props.name] = props
 end
 
+-- weapon classes
 rawset(_G, "WPT_SHOOTER", 1)
 rawset(_G, "WPT_CHARGER", 2)
 rawset(_G, "WPT_KATANA", 3)
@@ -67,10 +75,13 @@ rawset(_G, "WPT_BRUSH", 4)
 rawset(_G, "WPT_BLASTER", 5)
 rawset(_G, "WPT_DUALIES", 6)
 rawset(_G, "WPT_BRELLA", 7)
+rawset(_G, "WPT_SLOSHER", 8)
 
 Paint.weapons = {}
 local weapon_meta = {
-	range = 405 * FU, --about 2.3 distance units
+	realname = "Main Weapon",
+	
+	range = 405 * FU, --about 2.3 splat3 distance units
 	damage = 24*FU,
 	startlag = 0,
 	endlag = 0,
@@ -640,15 +651,24 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 	bomb.momy = FixedMul(FixedMul(SUBMOVE_LATERAL, me.scale), vec.y * 8/5)
 	bomb.momz = FixedMul(FixedMul(SUBMOVE_VERTICAL, me.scale), vec.z) + FixedMul(SUBMOVE_OFFSET, me.scale)
 	bomb.momz = $ * flip
+	
 	bomb.shadowscale = 2*FU
-	bomb.fuse = 5 * TR
-	bomb.subtype = wep.subtype
+	--bomb.fuse = 5 * TR
 	bomb.target = me
+	bomb.tracer_player = p
+	
 	bomb.color = Paint:getPlayerColor(p)
+	bomb.basecolor = bomb.color
+	bomb.renderflags = $|RF_NOCOLORMAPS|RF_SEMIBRIGHT
+	
+	bomb.subweapon = true
+	bomb.subtype = wep.subtype
 	bomb.airdrag = sub_t:get(pt,"airdrag")
 	bomb.gravmul = sub_t:get(pt,"gravmul")
 	bomb.slowspeed = FixedMul(sub_t:get(pt,"slowspeed"), bomb.scale)
 	bomb.fusetimer = sub_t:get(pt,"fuse")
+	bomb.explodeoncontact = sub_t:get(pt,"explodeoncontact")
+	
 	if aimline
 		bomb.flags = MF_NOCLIPTHING|MF_NOSECTOR|MF_NOGRAVITY
 		bomb.flags2 = $|MF2_DONTDRAW
@@ -665,11 +685,11 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 	if momzadd < 0 then momzadd = 0; end
 	bomb.momz = $ + momzadd
 	
-	local sidefact = FixedDiv(p.cmd.sidemove*FU, 50*FU)
+	local sidefact = FixedDiv(pt.fixed_smove, 50*FU)
 	local sideangle = FixedAngle(15 * sidefact)
 	P_InstaThrust(bomb, angle - sideangle, R_PointToDist2(0,0, bomb.momx,bomb.momy))
 	
-	local backfact = FixedDiv(p.cmd.forwardmove*FU, 50*FU)
+	local backfact = FixedDiv(pt.fixed_fmove, 50*FU)
 	if backfact > 0 then backfact = 0; end
 	P_Thrust(bomb, angle, 15 * backfact)
 	return bomb

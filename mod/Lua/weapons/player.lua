@@ -192,6 +192,9 @@ function Paint:getPlayerColor(p)
 	if G_GametypeHasTeams()
 		return (p.ctfteam == 1 and skincolor_redteam or skincolor_blueteam)
 	end
+	if p.skincolor == SKINCOLOR_NONE
+		return SKINCOLOR_GREEN
+	end
 	return p.skincolor
 end
 

@@ -6,6 +6,13 @@ local lagtics = 0
 local oldangle = 0
 local oldaiming = 0
 
+local factor = FU/2
+local function camlag()
+	camera.momx = FixedMul($, factor)
+	camera.momy = FixedMul($, factor)
+	camera.momz = FixedMul($, factor)	
+end
+
 function HUD:cameraLag(p, tics)
 	if p ~= displayplayer then return end
 	
@@ -13,7 +20,7 @@ function HUD:cameraLag(p, tics)
 	oldangle = camera.angle
 	oldaiming = camera.aiming
 	
-	camera.momx, camera.momy, camera.momz = 0,0,0
+	camlag()
 	camera.angle = oldangle
 	camera.aiming = oldaiming
 end
@@ -21,7 +28,7 @@ end
 addHook("ThinkFrame",do
 	if not lagtics then return end
 	
-	camera.momx, camera.momy, camera.momz = 0,0,0
+	camlag()
 	camera.angle = oldangle
 	camera.aiming = oldaiming
 	lagtics = $ - 1

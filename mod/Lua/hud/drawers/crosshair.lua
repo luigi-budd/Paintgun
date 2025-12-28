@@ -576,6 +576,7 @@ addHook("HUD",function(v,p,cam)
 	
 	local wep = Paint.weapons[pt.weapon_id]
 	if wep == nil then return end
+	if pt.aimingsub then return end
 	
 	crosshairdrawer(v,p,cam, pt, false, wep.guntype == WPT_CHARGER)
 	if (wep.guntype == WPT_DUALIES)

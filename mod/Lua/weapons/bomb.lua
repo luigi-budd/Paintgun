@@ -1,10 +1,20 @@
-freeslot("MT_PAINT_BOMB")
+freeslot(
+	"SPR_PAINT_BOMB",
+	"S_PAINT_BOMB",
+	"MT_PAINT_BOMB"
+)
+states[S_PAINT_BOMB] = {
+	frame = 0|FF_SEMIBRIGHT,
+	sprite = SPR_PAINT_BOMB,
+	tics = -1,
+}
+
 mobjinfo[MT_PAINT_BOMB] = {
 	doomednum = -1,
 	radius = 16*FU,
 	height = 32*FU,
 	flags = MF_NOGRAVITY,
-	spawnstate = S_ROCKCRUMBLEA
+	spawnstate = S_PAINT_BOMB
 }
 sfxinfo[freeslot("sfx_pb_fly")] = {
 	caption = "/",
@@ -27,7 +37,7 @@ end
 local function splash_blockmap(ray, mo)
 	if not (ray and ray.valid) then return end
 	if not (mo and mo.valid) then return end
-	if (mo == ray.donthit) then return end
+	if (mo == ray.donthit and ray.forcehit ~= mo) then return end
 	if (ray.donthit and ray.donthit.paint_shield and (mo == ray.donthit.tracer))
 		return
 	end
@@ -79,16 +89,13 @@ function Paint:bombExplosion(mo, subtype)
 	S_StartSound(sfx, sound)
 	
 	local splashrad = sub_t.outer_radius
-	P_StartQuake(10*FU, 10, {mo.x,mo.y,mo.z}, splashrad * 6/5)
+	P_StartQuake(sub_t.quakeforce, 10, {mo.x,mo.y,mo.z}, splashrad * 6/5)
 	
-	local spr_scale = FU * 6/5
-	local tntstate = S_TNTBARREL_EXPL3
-	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
 	local bam = P_SpawnMobjFromMobj(mo, 0,0,0, MT_THOK)
-	P_SetMobjStateNF(bam, tntstate)
-	bam.spritexscale = FixedMul($, spr_scale)
+	P_SetMobjStateNF(bam, S_TNTBARREL_EXPL3)
+	bam.spritexscale = FixedDiv(sub_t.inner_radius, 208*FU) * 2
 	bam.spriteyscale = bam.spritexscale
-	bam.renderflags = $|rflags
+	bam.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	bam.blendmode = AST_ADD
 	bam.colorized = true
 	bam.color = mo.color
@@ -103,7 +110,7 @@ function Paint:bombExplosion(mo, subtype)
 		outline.frame = ($ &~FF_FRAMEMASK)|18
 		outline.spritexscale = FixedDiv(sub_t.inner_radius, 80*FU) * 2
 		outline.spriteyscale = outline.spritexscale
-		outline.renderflags = $|rflags|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
+		outline.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
 		outline.blendmode = AST_ADD
 		outline.colorized = true
 		outline.color = mo.color
@@ -232,8 +239,10 @@ addHook("MobjThinker",function(sub)
 		flashtime = min(8, max($ >> 4, 2))
 		if (timer % flashtime ~= 0)
 			sub.colorized = false
+			sub.translation = nil
 		else
 			sub.colorized = true
+			sub.translation = "AllWhite"
 		end
 	end
 	
@@ -242,6 +251,18 @@ addHook("MobjThinker",function(sub)
 	if P_IsObjectOnGround(sub)
 		sub.flags = $ &~MF_NOGRAVITY
 		if not sub.wasgrounded
+			if sub_t.blockedfunc ~= nil
+				if sub_t.blockedfunc(sub)
+					return
+				end
+				if not (sub and sub.valid) then return end
+			end
+			if sub.explodeoncontact
+				Paint:bombExplosion(sub, sub.subtype)
+				P_KillMobj(sub)
+				return
+			end
+			
 			clattersound(sub)
 			if R_PointToDist2(0,0, sub.momx,sub.momy) >= 20 * sub.scale
 				sub.momz = 3 * sub.scale * P_MobjFlip(sub)
@@ -272,7 +293,53 @@ addHook("MobjThinker",function(sub)
 	sub.wasgrounded = P_IsObjectOnGround(sub)
 end,MT_PAINT_BOMB)
 
+addHook("MobjMoveCollide",function(bomb, thing)
+	if not (bomb and bomb.valid) then return end
+	if not (thing and thing.valid) then return end
+	if not thing.health then return end
+	if not L_ZCollide(bomb,thing) then return end
+	if (bomb.lasthit == thing) then return end
+	bomb.lasthit = thing
+	
+	local sub_t = Paint.subs[bomb.subtype]
+	
+	local forceexplosion = false
+	if (thing.paint_explodebombs)
+	and (thing.target ~= bomb.target)
+		forceexplosion = true
+	end
+	
+	if (bomb.explodeoncontact)
+		if (Paint_canHurtEnemy(bomb.tracer_player, thing)
+		or thing.type == MT_TNTBARREL)
+		or (thing.type == MT_PLAYER and (thing ~= bomb.target)
+		and Paint_canHurtPlayer(bomb.tracer_player, thing.player))
+			forceexplosion = true
+		end
+	end
+	
+	if forceexplosion
+		bomb.donthit = thing
+		bomb.forcehit = thing
+		Paint:bombExplosion(bomb, bomb.subtype)
+		P_KillMobj(bomb)
+		return
+	end
+end,MT_PAINT_BOMB)
+
 addHook("MobjMoveBlocked",function(me, thing,line)
+	local sub_t = Paint.subs[me.subtype]
+	if sub_t.blockedfunc ~= nil
+		if sub_t.blockedfunc(me, thing,line)
+			return
+		end
+		if not (me and me.valid) then return end
+	end
+	if me.explodeoncontact
+		Paint:bombExplosion(me, me.subtype)
+		P_KillMobj(me)
+		return
+	end
 	clattersound(me)
 
 	if (line and line.valid)

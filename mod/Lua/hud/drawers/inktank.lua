@@ -21,17 +21,17 @@ addHook("HUD",function(v,p,cam)
 	result.x = $ + 27*result.scale
 	
 	local animprogress = FixedDiv(anim*FU, MAXANIM*FU)
-	
+	local weapon_t = Paint.weapons[pt.weapon_id]
+	local sub_t
+	if weapon_t
+		sub_t = Paint.subs[weapon_t.subtype]
+	end
+
 	v.dointerp(true)
-	v.drawStretched(result.x,result.y, result.scale, FixedMul(result.scale, animprogress), v.getSpritePatch(SPR_PAINT_MISC,5,0), 0)
-	/*
-	v.drawStretched(result.x,result.y, result.scale, FixedMul(result.scale, FixedDiv(pt.inktank,100*FU)),
-		v.getSpritePatch(SPR_PAINT_MISC,3,0), 0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p))
-	)
-	*/
+	v.drawStretched(result.x,result.y, result.scale, FixedMul(result.scale, animprogress), v.getSpritePatch(SPR_PAINT_INKTANK,3,0), 0)
 	local fast = (pt.inktank ~= 100*FU and pt.inkdelay == 0)
 	local inkprogress = FixedDiv(pt.inktank - pt.inkqueue,100*FU)
-	local patch = v.getSpritePatch(SPR_PAINT_MISC,fast and 3 or 4,0)
+	local patch = v.getSpritePatch(SPR_PAINT_INKTANK,fast and 1 or 2,0)
 	local cropheight = FixedMul(patch.height*FU, FU - inkprogress)
 	local ypos = result.y + FixedMul(cropheight, FixedMul(result.scale, animprogress))
 	if pt.inkdelay ~= 0
@@ -48,6 +48,14 @@ addHook("HUD",function(v,p,cam)
 		patch, 0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)),
 		0,cropheight, patch.width*FU, patch.height*FU
 	)
+	if sub_t
+		v.drawStretched(result.x,
+			result.y - FixedMul(23 * FixedMul(result.scale, animprogress), FixedDiv(sub_t:get(pt,"inkcost"), 100*FU)),
+			result.scale, FixedMul(result.scale, animprogress),
+			v.getSpritePatch(SPR_PAINT_INKTANK,4,0),
+			0,v.getColormap(TC_DEFAULT, ColorOpposite(Paint:getPlayerColor(p)), nil)
+		)
+	end
 	/*
 	HUD.drawSplashBG(v,
 		result.x - patch.leftoffset*result.scale,

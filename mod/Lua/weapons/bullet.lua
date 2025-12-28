@@ -172,9 +172,7 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 	end
 	hitmark_tic = leveltime
 	
-	if nullify then return end
-	
-	if splatter
+	if splatter and not nullify
 		splattersound(shot, true)
 		if not shot.pellet
 			splattersound(shot, true)
@@ -188,8 +186,8 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 		z = shot.z + shot.height/2,
 	}
 	
-	local rollangle = FixedAngle(P_RandomRange(0,230)*FU)
-	Paint.HUD:hitMarker(shot.target.player, pos, rollangle, (shot.pellet and FU/2 or FU), shot.powerful)
+	local rollangle = FixedAngle(360 * P_RandomFixed())
+	Paint.HUD:hitMarker(shot.target.player, pos, rollangle, (shot.pellet and FU/2 or FU), shot.powerful, nil, nullify)
 end
 
 local function SetSplatSkew(splat,slope,skew)
@@ -605,11 +603,14 @@ addHook("MobjMoveCollide",function(shot,mo)
 				shot.pierces = $ - 1
 			else
 				P_RemoveMobj(shot)
+				return
 			end
+		-- invicible but not a teammate
 		elseif Paint_canHurtPlayer(p, mo.player, true)
 		and not Paint:isFriendlyFire(p,mo.player)
 			Paint:doProjHitmarker(shot, mo, true, true)
 			P_RemoveMobj(shot)
+			return
 		end
 		P_RemoveMobj(shot)
 	end
