@@ -477,10 +477,7 @@ addHook("PlayerThink",function(p)
 		return
 	end
 	local sub_t = Paint.subs[cur_weapon.subtype]
-	
-	if G_RingSlingerGametype()
-		p.weapondelay = max($, 5)
-	end
+	p.weapondelay = max($, 5)
 	
 	-- brella shield
 	pt.shieldwait = max($-1, 0)
