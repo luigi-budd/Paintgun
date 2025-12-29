@@ -433,6 +433,9 @@ addHook("PlayerThink",function(p)
 		p.charflags = $|(skin.flags & SF_DASHMODE)
 		p.charability = skin.ability
 		p.charability2 = skin.ability2
+		if (p.pflags & PF_TAGIT)
+			p.charability2 = CA2_SQUIDFORM
+		end
 		p.wasmode = nil
 	end
 	
@@ -1222,9 +1225,9 @@ addHook("PlayerThink",function(p)
 	--print("lag", pt.firewait, pt.endlag, pt.cooldown, "firerate = "..cur_weapon:get(pt,"firerate"))
 	
 	-- handle dodge rolls
+	local dd = pt.dodgeroll
 	if cur_weapon.guntype == WPT_DUALIES
 		local inpain = (P_PlayerInPain(p) or me.state == S_PLAY_PAIN or (not me.health))
-		local dd = pt.dodgeroll
 		if dd.tics and not inpain
 			local frac = FU - FixedDiv(dd.tics*FU, cur_weapon:get(pt,"dodgelength")*FU)
 			--frac = ease.outsine($ * 3/4, 0, FU)
@@ -1256,16 +1259,16 @@ addHook("PlayerThink",function(p)
 				me.state = S_PLAY_GLIDE_LANDING
 				me.momx = dd.momx
 				me.momy = dd.momy
-				P_MovePlayer(p)
 				dd.getup = cur_weapon:get(pt,"dodgegetup")
 				pt.turretmode = true
 				dd.momx = 0;dd.momx = 0
+				P_MovePlayer(p)
 			end
 			p.pflags = $|PF_FULLSTASIS
 			p.jumpfactor = 0
 			dd.oldx = me.x
 			dd.oldy = me.y
-		elseif pt.firewait or dd.getup or inpain
+		elseif pt.firewait or dd.getup or inpain or pt.turretmode
 			p.pflags = $|PF_FULLSTASIS
 			p.jumpfactor = 0
 			
@@ -1318,11 +1321,12 @@ addHook("PlayerThink",function(p)
 			p.jumpfactor = skin.jumpfactor
 		end
 		/*
-		print("dd = {")
+		print(leveltime .. " dd = {")
 		for k,v in pairs(dd)
-			print("\t"..tostring(k) .. " = " .. tostring(v))
+			print("    "..tostring(k) .. " = " .. tostring(v))
 		end
 		print("}")
+		print(pt.turretmode)
 		*/
 	end
 	
@@ -1462,6 +1466,7 @@ addHook("PlayerThink",function(p)
 	end
 	
 	if (pt.firewait or pt.fireheld or pt.endlag or pt.cooldown)
+	or (dd.tics or dd.getup or pt.turretmode)
 		pt.weaponzoffset = P_Lerp(FU * 3/4, $, 0)
 	else
 		pt.weaponzoffset = P_Lerp(FU / 3, $, Paint.IDLE_OFFSET)
@@ -1710,6 +1715,12 @@ addHook("PostThinkFrame",do for p in players.iterate
 			if (cur_weapon.guntype == WPT_DUALIES)
 				BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
 			end
+			
+			local dd = pt.dodgeroll
+			if (dd.tics or dd.getup or pt.turretmode)
+			and me.state ~= S_PLAY_GLIDE_LANDING
+				me.state = S_PLAY_GLIDE_LANDING
+			end
 		end
 	end
 	pt.justrestored = false
@@ -1773,7 +1784,7 @@ addHook("PlayerHeight",function(p)
 	local me = p.realmo
 	if not (me and me.valid) then return end
 	
-	if (pt.turretmode or (pt.dodgeroll.tics or pt.dodgeroll.getup))
+	if (pt.turretmode or pt.dodgeroll.getup) or pt.dodgeroll.tics
 		return P_GetPlayerSpinHeight(p)
 	end
 	if not pt.squidtime then return end

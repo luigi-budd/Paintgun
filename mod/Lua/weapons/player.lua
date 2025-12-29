@@ -328,6 +328,26 @@ function Paint:doDodgeRoll(p)
 	
 	local rad = FixedDiv(me.radius,me.scale)/FU
 	local hei = FixedDiv(me.height,me.scale)/FU
+	local angstep = FixedDiv(90*FU, 16*FU)
+	-- paint our feet
+	for i = -7,8
+		local angle = ang + FixedAngle(angstep * i)
+		local drop = P_SpawnMobjFromMobj(me,
+			P_ReturnThrustX(nil, angle, -16*FU),
+			P_ReturnThrustY(nil, angle, -16*FU),
+			0, MT_PAINT_SHOT
+		)
+		drop.target = me
+		drop.angle = angle
+		drop.color = Paint:getPlayerColor(p)
+		drop.trail = true
+		drop.nosound = true
+		drop.lifespan = 0
+		drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
+		drop.tracer_player = p
+		drop.frame = ($ &~FF_FRAMEMASK)|2
+		P_SetObjectMomZ(drop, -20*FU)
+	end
 	for i = 0,15
 		local blob = makeBlob(p,me,pt, rad,hei)
 		local ang = R_PointToAngle2(blob.x,blob.y, me.x,me.y)
