@@ -115,6 +115,10 @@ mobjinfo[MT_PAINT_WALLSPLAT] = {
 	deathstate = S_PAINT_WALLSPLATTER,
 }
 
+for i = 0,3
+	sfxinfo[freeslot("sfx_pt_nm"..i)].caption = "Bullet whiz"
+end
+
 local function splattersound(shot, collided)
 	if shot.nosound
 		return
@@ -388,12 +392,12 @@ addHook("MobjThinker",function(shot)
 	
 	shot.eflags = $|MFE_NOPITCHROLLEASING
 	shot.lifespan = $ + 1
-	if shot.lifespan == 1
-	and (shot.frame & FF_FRAMEMASK == 0)
+	shot.spritexscale = shot.basescale or FU
+	if (shot.frame & FF_FRAMEMASK == 0)
 		--Fuck!
 		shot.spritexscale = $ * 5/2
-		shot.spriteyscale = shot.spritexscale
 	end
+	shot.spriteyscale = shot.spritexscale
 	
 	if HandleFloorSplat(shot) then return end
 	
@@ -485,6 +489,32 @@ addHook("MobjThinker",function(shot)
 		and P_RandomChance(FU/2)
 			CreateTrail(shot)
 		end
+		
+		local sfxid = P_RandomRange(sfx_pt_nm0,sfx_pt_nm3)
+		local dp = displayplayer
+		if (dp and dp.valid and dp.mo and dp.mo.valid and not dp.spectator and dp.mo ~= shot.target)
+		and not shot.whizzed
+			if R_PointTo3DDist(shot.x,shot.y,shot.z, dp.mo.x,dp.mo.y,dp.mo.z) <= 100*dp.mo.scale
+				local sfx = P_SpawnGhostMobj(shot)
+				sfx.flags2 = $|MF2_DONTDRAW
+				sfx.fuse = TR
+				sfx.tics = sfx.fuse
+				S_StartSoundAtVolume(sfx, sfxid, dp, 255 * 4/5)
+				shot.whizzed = true
+			end
+		end
+	end
+	
+	shot.angle = shot.baseangle + shot.angoffset
+	shot.angoffset = $ * 3/4
+	if shot.lifespan <= 4
+	and ((shot.frame & FF_FRAMEMASK == 0)
+	or (shot.frame & FF_FRAMEMASK == 3))
+		local stretch = 7*FU
+		if shot.lifespan > 2
+			stretch = $ - ((7*FU)/2) * (shot.lifespan - 2)
+		end
+		shot.spritexscale = $ + abs(FixedMul(stretch, sin(R_PointToAngle(shot.x,shot.y) - shot.angle)))
 	end
 	
 	if dist >= range

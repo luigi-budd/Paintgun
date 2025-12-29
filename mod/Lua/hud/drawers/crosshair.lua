@@ -388,10 +388,10 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 		local L_hspread, R_hspread
 		local B_vspread, T_vspread
 		if not (range_cache[range] and range_cache[range][pt.spreadadd])
-			L_hspread = -wep.h_spread[1]*FU - pt.spreadadd
-			R_hspread = wep.h_spread[2]*FU + pt.spreadadd
-			B_vspread = -wep.v_spread[1]*FU
-			T_vspread = wep.v_spread[2]*FU
+			L_hspread = -wep.h_spread[1] - pt.spreadadd
+			R_hspread = wep.h_spread[2] + pt.spreadadd
+			B_vspread = -wep.v_spread[1]
+			T_vspread = wep.v_spread[2]
 			local scale = p.mo.scale
 			L_hspread = FixedMul($, scale)
 			R_hspread = FixedMul($, scale)

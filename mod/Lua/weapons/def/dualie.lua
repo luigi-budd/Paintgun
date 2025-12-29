@@ -25,8 +25,8 @@ Paint:registerWeapon({
 	
 	name = "dualies",
 	handoffset = 5*FU,
-	h_spread = {6, 6},
-	v_spread = {4, 4},
+	h_spread = {6*FU, 6*FU},
+	v_spread = {4*FU, 4*FU},
 	damage = 25*FU,
 	guntype = WPT_DUALIES,
 	lifespan = 4,

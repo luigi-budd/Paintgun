@@ -173,6 +173,7 @@ function Paint:bombExplosion(mo, subtype)
 		drop.tracer_player = mo.target.player
 	end
 	
+	/*
 	for i = -1,1,2
 		local z = splashrad * i
 		P_SpawnMobjFromMobj(mo, splashrad, splashrad, z, MT_THOK)
@@ -204,6 +205,7 @@ function Paint:bombExplosion(mo, subtype)
 			part.color = mo.color
 		end
 	end
+	*/
 	local px = mo.x
 	local py = mo.y
 	local br = splashrad * 7/5

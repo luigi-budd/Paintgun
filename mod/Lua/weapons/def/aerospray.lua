@@ -9,6 +9,8 @@ for i = 0,6
 	sfxinfo[freeslot("sfx_p_s1_"..i)].caption = "Paint fired"
 end
 
+local point63 = tofixed(".63")
+
 Paint:registerWeapon({
 	realname = "Aerospray MG",
 	
@@ -26,8 +28,8 @@ Paint:registerWeapon({
 	shotscale = FU*3/4,
 	
 	firerate = 2,
-	h_spread = {17, 17},
-	v_spread = {8, 8},
+	h_spread = {12*FU+point63, 12*FU+point63},
+	v_spread = {7*FU, 7*FU},
 	
 	inkcost = FU/2,
 	inkdelay = TR / 4,

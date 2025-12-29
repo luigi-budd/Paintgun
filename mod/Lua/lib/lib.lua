@@ -55,7 +55,7 @@ rawset(_G,"P_3DInstaThrust",function(mo, h_ang, v_ang, speed)
 	mo.momz = FixedMul(speed, t.z)
 end)
 
-rawset(_G,"P_AngleLerp",function(frac, from, to)
+rawset(_G,"P_Lerp",function(frac, from, to)
 	return from + FixedMul(to - from, frac)
 end)
 

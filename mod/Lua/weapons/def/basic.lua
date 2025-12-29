@@ -4,8 +4,8 @@ Paint:registerWeapon({
 	name = "basic",
 	subtype = "suctionbomb",
 	handoffset = 8*FU,
-	h_spread = {6, 6},
-	v_spread = {3, 3},
+	h_spread = {6*FU, 6*FU},
+	v_spread = {3*FU, 3*FU},
 	damage = 35*FU,
 	inkcost = FU * 92/100,
 	

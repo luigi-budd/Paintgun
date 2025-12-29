@@ -106,8 +106,8 @@ local weapon_meta = {
 	firewithnoink = false, -- allow firing even if you have low ink
 	
 	--shooter-specific
-	h_spread = {6, 6},
-	v_spread = {3, 3},
+	h_spread = {6*FU, 6*FU},
+	v_spread = {3*FU, 3*FU}, -- visual only for the crosshair if `verticalspread` is false
 	verticalspread = false,
 	-- spread values (PERCETANGES [0, 100*FRACUNIT], DIVIDED BY 100*FU WHEN NEEDED)
 	spread_base = (FU * 1), -- chance to spread, similar to accelstart
@@ -356,8 +356,8 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	
 	local h_spread,v_spread = 0,0
 	if not crosshair
-		h_spread = P_RandomFixedRange(-weap.h_spread[1]*FU, weap.h_spread[2]*FU)
-		v_spread = P_RandomFixedRange(-weap.v_spread[1]*FU, weap.v_spread[2]*FU)
+		h_spread = P_RandomFixedRange(-weap.h_spread[1], weap.h_spread[2])
+		v_spread = P_RandomFixedRange(-weap.v_spread[1], weap.v_spread[2])
 		if (weap.guntype == WPT_DUALIES and pt.turretmode)
 		or not dospread
 			h_spread = FixedDiv($, FU*5/2)
@@ -492,7 +492,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.weapon_id = pt.weapon_id
 	proj.color = Paint:getPlayerColor(p)
 	proj.lifespan = 0
-	proj.falloff = FixedMul(P_RandomFixedRange(-cur_weapon.falloff[1]*FU, cur_weapon.falloff[2]*FU), proj.scale)
+	proj.falloff = FixedMul(P_RandomFixedRange(-cur_weapon.falloff[1], cur_weapon.falloff[2]), proj.scale)
 	local mom_vec = {x = me.momx,y = me.momy}
 	local handoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, nil, false)}
 	-- fire from the center
@@ -517,6 +517,8 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	if doaiming
 		Paint:aimProjectile(p,proj, angle, aiming, dospread, mom_vec, nil,nil, hsprd, vsprd)
 	end
+	proj.baseangle = proj.angle
+	proj.angoffset = (pt.angdiff - angle)
 	proj.origin = {x = me.x+mom_vec.x, y = me.y+mom_vec.y, z = proj.z}
 	if doinertia
 		proj.momx = $ + mom_vec.x
@@ -531,6 +533,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.progress = 0
 	proj.spritexscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
 	proj.spriteyscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
+	proj.basescale = proj.spritexscale
 	proj.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 	local new_state = cur_weapon:get(pt,"shotstate")
 	if (new_state ~= nil)

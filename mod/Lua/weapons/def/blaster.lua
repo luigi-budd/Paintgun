@@ -35,8 +35,8 @@ Paint:registerWeapon({
 	inkcost = 10*FU,
 	inkdelay = 33,
 	
-	h_spread = {3, 3},
-	v_spread = {3, 3},
+	h_spread = {4*FU, 4*FU},
+	v_spread = {4*FU, 4*FU},
 	spread_recovery = 0, -- how many tics to wait before recovering spread
 	spread_jumpspread = 7*FU, -- how many degrees does jump inaccuracy add?
 	spread_jump = 56, -- how many tics until jump spread decays?

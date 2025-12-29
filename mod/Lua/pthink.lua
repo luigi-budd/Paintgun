@@ -102,12 +102,13 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 		pt.holsteranim = max($-1, 0)
 	end
 	local handoffset = {Paint:getWeaponOffset(me,pt,fireangle - ANGLE_90, cur_weapon, dualieflip, false)}
-	local zoffset = (41*me.height)/48 - (12 * me.scale)
+	local zoffset = (41*me.height)/48 - (12 * me.scale) + FixedMul(pt.weaponzoffset, me.scale)
 	teleport(wepmo,
 		me.x + handoffset[1] + offx,
 		me.y + handoffset[2] + offy,
 		me.z + zoffset
 	)
+	wepmo.angle = $ - FixedAngle(18 * FixedDiv(pt.weaponzoffset, Paint.IDLE_OFFSET) * (dualieflip and -1 or 1))
 	if (P_MobjFlip(me) == -1)
 		wepmo.z = $ - wepmo.height
 		wepmo.eflags = $|MFE_VERTICALFLIP
@@ -144,6 +145,10 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 			fx.renderflags = $|RF_NOCOLORMAPS|RF_ALWAYSONTOP
 			fx.threshold = 1
 		end
+	/*
+	elseif (cur_weapon.guntype == WPT_DUALIES)
+		wepmo.angle = $ + FixedAngle(6 * (FU - FixedDiv(pt.weaponzoffset, Paint.IDLE_OFFSET)) * (dualieflip and -1 or 1))
+	*/
 	end
 	if reset_interp
 		wepmo.resetinterp = true
@@ -1456,6 +1461,12 @@ addHook("PlayerThink",function(p)
 		doslowdown = false
 	end
 	
+	if (pt.firewait or pt.fireheld or pt.endlag or pt.cooldown)
+		pt.weaponzoffset = P_Lerp(FU * 3/4, $, 0)
+	else
+		pt.weaponzoffset = P_Lerp(FU / 3, $, Paint.IDLE_OFFSET)
+	end
+	
 	if doslowdown
 		local slowdown = cur_weapon:get(pt,"shootspeed")
 		if (pt.deployshield or pt.shieldlag)
@@ -1702,6 +1713,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 		end
 	end
 	pt.justrestored = false
+	pt.angdiff = P_Lerp(FU / 4, $, p.drawangle)
 	
 	/*
 	local changed = false

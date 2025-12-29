@@ -178,8 +178,10 @@ function Paint:initPlayer(p)
 		endlag = 0,
 		anglefix = 0,
 		anglestand = (p.realmo and p.realmo.valid) and (p.realmo.angle) or p.cmd.angleturn << 16,
+		angdiff = 0,
 		lastslowdown = false,
 		holsteranim = 0,
+		weaponzoffset = 0,
 		
 		shield = nil, -- shield mobj for brellas
 		shieldwait = 0, -- dont deploy for this long
@@ -302,6 +304,7 @@ Paint.ININK_ENEMY = 1
 Paint.MAX_HOLSTER = 5
 Paint.SQUID_HEIGHT = 25*FU
 Paint.CANOPY_ANIM = 6
+Paint.IDLE_OFFSET = -13*FU
 
 Paint.SIGNAL_TIME = 3*TR
 Paint.SIGNAL_BOOYAH		= 1
