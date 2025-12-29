@@ -33,7 +33,9 @@ Paint:registerWeapon({
 	shootspeed = FU*78/100,
 	falloffdamage = 14*FU,
 	fallofftime = 6,
-	inkcost = FU*6/5,
+	-- a bit lower than splat3's since the higher
+	-- firerate here makes you use a bit more ink
+	inkcost = (FU*6/5)*8/10,
 	range = 430*FU,
 	firerate = 2,
 	
