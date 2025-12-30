@@ -499,7 +499,7 @@ addHook("MobjThinker",function(shot)
 				sfx.flags2 = $|MF2_DONTDRAW
 				sfx.fuse = TR
 				sfx.tics = sfx.fuse
-				S_StartSoundAtVolume(sfx, sfxid, dp, 255 * 4/5)
+				S_StartSoundAtVolume(sfx, sfxid, 255 * 4/5, dp)
 				shot.whizzed = true
 			end
 		end

@@ -165,6 +165,8 @@ function Paint:damagePlayer(p, shot, sorp, damage, inf) -- mobj if no player
 		pt.hittime = 3*TR
 	end
 	
+	--print(leveltime.." damaged "..p.name)
+	--print(("%f"):format(damage))
 	local oldhp = pt.hp
 	pt.hp = $ - damage
 	if oldhp > 85*FU
