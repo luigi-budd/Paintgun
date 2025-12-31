@@ -815,8 +815,17 @@ end
 addHook("PlayerThink",function(p)
 	local me = p.mo
 	if not (me and me.valid) then return end
-	if gametype ~= GT_SALMONRUN then return end
-	
+	if gametype ~= GT_SALMONRUN
+		p.sr_totaleggs = nil
+		p.sr_wipeouts  = nil
+		p.sr_revives   = nil
+		return
+	end
+
+	p.sr_totaleggs = $ or 0
+	p.sr_wipeouts  = $ or 0
+	p.sr_revives   = $ or 0
+
 	local pt = p.paint
 	
 	p.skincolor = Salmon.playercolor

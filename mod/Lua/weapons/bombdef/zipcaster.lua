@@ -1,8 +1,9 @@
-freeslot("sfx_z_fire")
-freeslot("sfx_z_hit")
-freeslot("sfx_z_mve0")
-freeslot("sfx_z_mve1")
-freeslot("sfx_z_rech")
+sfxinfo[freeslot("sfx_z_fire")].caption = "/"
+sfxinfo[freeslot("sfx_z_hit")].caption = "/"
+sfxinfo[freeslot("sfx_z_mve0")].caption = "/"
+sfxinfo[freeslot("sfx_z_mve1")].caption = "/"
+sfxinfo[freeslot("sfx_z_rech")].caption = "/"
+sfxinfo[freeslot("sfx_z_strt")].caption = "/"
 
 freeslot("S_ZIPCAST")
 states[S_ZIPCAST] = {
