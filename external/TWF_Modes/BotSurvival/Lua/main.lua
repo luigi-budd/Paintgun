@@ -170,7 +170,9 @@ local STAGE_END		= 2
 
 local ROUND_PREGAME		= 1
 local ROUND_GAME		= 2
-local ROUND_POSTGAME	= 2
+local ROUND_POSTGAME	= 3
+local ROUND_GAMEOVER	= 4
+local ROUND_WINGAME		= 5
 
 local INTER_TIME	= 10*TR
 local POST_TIME		= 10*TR
@@ -893,6 +895,7 @@ addHook("PlayerThink",function(p)
 			me.lifesaver_mo.target = me
 			me.lifesaver_mo.rollangle = ANGLE_180
 			me.lifesaver_mo.colorized = true
+			me.lifesaver_mo.paint_explodebombs = true
 		else
 			p.deadtimer = 0
 		end

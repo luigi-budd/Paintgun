@@ -25,6 +25,7 @@ Paint:registerSubWeapon({
 		bomb.forcefuse = true
 		bomb.momx,bomb.momy,bomb.momz = 0,0,0
 		S_StartSound(bomb, sfx_pb_ht5)
+		S_StopSoundByID(bomb, sfx_pb_fly)
 		
 		if (line and line.valid)
 			bomb.angle = R_PointToAngle2(

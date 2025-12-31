@@ -212,9 +212,15 @@ function Paint:bombExplosion(mo, subtype)
 	searchBlockmap("objects",splash_blockmap, mo, px-br, px+br, py-br, py+br)
 end
 
-function Paint:bombPhysics(mo, subtype)
+function Paint:bombPhysics(mo, subtype, aimline)
 	if not (mo and mo.valid) then return end
 	local sub_t = Paint.subs[subtype]
+	
+	if sub_t.physicsthink ~= nil
+		if sub_t.physicsthink(mo, subtype, aimline)
+			return true
+		end
+	end
 
 	if not P_IsObjectOnGround(mo)
 	and not mo.nophysics
@@ -227,11 +233,6 @@ function Paint:bombPhysics(mo, subtype)
 		and (mo.momz * P_MobjFlip(mo) > 0)
 			mo.momz = FixedMul($, mo.airdrag)
 		end
-	else
-		mo.extravalue1 = $ + 1
-		if mo.extravalue1 >= 4
-			S_StopSoundByID(mo, sfx_pb_fly)
-		end
 	end
 end
 
@@ -240,7 +241,10 @@ addHook("MobjThinker",function(sub)
 	local sub_t = Paint.subs[sub.subtype]
 	
 	--P_ButteredSlope(sub)
-	Paint:bombPhysics(sub, sub.subtype)
+	if Paint:bombPhysics(sub, sub.subtype, false)
+		return
+	end
+	
 	if sub.fusetimer <= 32
 		local timer = sub.fusetimer
 		local flashtime = 1 << (timer * 3/5)
@@ -278,11 +282,18 @@ addHook("MobjThinker",function(sub)
 	end
 	
 	if P_IsObjectOnGround(sub)
+		sub.extravalue1 = $ + 1
+		if sub.extravalue1 >= 4
+			S_StopSoundByID(sub, sfx_pb_fly)
+		end
+		
 		sub.flags = $ &~MF_NOGRAVITY
 		if not sub.wasgrounded
 			if sub_t.blockedfunc ~= nil
 				if sub_t.blockedfunc(sub, false)
-					sub.wasgrounded = true
+					if sub and sub.valid
+						sub.wasgrounded = true
+					end
 					return
 				end
 				if not (sub and sub.valid) then return end

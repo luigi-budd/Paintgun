@@ -40,6 +40,7 @@ local sub_meta = {
 	explodesound = sfx_pb_exp,
 	allowhitmarkers = false,
 	guidedrot = false,
+	inertia = true,
 	
 	inner_radius = 175*FU,
 	inner_damage = 180*FU,
@@ -614,6 +615,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	return proj
 end
 
+-- also does the aiming for the sub
 function Paint:throwSub(p, wep, angle, aiming, aimline)
 	local me = p.realmo
 	local pt = p.paint
@@ -676,6 +678,7 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 	bomb.explodeoncontact = sub_t:get(pt,"explodeoncontact")
 	bomb.allowhitmarkers = sub_t:get(pt,"allowhitmarkers")
 	bomb.guidedrot = sub_t:get(pt,"guidedrot")
+	bomb.inertia = sub_t:get(pt,"inertia")
 	
 	if aimline
 		bomb.flags = MF_NOCLIPTHING|MF_NOSECTOR|MF_NOGRAVITY
@@ -691,18 +694,20 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 		end
 	end
 	
-	local momzadd = 3 * ((me.momz * flip) / me.scale) * 3/4
-	momzadd = $ * me.scale
-	if momzadd < 0 then momzadd = 0; end
-	bomb.momz = $ + momzadd
-	
-	local sidefact = FixedDiv(pt.fixed_smove, 50*FU)
-	local sideangle = FixedAngle(15 * sidefact)
-	P_InstaThrust(bomb, angle - sideangle, R_PointToDist2(0,0, bomb.momx,bomb.momy))
-	
-	local backfact = FixedDiv(pt.fixed_fmove, 50*FU)
-	if backfact > 0 then backfact = 0; end
-	P_Thrust(bomb, angle, 15 * backfact)
+	if bomb.inertia
+		local momzadd = 3 * ((me.momz * flip) / me.scale) * 3/4
+		momzadd = $ * me.scale
+		if momzadd < 0 then momzadd = 0; end
+		bomb.momz = $ + momzadd
+		
+		local sidefact = FixedDiv(pt.fixed_smove, 50*FU)
+		local sideangle = FixedAngle(15 * sidefact)
+		P_InstaThrust(bomb, angle - sideangle, R_PointToDist2(0,0, bomb.momx,bomb.momy))
+		
+		local backfact = FixedDiv(pt.fixed_fmove, 50*FU)
+		if backfact > 0 then backfact = 0; end
+		P_Thrust(bomb, angle, 15 * backfact)
+	end
 	return bomb
 end
 

@@ -1363,7 +1363,10 @@ addHook("PlayerThink",function(p)
 					ceiling = false,
 				}
 				while (true)
-					Paint:bombPhysics(test, cur_weapon.subtype)
+					if Paint:bombPhysics(test, cur_weapon.subtype, true)
+						pos.x = test.x; pos.y = test.y; pos.z = test.z
+						break
+					end
 					if not P_TryMove(test, test.x + test.momx, test.y + test.momy, true)
 						pos.x = test.x; pos.y = test.y; pos.z = test.z
 						break
