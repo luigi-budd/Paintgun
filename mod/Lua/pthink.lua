@@ -1580,6 +1580,10 @@ addHook("PreThinkFrame",do for p in players.iterate
 	local pt = p.paint
 	if not pt then continue end
 	
+	if (me and me.valid)
+		me.alpha = FU
+	end
+	
 	pt.forwardmove = p.cmd.forwardmove
 	pt.sidemove = p.cmd.sidemove
 	pt.buttons = p.cmd.buttons

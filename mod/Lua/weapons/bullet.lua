@@ -154,7 +154,7 @@ local function splattersound(shot, collided)
 end
 
 local hitmark_tic = 0
-function Paint:doProjHitmarker(shot, mo, splatter, nullify)
+function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo)
 	local hitmarker
 	local startrange, endrange = sfx_pnt_h0, sfx_pnt_h5
 	if (mo.paint_shield)
@@ -183,12 +183,18 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify)
 		end
 	end
 	
-	local range = 6
 	local pos = {
-		x = shot.x + P_RandomRange(-range,range)*FU,
-		y = shot.y + P_RandomRange(-range,range)*FU,
+		x = shot.x,
+		y = shot.y,
 		z = shot.z + shot.height/2,
 	}
+	if onmo
+		pos = {
+			x = mo.x,
+			y = mo.y,
+			z = mo.z + mo.height/2,
+		}
+	end
 	
 	local rollangle = FixedAngle(360 * P_RandomFixed())
 	Paint.HUD:hitMarker(shot.target.player, pos, rollangle, (shot.pellet and FU/2 or FU), shot.powerful, nullify)
@@ -266,7 +272,7 @@ local function splash_blockmap(ray, mo)
 		local damage = wep.splashdamage[1] + FixedMul(wep.splashdamage[2] - wep.splashdamage[1], progress)
 		
 		P_DamageMobj(mo, ray, ray.target, damage)
-		Paint:doProjHitmarker(ray, mo, false)
+		Paint:doProjHitmarker(ray, mo, false, false, true)
 		return
 	end
 	
@@ -281,9 +287,9 @@ local function splash_blockmap(ray, mo)
 			Paint:damagePlayer(mo.player, ray, p, damage)
 			Paint:playHurtSound(mo.player)
 			Paint:doProjHitmarker(ray, mo, false)
-		elseif Paint_canHurtPlayer(p, mo.player, true)
+		elseif Paint_canHurtPlayer(p, mo.player, true, true)
 		and not Paint:isFriendlyFire(p,mo.player)
-			Paint:doProjHitmarker(ray, mo, false, true)
+			Paint:doProjHitmarker(ray, mo, false, true, true)
 		end
 	end
 end
@@ -376,6 +382,42 @@ local function CreateTrail(shot)
 	end
 	return drop
 end
+
+Paint.bulletSimpleState = function(shot)
+	local state = shot.s_state
+	if state == SS_STRAIGHT
+		if shot.lifespan >= shot.str_tics
+			shot.s_state = SS_BRAKE
+			shot.braketic = shot.lifespan
+		end
+	elseif state == SS_BRAKE
+		if R_PointToDist2(0,0, shot.momx,shot.momy) >= shot.str2brk_maxspeed
+			local new = shot.str2brk_maxspeed
+			shot.momx = P_ReturnThrustX(nil,shot.baseangle,new)
+			shot.momy = P_ReturnThrustY(nil,shot.baseangle,new)
+		end
+		local resist = shot.brk_airresist
+		shot.momx = FixedMul($, resist)
+		shot.momy = FixedMul($, resist)
+		shot.momz = FixedMul($, resist)
+		shot.momz = $ - (shot.brk_gravity * P_MobjFlip(shot))
+		if (shot.momz*P_MobjFlip(shot) <= shot.brk2fre_minz)
+		and (
+			(R_PointToDist2(0,0, shot.momx,shot.momy) <= shot.brk2fre_minxy)
+			or
+			(shot.lifespan - shot.braketic >= shot.brk2fre_tics)
+		)
+			shot.s_state = SS_FREE
+		end
+	elseif state == SS_FREE
+		local resist = shot.fre_airresist
+		shot.momx = FixedMul($, resist)
+		shot.momy = FixedMul($, resist)
+		shot.momz = FixedMul($, resist)
+		shot.momz = $ - (shot.fre_gravity * P_MobjFlip(shot))
+	end
+end
+
 addHook("MobjThinker",function(shot)
 	shot.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 	if shot.visualfadestupidshit then
@@ -433,7 +475,7 @@ addHook("MobjThinker",function(shot)
 	local pt = p.paint
 	
 	local wep = Paint.weapons[shot.weapon_id]
-	local range = FixedMul(wep.range, shot.scale) + shot.falloff
+	local range = FixedMul(wep.range, shot.scale)
 	local dropoff = FixedMul(wep.dropoff, shot.scale)
 	local dist = R_PointTo3DDist(shot.origin.x, shot.origin.y, shot.origin.z, shot.x,shot.y,shot.z)
 	
@@ -441,29 +483,30 @@ addHook("MobjThinker",function(shot)
 		local minrange = FixedMul(wep.minrange, shot.scale)
 		local chargeprogress = shot.progress
 		local disttocover = max(FixedMul(range, chargeprogress), minrange)
+		local org = shot.origin
 		shot.angle = shot.p_angle
-		shot.powerful = chargeprogress == FU
-		local count = 0
-		repeat
+		while true
+			if not (shot and shot.valid and shot.health) then break end
 			for j = 0,3
-				if P_RailThinker(shot) then return; end
+				if not (shot and shot.valid and shot.health) then break 2 end
+				if P_RailThinker(shot) then break 2 end
+				
 				local g = P_SpawnGhostMobj(shot)
 				P_SetOrigin(g,g.x,g.y,g.z)
 				g.blendmode = AST_ADD
 				g.destscale = 0
-				if (count % 3 == 0)
+				if (j == 0)
 					CreateTrail(shot)
 				end
-				count = $ + 1
+				
+				if R_PointTo3DDist(org.x, org.y, org.z, shot.x,shot.y,shot.z) >= disttocover
+					break 2
+				end
+				if HandleFloorSplat(shot)
+					break 2
+				end
 			end
-			if not shot and shot.valid
-				return
-			end
-		until (
-			(not shot and shot.valid)
-			or ((shot and shot.valid) and R_PointTo3DDist(shot.origin.x, shot.origin.y, shot.origin.z, shot.x,shot.y,shot.z) >= disttocover)
-			or ((shot and shot.valid) and HandleFloorSplat(shot))
-		)
+		end
 		if (shot and shot.valid)
 			P_RemoveMobj(shot)
 		end
@@ -484,6 +527,11 @@ addHook("MobjThinker",function(shot)
 		if (d and d.valid)
 			P_SetObjectMomZ(d,-30*FU)
 		end
+		
+		if dist >= range
+			ExplodeShot(shot)
+			return
+		end
 	else
 		if ((leveltime + shot.lifespan) % 3 == 0)
 		and P_RandomChance(FU/2)
@@ -503,10 +551,21 @@ addHook("MobjThinker",function(shot)
 				shot.whizzed = true
 			end
 		end
+		
+		Paint.bulletSimpleState(shot)
+		
+		if shot.lifespan >= shot.crs_guideframe
+			shot.damage = shot.falloffdamage + ease.linear(
+				min(
+					abs((FU/wep.fallofftime) * (shot.lifespan - (shot.crs_guideframe))),
+				FU),
+				shot.basedamage - shot.falloffdamage, 0 
+			)
+		end
 	end
 	
 	shot.angle = shot.baseangle + shot.angoffset
-	shot.angoffset = $ * 3/4
+	shot.angoffset = $ * 6/7
 	if shot.lifespan <= 4
 	and ((shot.frame & FF_FRAMEMASK == 0)
 	or (shot.frame & FF_FRAMEMASK == 3))
@@ -515,50 +574,6 @@ addHook("MobjThinker",function(shot)
 			stretch = $ - ((7*FU)/2) * (shot.lifespan - 2)
 		end
 		shot.spritexscale = $ + abs(FixedMul(stretch, sin(R_PointToAngle(shot.x,shot.y) - shot.angle)))
-	end
-	
-	if dist >= range
-		if wep.guntype == WPT_BLASTER
-			ExplodeShot(shot)
-			return
-		end
-		
-		if (shot.flags & MF_NOGRAVITY)
-			/*
-			if shot.quartersteps
-				shot.momx = $ * 4
-				shot.momy = $ * 4
-				shot.momz = $ * 4
-			end
-			*/
-			shot.fallofftime = shot.lifespan
-		end
-		shot.flags = $ &~MF_NOGRAVITY
-		
-		local dropoff_grav = ((dropoff - range) / wep.lifespan)
-		dropoff_grav = FixedMul($, wep.dropoffmul)
-		dropoff_grav = max($, wep.mindropoffgrav) * P_MobjFlip(shot)
-		dropoff_grav = $ + P_GetMobjGravity(shot)
-		if shot.quartersteps
-			dropoff_grav = $ / 4
-		end
-		shot.momz = $ + dropoff_grav
-		
-		if (shot.lifespan - shot.fallofftime >= 3)
-			shot.damage = shot.falloffdamage + ease.linear(
-				min(
-					abs((FU/wep.fallofftime) * (shot.fallofftime - (shot.lifespan-3))),
-				FU),
-				shot.basedamage - shot.falloffdamage, 0 
-			)
-		end
-		
-		local drag = wep.dragmul
-		shot.momx = FixedMul($, drag)
-		shot.momy = FixedMul($, drag)
-		if (shot.momz * P_MobjFlip(shot) > 0)
-			shot.momz = FixedMul($, drag)
-		end
 	end
 end,MT_PAINT_SHOT)
 

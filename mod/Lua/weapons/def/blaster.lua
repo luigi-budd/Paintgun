@@ -27,7 +27,6 @@ Paint:registerWeapon({
 	endlag = 14,
 	lifespan = 6,
 	inertia = false,
-	falloff = {0,0},
 	neverspreadonground = true,
 	shotstate = S_PAINT_SHOT_BIG,
 	dropoff = 0,

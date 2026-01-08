@@ -312,6 +312,11 @@ Paint.SIGNAL_THISWAY	= 2
 Paint.SIGNAL_OUCH		= 3
 Paint.SIGNAL_HELP		= 4
 
+-- distance-unit 2 fracunit scale factor
+-- .35 du = 16 fu (player radii)
+-- 45.714 is the scale factor cause, of math reasons :think:
+Paint.DU2FU = 46*FU
+
 dofile("cvars/main.lua")
 dofile("lib/lib.lua")
 dofile("weapons/main.lua")

@@ -213,7 +213,7 @@ function Paint:chargerSightline(p)
 	dummy.radius = FixedMul(mobjinfo[MT_PAINT_SHOT].radius, dummy.scale)
 	dummy.height = FixedMul(mobjinfo[MT_PAINT_SHOT].height, dummy.scale)
 	
-	local range = wep:get(pt,"range") + (wep:get(pt,"falloff"))[2]*FU
+	local range = wep:get(pt,"range")
 	range = FixedMul($, me.scale)
 	local dots = 50
 	local step = FixedDiv(range, dots*FU)

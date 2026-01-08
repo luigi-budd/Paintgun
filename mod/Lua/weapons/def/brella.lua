@@ -37,7 +37,6 @@ Paint:registerWeapon({
 	h_spread = {10*FU, 10*FU},
 	v_spread = {8*FU, 8*FU},
 	verticalspread = true,
-	falloff = {2,2},
 	maxdamage = 16*FU + (FU/5),
 	damage = MIN_DAMAGE,
 	guntype = WPT_BRELLA,
@@ -69,6 +68,20 @@ Paint:registerWeapon({
 	spread_decay = (FU*3/2),
 	neverspreadatall = true,
 	
+	-- brellas... DONT... use bulletsimple..... :scream:
+	-- this is close enough to how the brella was before
+	spawnspeed = FixedMul(tofixed("2.266"), Paint.DU2FU), -- 2.266 splat3 distance units
+	str_tics = 2, -- straight state lasts this many tics
+	str2brk_maxspeed = FixedMul(tofixed("1.993"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
+	brk_airresist = FU * 80/100, -- xy AND z moms are affected by air resistance
+	brk_gravity = FixedMul(tofixed("0.03"), Paint.DU2FU),
+	brk2fre_minz = FixedMul(tofixed("-0.15"), Paint.DU2FU), -- go to free when momz is below this
+	brk2fre_minxy = FixedMul(tofixed("0.2355"), Paint.DU2FU), -- or go to free when xyspeed is below this
+	brk2fre_tics = 4, -- or when brake state lasts this many tics
+	fre_airresist = FU * 98/100,
+	fre_gravity = FixedMul(tofixed("0.016"), Paint.DU2FU),
+	crs_guideframe = 4, -- crosshair is placed at this frame in the shot's lifetime
+
 	falloffdamage = MIN_DAMAGE, --damage falloff when the bullet does
 	fallofftime = 14, --how many tics to reach falloffdamage?
 	

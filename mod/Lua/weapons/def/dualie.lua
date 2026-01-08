@@ -39,6 +39,12 @@ Paint:registerWeapon({
 	range = 430*FU,
 	firerate = 2,
 	
+	spawnspeed = FixedMul(tofixed("2.3"), Paint.DU2FU), -- 2.266 splat3 distance units
+	str_tics = 5, -- straight state lasts this many tics
+	str2brk_maxspeed = FixedMul(tofixed("2.2698"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
+	fre_gravity = FixedMul(tofixed("0.016"), Paint.DU2FU),
+	crs_guideframe = 9, -- crosshair is placed at this frame in the shot's lifetime
+
 	spread_base = (FU * 4), -- chance to spread, similar to accelstart
 	spread_pershot = (FU * 2), -- add this much chance to spread per shot
 	spread_max = (FU * 30), -- max chance to spread

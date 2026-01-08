@@ -1,16 +1,32 @@
+local hsprd = tofixed("4.86")
+
 Paint:registerWeapon({
 	realname = "Splattershot",
 	
 	name = "basic",
 	subtype = "suctionbomb",
 	handoffset = 8*FU,
-	h_spread = {6*FU, 6*FU},
+	h_spread = {hsprd,hsprd},
+	spread_jumpspread = tofixed("11.66") - hsprd,
 	v_spread = {3*FU, 3*FU},
-	damage = 35*FU,
+	damage = 36*FU,
+
 	inkcost = FU * 92/100,
 	
 	weaponstate = S_PAINT_GUN,
 	weaponstate_scale = FU/2,
+	
+	spawnspeed = FixedMul(tofixed("2.266"), Paint.DU2FU), -- 2.266 splat3 distance units
+	str_tics = 4, -- straight state lasts this many tics
+	str2brk_maxspeed = FixedMul(tofixed("1.493"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
+	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
+	brk_gravity = FixedMul(tofixed("0.07"), Paint.DU2FU),
+	brk2fre_minz = FixedMul(tofixed("-0.15"), Paint.DU2FU), -- go to free when momz is below this
+	brk2fre_minxy = FixedMul(tofixed("0.2355"), Paint.DU2FU), -- or go to free when xyspeed is below this
+	brk2fre_tics = 4, -- or when brake state lasts this many tics
+	fre_airresist = FU * 98/100,
+	fre_gravity = FixedMul(tofixed("0.016"), Paint.DU2FU),
+	crs_guideframe = 8, -- crosshair is placed at this frame in the shot's lifetime
 	
 	/*
 	inkcost = (FU * 92/100)/6,

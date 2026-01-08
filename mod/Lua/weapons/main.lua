@@ -81,6 +81,15 @@ rawset(_G, "WPT_DUALIES", 6)
 rawset(_G, "WPT_BRELLA", 7)
 rawset(_G, "WPT_SLOSHER", 8)
 
+-- shot states
+rawset(_G, "SS_STRAIGHT", 1)
+rawset(_G, "SS_BRAKE", 2)
+rawset(_G, "SS_FREE", 3)
+
+-- https://www.youtube.com/watch?v=lVE7RFD1tmo
+-- lifespan, mindropoffgrav, dropoffmul, dropoff, and other related variables
+-- should be removed and replaced with bulletsimple phases
+-- a distanceunit-to-fracunit scaling factor should also be added lol
 Paint.weapons = {}
 local weapon_meta = {
 	realname = "Main Weapon",
@@ -119,19 +128,38 @@ local weapon_meta = {
 	spread_jumpspread = 6*FU, -- how many degrees does jump inaccuracy add?
 	spread_jump = 41, -- how many tics until jump spread decays?
 	spread_jumpchance = (FU * 40), -- set spread chance to this when jumping
-	lifespan = 5,
+	/*[DEPRECATED]*/ lifespan = 5,
+	spawnspeed = FixedMul(tofixed("2.0"), Paint.DU2FU), -- 2.0 splat3 distance units
+	
+	str_tics = 10, -- straight state lasts this many tics
+	str2brk_maxspeed = FixedMul(tofixed("10"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
+	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
+	brk_gravity = FixedMul(tofixed("0.07"), Paint.DU2FU),
+	/*
+		brake state ends when:
+			1. brk2fre_minz condition is satisfied
+			AND
+			2. (brk2fre_minxy is satisfied) or (brk2fre_tics is satisfied)
+	*/
+	brk2fre_minz = FixedMul(tofixed("-0.15"), Paint.DU2FU), -- go to free when momz is below this
+	brk2fre_minxy = FixedMul(tofixed("0.2355"), Paint.DU2FU), -- or go to free when xyspeed is below this
+	brk2fre_tics = 4, -- or when brake state lasts this many tics
+	fre_airresist = FU * 98/100,
+	fre_gravity = FixedMul(tofixed("0.016"), Paint.DU2FU),
+	crs_guideframe = 8, -- crosshair is placed at this frame in the shot's lifetime
+	-- start falling off when past crs_guideframe 
+	falloffdamage = 18*FU, --damage to fall off to when the bullet drops off
+	fallofftime = 23, --how many tics to reach falloffdamage?
+	
 	firerate = 3, -- how many tics to wait AFTER the tic when firing
-	dropoff = 540 * FU, --absolute edge of range, drop off in between
-	dropoffmul = FU / 20,
-	mindropoffgrav = FU*3/4, --WTF.
-	falloff = {16,16}, --random distance
-	falloffdamage = 10*FU, --damage falloff when the bullet does
-	fallofftime = 8, --how many tics to reach falloffdamage?
-	dragmul = FU * 78/100,
+	/*[DEPRECATED]*/ dropoff = 540 * FU, --absolute edge of range, drop off in between
+	/*[DEPRECATED]*/ dropoffmul = FU / 20,
+	/*[DEPRECATED]*/ mindropoffgrav = FU*3/4, --WTF.
+	/*[DEPRECATED]*/ dragmul = FU * 78/100,
 	quartersteps = true,
 	neverspreadonground = false, -- never apply shotspread if the player is grounded
 	neverspreadatall = false,
-	bulletspershot = 1, -- yes these DO factor into spread! yes, these DO change dualie order!
+	bulletspershot = 1,-- these probably add to dualie order and spread calcs but idk
 	
 	--charger specific
 	chargetime = TR*FU,
@@ -324,7 +352,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	
 	hsprd = $ or 0
 	vsprd = $ or 0
-	local speed = FixedMul(FixedDiv(weap:get(pt,"range"), weap:get(pt,"lifespan") * FU), proj.scale)
+	local speed = FixedMul(weap:get(pt,"spawnspeed"), proj.scale)
 	if (weap.guntype == WPT_CHARGER)
 		speed = proj.radius * 2
 	end
@@ -336,6 +364,10 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	
 	local range = FixedMul(chargerdupe and (weap.range) or (weap:get(pt,"range")), me.scale)
 	local aimvec = P_Vec3.SphereToCartesian(angle,aiming)
+	-- for shooters, adjust the range to be at the end of straight state
+	if (weap.guntype ~= WPT_CHARGER and weap.guntype ~= WPT_BLASTER)
+		range = speed * weap:get(pt,"str_tics")
+	end
 	
 	-- Aim in the center (but offset)
 	if (weap.guntype == WPT_DUALIES)
@@ -425,6 +457,9 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	proj.angle = R_PointToAngle2(proj.x,proj.y, point.x,point.y) - h_spread
 	
 	/*
+	if not crosshair
+		P_SpawnMobj(point.x,point.y,point.z, MT_THOK).color = SKINCOLOR_RED
+	end
 	P_SpawnMobj(point.x,point.y,point.z, MT_THOK).color = (dualieflip and SKINCOLOR_RED or SKINCOLOR_GREEN)
 	P_SpawnMobj(point.x,point.y, me.z, MT_THOK)
 	P_SpawnMobj(
@@ -489,11 +524,22 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		cur_weapon.shottype
 	)
 	proj.target = me
-	proj.mirrored = P_RandomChance(FU/2)
 	proj.weapon_id = pt.weapon_id
-	proj.color = Paint:getPlayerColor(p)
 	proj.lifespan = 0
-	proj.falloff = FixedMul(P_RandomFixedRange(-cur_weapon.falloff[1], cur_weapon.falloff[2]), proj.scale)
+	proj.s_state = SS_STRAIGHT
+
+	-- who knows if this is optimized
+	proj.str_tics			= cur_weapon:get(pt,"str_tics")
+	proj.str2brk_maxspeed	= FixedMul(cur_weapon:get(pt,"str2brk_maxspeed"), proj.scale)
+	proj.brk_airresist		= cur_weapon:get(pt,"brk_airresist")
+	proj.brk_gravity		= cur_weapon:get(pt,"brk_gravity")
+	proj.brk2fre_minz		= FixedMul(cur_weapon:get(pt,"brk2fre_minz"), proj.scale)
+	proj.brk2fre_minxy		= FixedMul(cur_weapon:get(pt,"brk2fre_minxy"), proj.scale)
+	proj.brk2fre_tics		= cur_weapon:get(pt,"brk2fre_tics")
+	proj.fre_airresist		= cur_weapon:get(pt,"fre_airresist")
+	proj.fre_gravity		= cur_weapon:get(pt,"fre_gravity")
+	proj.crs_guideframe		= cur_weapon:get(pt,"crs_guideframe")
+	
 	local mom_vec = {x = me.momx,y = me.momy}
 	local handoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, nil, false)}
 	-- fire from the center
@@ -509,6 +555,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		proj.z + me.momz + FixedMul(aimoffset_dist, aimoffset_vec.z)
 	)
 	if not (proj and proj.valid) then return end
+	
 	if not doinertia
 		mom_vec.x, mom_vec.y = 0, 0
 	end
@@ -531,10 +578,13 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.pierces = cur_weapon.pierces
 	proj.powerful = false
 	proj.init = true
+	-- charger progress
 	proj.progress = 0
+	
 	proj.spritexscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
 	proj.spriteyscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
 	proj.basescale = proj.spritexscale
+	proj.color = Paint:getPlayerColor(p)
 	proj.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
 	local new_state = cur_weapon:get(pt,"shotstate")
 	if (new_state ~= nil)
@@ -562,6 +612,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 			pt.shieldwait = max($, cur_weapon:get(pt,"deploywait"))
 		end
 	end
+
 	if cur_weapon.guntype == WPT_CHARGER
 		local sound
 		local chargetime = cur_weapon:get(pt,"chargetime")
@@ -573,14 +624,16 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		end
 		S_StartSoundAtVolume(me, sound, cur_weapon.soundvolume)
 		
-		if (p == displayplayer or p == secondarydisplayplayer)
-			P_StartQuake(15 * max(chargeprogress, FU/5), 12)
-		end
 		pt.cooldown = (firerate + (FixedMul((cur_weapon:get(pt,"maxfirerate") - firerate)*FU, chargeprogress)/FU)) + 1
 		pt.endlag = pt.cooldown
 		
-		proj.falloff = FixedMul(cur_weapon.falloff[2], proj.scale)
+		proj.powerful = chargeprogress >= FU
 		proj.progress = chargeprogress
+		if (p == displayplayer or p == secondarydisplayplayer)
+		and proj.powerful
+			P_StartQuake(15 * max(chargeprogress, FU/5), 12)
+		end
+
 		if (chargeprogress >= FU)
 			proj.damage = cur_weapon:get(pt,"maxdamage")
 		else

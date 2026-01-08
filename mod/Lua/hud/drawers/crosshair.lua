@@ -40,24 +40,25 @@ rawset(_G, "local_raycasts", {
 	hitcast = nil,
 	dhitcast = nil
 })
+local function is_shooter(type)
+	return (
+		type == WPT_SHOOTER or
+		type == WPT_BRELLA or
+		type == WPT_DUALIES
+	)
+end
+
 local function getrange(ray, pt, cur_weapon, chargerdupe)
 	local range = cur_weapon:get(pt,"range")
 	if chargerdupe
 		range = cur_weapon.range
 	end
-	local drop = FixedMul(cur_weapon:get(pt,"dropoff") - cur_weapon:get(pt,"range"), ray.scale)
-	if drop < 0 then drop = 0; end
-	local drag = FixedMul(cur_weapon:get(pt,"dragmul"), cur_weapon:get(pt,"dragmul"))
-	drop = $ + FixedMul(FixedMul(range, drag) - 40*FU, ray.scale)
-	if drop < 0 then drop = 0; end
 	
-	if cur_weapon.guntype == WPT_BLASTER
-		drop = 0
-	elseif cur_weapon.guntype == WPT_CHARGER
-		drop = FixedMul(cur_weapon.falloff[2], ray.scale)
+	if is_shooter(type)
+		range = FixedMul(cur_weapon:get(pt,"spawnspeed") * cur_weapon:get(pt,"str_tics"), proj.scale)
 	end
 	
-	return range + drop
+	return range
 end
 
 local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
@@ -73,33 +74,48 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 			MT_THOK
 		)
 		local range = getrange(ray, pt, cur_weapon, chargerdupe)
-		ray.flags = $ &~(MF_SLIDEME)
 		ray.target = me
-		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		ray.weapon_id = pt.weapon_id
+		ray.lifespan = 0
+		ray.s_state = SS_STRAIGHT
 		local weaponoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, dualieflip, false)}
-		if (pt.turretmode and (cur_weapon.guntype == WPT_DUALIES))
-		or (cur_weapon.guntype == WPT_BRELLA)
+		if /*( and (cur_weapon.guntype == WPT_DUALIES))
+		or */(cur_weapon.guntype == WPT_BRELLA)
 			weaponoffset[1],weaponoffset[2] = 0,0
 		end
+		local aimoffset_vec = SphereToCartesian(angle,p.aiming)
+		local aimoffset_dist = 5 * me.scale
 		P_SetOrigin(ray,
-			me.x + weaponoffset[1],
-			me.y + weaponoffset[2],
-			ray.z
+			me.x + weaponoffset[1] + FixedMul(aimoffset_dist, aimoffset_vec.x),
+			me.y + weaponoffset[2] + FixedMul(aimoffset_dist, aimoffset_vec.y),
+			ray.z + FixedMul(aimoffset_dist, aimoffset_vec.z)
 		)
-		P_InstaThrust(ray, angle, FixedMul(FixedDiv(range, cur_weapon:get(pt,"lifespan") * FU), ray.scale))
 		ray.finalpos = Paint:aimProjectile(p,ray, angle, p.aiming, false,nil, dualieflip, true, nil,nil, chargerdupe)
+		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		local aimvec = SphereToCartesian(ray.angle, p.aiming)
 		ray.finalpos.x = ray.x + FixedMul(range, aimvec.x)
 		ray.finalpos.y = ray.y + FixedMul(range, aimvec.y)
 		ray.finalpos.z = ray.z + FixedMul(range, aimvec.z)
 		ray.range = range
+		ray.baseangle = angle
+		ray.turret = pt.turretmode
 		
 		ray.radius = FixedMul(mobjinfo[MT_PAINT_SHOT].radius, ray.scale)
 		ray.height = FixedMul(mobjinfo[MT_PAINT_SHOT].height, ray.scale)
+		ray.flags = mobjinfo[MT_PAINT_SHOT].flags|MF_NOCLIP|MF_NOCLIPHEIGHT &~MF_SLIDEME
 		ray.target = me
-		--ray.momx,ray.momy,ray.momz = $1/5, $2/5, $3/5
 		ray.sprite = SPR_NULL
+		
+		ray.str_tics			= cur_weapon:get(pt,"str_tics")
+		ray.str2brk_maxspeed	= FixedMul(cur_weapon:get(pt,"str2brk_maxspeed"), ray.scale)
+		ray.brk_airresist		= cur_weapon:get(pt,"brk_airresist")
+		ray.brk_gravity			= cur_weapon:get(pt,"brk_gravity")
+		ray.brk2fre_minz		= FixedMul(cur_weapon:get(pt,"brk2fre_minz"), ray.scale)
+		ray.brk2fre_minxy		= FixedMul(cur_weapon:get(pt,"brk2fre_minxy"), ray.scale)
+		ray.brk2fre_tics		= cur_weapon:get(pt,"brk2fre_tics")
+		ray.fre_airresist		= cur_weapon:get(pt,"fre_airresist")
+		ray.fre_gravity			= cur_weapon:get(pt,"fre_gravity")
+		ray.crs_guideframe		= cur_weapon:get(pt,"crs_guideframe")
 		
 		if (dualieflip or chargerdupe)
 			d_raycast = ray
@@ -114,22 +130,54 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 		local ray = workray
 		local range = ray.range
 		
-		for i = 0,25 do
-			for j = 0,5
-				if P_RailThinker(ray)
+		if is_shooter(Paint.weapons[ray.weapon_id].guntype)
+			while true
+				ray.lifespan = $ + 1
+				if (ray.lifespan >= ray.crs_guideframe)
+				or (ray.turret and ray.s_state ~= SS_STRAIGHT)
 					ray.momx,ray.momy,ray.momz = 0,0,0
 					ray.fuse = 1
 					break
+				else
+					Paint.bulletSimpleState(ray)
+					P_RailThinker(ray)
 				end
-				if not (ray and ray.valid)
-					return
+				
+				/*
+				local g = P_SpawnMobjFromMobj(ray, 0,0,0,MT_THOK)
+				g.scale = $ / 4
+				g.fuse = 1
+				g.tics = 1
+				g.frame = $ &~FF_TRANSMASK
+				g.alpha = FU * 3/4
+				if (ray.s_state == SS_STRAIGHT)
+					g.color = SKINCOLOR_EMERALD
+				elseif (ray.s_state == SS_BRAKE)
+					g.color = SKINCOLOR_RED
+				else
+					g.color = SKINCOLOR_YELLOW
 				end
+				P_SetOrigin(g, g.x,g.y,g.z)
+				*/
 			end
-			if R_PointTo3DDist(ray.origin.x, ray.origin.y, ray.origin.z, ray.x,ray.y,ray.z) >= range
-				ray.momx,ray.momy,ray.momz = 0,0,0
-				P_SetOrigin(ray, ray.finalpos.x, ray.finalpos.y, ray.finalpos.z)
-				ray.fuse = 1
-				break
+		else
+			for i = 0,25 do
+				for j = 0,5
+					if P_RailThinker(ray)
+						ray.momx,ray.momy,ray.momz = 0,0,0
+						ray.fuse = 1
+						break
+					end
+					if not (ray and ray.valid)
+						return
+					end
+				end
+				if R_PointTo3DDist(ray.origin.x, ray.origin.y, ray.origin.z, ray.x,ray.y,ray.z) >= range
+					ray.momx,ray.momy,ray.momz = 0,0,0
+					P_SetOrigin(ray, ray.finalpos.x, ray.finalpos.y, ray.finalpos.z)
+					ray.fuse = 1
+					break
+				end
 			end
 		end
 		ray.fuse = 1
@@ -184,8 +232,9 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		local range = getrange(ray, pt, cur_weapon, false)
 		ray.flags = $ &~(MF_NOCLIP|MF_NOCLIPTHING|MF_NOBLOCKMAP|MF_SLIDEME)
 		ray.target = me
-		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		ray.weapon_id = pt.weapon_id
+		ray.lifespan = 0
+		ray.s_state = SS_STRAIGHT
 		local weaponoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, dualieflip, false)}
 		if (cur_weapon.guntype == WPT_BRELLA)
 			weaponoffset[1],weaponoffset[2] = 0,0
@@ -195,20 +244,34 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 			me.y + weaponoffset[2],
 			ray.z
 		)
-		P_InstaThrust(ray, angle, FixedMul(FixedDiv(cur_weapon:get(pt,"range"), cur_weapon:get(pt,"lifespan") * FU), ray.scale))
 		ray.finalpos = Paint:aimProjectile(p,ray, angle, p.aiming, false,nil,dualieflip, true)
+		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		local aimvec = SphereToCartesian(angle, p.aiming)
 		ray.finalpos.x = ray.x + FixedMul(range, aimvec.x)
 		ray.finalpos.y = ray.y + FixedMul(range, aimvec.y)
 		ray.finalpos.z = ray.z + FixedMul(range, aimvec.z)
 		ray.range = range
+		ray.baseangle = angle
 		
 		ray.radius = FixedMul(mobjinfo[MT_PAINT_SHOT].radius, ray.scale)
 		ray.height = FixedMul(mobjinfo[MT_PAINT_SHOT].height, ray.scale)
 		ray.target = me
-		ray.momx,ray.momy,ray.momz = $1/5, $2/5, $3/5
+		if not is_shooter(cur_weapon.guntype)
+			ray.momx,ray.momy,ray.momz = $1/5, $2/5, $3/5
+		end
 		ray.sprite = SPR_NULL
 		
+		ray.str_tics			= cur_weapon:get(pt,"str_tics")
+		ray.str2brk_maxspeed	= FixedMul(cur_weapon:get(pt,"str2brk_maxspeed"), ray.scale)
+		ray.brk_airresist		= cur_weapon:get(pt,"brk_airresist")
+		ray.brk_gravity			= cur_weapon:get(pt,"brk_gravity")
+		ray.brk2fre_minz		= FixedMul(cur_weapon:get(pt,"brk2fre_minz"), ray.scale)
+		ray.brk2fre_minxy		= FixedMul(cur_weapon:get(pt,"brk2fre_minxy"), ray.scale)
+		ray.brk2fre_tics		= cur_weapon:get(pt,"brk2fre_tics")
+		ray.fre_airresist		= cur_weapon:get(pt,"fre_airresist")
+		ray.fre_gravity			= cur_weapon:get(pt,"fre_gravity")
+		ray.crs_guideframe		= cur_weapon:get(pt,"crs_guideframe")
+
 		if (dualieflip)
 			dh_raycast2 = ray
 			local_raycasts.dhitcast = ray
@@ -222,12 +285,14 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		local ray = workray
 		local doblockmap = Paint.CV.directhit_crosshair.value
 		local accurate = Paint.CV.directhit_crosshair.value == 1
-		
 		local range = ray.range
-		
 		local br = ray.radius + 16*ray.scale
-		for i = 0,25 do
-			for j = 0,5
+
+		if is_shooter(Paint.weapons[ray.weapon_id].guntype)
+			while true
+				ray.lifespan = $ + 1
+				Paint.bulletSimpleState(ray)
+				
 				if P_RailThinker(ray)
 				or (ray.z + ray.height >= ray.ceilingz or ray.z <= ray.floorz)
 				or (ray.momx == 0 and ray.momy == 0)
@@ -235,31 +300,57 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 					ray.momx,ray.momy,ray.momz = 0,0,0
 					ray.fuse = 1
 					ray.hit = true
-					break 2
+					break
 				end
-				if accurate
+				
+				if doblockmap
 					local px = ray.x
 					local py = ray.y
 					searchBlockmap("objects",directhit_blockmap, ray, px-br, px+br, py-br, py+br)
 				end
+				if (ray.lifespan >= ray.crs_guideframe)
+					ray.momx,ray.momy,ray.momz = 0,0,0
+					ray.fuse = 1
+					break
+				end
 			end
-			if doblockmap
-				local px = ray.x
-				local py = ray.y
-				searchBlockmap("objects",directhit_blockmap, ray, px-br, px+br, py-br, py+br)
-			end
-			if not (ray and ray.valid)
-				break
-			end
-			
-			if R_PointTo3DDist(ray.origin.x, ray.origin.y, ray.origin.z, ray.x,ray.y,ray.z) >= range
-				P_SetOrigin(ray, ray.finalpos.x, ray.finalpos.y, ray.finalpos.z)
-				ray.momx,ray.momy,ray.momz = 0,0,0
-				ray.fuse = 1
-				break
+		else
+			for i = 0,25 do
+				for j = 0,5
+					if P_RailThinker(ray)
+					or (ray.z + ray.height >= ray.ceilingz or ray.z <= ray.floorz)
+					or (ray.momx == 0 and ray.momy == 0)
+					and (ray and ray.valid)
+						ray.momx,ray.momy,ray.momz = 0,0,0
+						ray.fuse = 1
+						ray.hit = true
+						break 2
+					end
+					if accurate and doblockmap
+						local px = ray.x
+						local py = ray.y
+						searchBlockmap("objects",directhit_blockmap, ray, px-br, px+br, py-br, py+br)
+					end
+				end
+				if doblockmap
+					local px = ray.x
+					local py = ray.y
+					searchBlockmap("objects",directhit_blockmap, ray, px-br, px+br, py-br, py+br)
+				end
+				if not (ray and ray.valid)
+					break
+				end
+				
+				if R_PointTo3DDist(ray.origin.x, ray.origin.y, ray.origin.z, ray.x,ray.y,ray.z) >= range
+					P_SetOrigin(ray, ray.finalpos.x, ray.finalpos.y, ray.finalpos.z)
+					ray.momx,ray.momy,ray.momz = 0,0,0
+					ray.fuse = 1
+					break
+				end
 			end
 		end
 		if ray and ray.valid
+			ray.momx,ray.momy,ray.momz = 0,0,0
 			ray.fuse = 1
 		end
 	end
@@ -385,6 +476,14 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 	or (wep.guntype == WPT_DUALIES)
 	or (wep.guntype == WPT_BRELLA)
 		local range = getrange(p.realmo, pt, wep, false)
+		if (is_shooter(wep.guntype))
+		and (workray and workray.valid)
+			local o = workray.origin
+			range = R_PointTo3DDist(
+				o.x,o.y,o.z, workray.x,workray.y,workray.z
+			)
+		end
+		
 		local L_hspread, R_hspread
 		local B_vspread, T_vspread
 		if not (range_cache[range] and range_cache[range][pt.spreadadd])
@@ -419,15 +518,16 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 			
 			-- yikes...
 			local cam_dist = (cam.chase) and -cv_camdist.value or 0
+			local centered = false --not cam.chase
 			local override = {
 				angle = 0, aiming = 0, x = P_ReturnThrustX(nil,0,cam_dist), y = P_ReturnThrustY(nil,0,cam_dist), z = 0
 			}
-			local C_result = K_GetScreenCoords(v,p,cam, {x=C_point.x, y=C_point.y, z=0}, {dontclip = true, viewoverride = override})
-			local L_result = K_GetScreenCoords(v,p,cam, {x=L_point.x, y=L_point.y, z=0}, {dontclip = true, viewoverride = override})
-			local R_result = K_GetScreenCoords(v,p,cam, {x=R_point.x, y=R_point.y, z=0}, {dontclip = true, viewoverride = override})
+			local C_result = K_GetScreenCoords(v,p,cam, {x=C_point.x, y=C_point.y, z=0}, {dontclip = true, viewoverride = override, centered = centered})
+			local L_result = K_GetScreenCoords(v,p,cam, {x=L_point.x, y=L_point.y, z=0}, {dontclip = true, viewoverride = override, centered = centered})
+			local R_result = K_GetScreenCoords(v,p,cam, {x=R_point.x, y=R_point.y, z=0}, {dontclip = true, viewoverride = override, centered = centered})
 			
-			L_result = K_GetScreenCoords(v,p,cam, {x=L_point.x, y=L_point.y, z=L_point.z}, {dontclip = true, viewoverride = override})
-			R_result = K_GetScreenCoords(v,p,cam, {x=R_point.x, y=R_point.y, z=R_point.z}, {dontclip = true, viewoverride = override})
+			L_result = K_GetScreenCoords(v,p,cam, {x=L_point.x, y=L_point.y, z=L_point.z}, {dontclip = true, viewoverride = override, centered = centered})
+			R_result = K_GetScreenCoords(v,p,cam, {x=R_point.x, y=R_point.y, z=R_point.z}, {dontclip = true, viewoverride = override, centered = centered})
 			local LEFT = abs(L_result.x - C_result.x)
 			local RIGHT = abs(R_result.x - C_result.x)
 			local TOP = abs(L_result.y - C_result.y)
