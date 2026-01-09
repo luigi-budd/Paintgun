@@ -293,6 +293,12 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 				ray.lifespan = $ + 1
 				Paint.bulletSimpleState(ray)
 				
+				if doblockmap
+					local px = ray.x
+					local py = ray.y
+					searchBlockmap("objects",directhit_blockmap, ray, px-br, px+br, py-br, py+br)
+				end
+				
 				if P_RailThinker(ray)
 				or (ray.z + ray.height >= ray.ceilingz or ray.z <= ray.floorz)
 				or (ray.momx == 0 and ray.momy == 0)
@@ -303,11 +309,6 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 					break
 				end
 				
-				if doblockmap
-					local px = ray.x
-					local py = ray.y
-					searchBlockmap("objects",directhit_blockmap, ray, px-br, px+br, py-br, py+br)
-				end
 				if (ray.lifespan >= ray.crs_guideframe)
 					ray.momx,ray.momy,ray.momz = 0,0,0
 					ray.fuse = 1

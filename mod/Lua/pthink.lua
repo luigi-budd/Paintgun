@@ -1,5 +1,15 @@
 local CV = Paint.CV
 local MAX_SQUIDTIME = 3
+local MAX_TRANSTIME = 6
+local setalpha = false
+local alphatrans = 0
+local function addalpha(p)
+	if p ~= displayplayer then return end
+	if not setalpha
+		alphatrans = min($ + 1, MAX_TRANSTIME)
+	end
+	setalpha = true
+end
 
 freeslot("SPR_PAINT_INKTANK")
 rawset(_G,"CA2_SQUIDFORM", 132)
@@ -715,7 +725,9 @@ addHook("PlayerThink",function(p)
 				p.cmd.buttons = $ &~BT_ATTACK
 				pt.nofiring = true
 				
+				-- store a charge
 				if (cur_weapon.guntype == WPT_CHARGER)
+				and (p.charability2 == CA2_SQUIDFORM)
 					if (cur_weapon:get(pt,"storecharges")
 					and (cur_weapon:get(pt,"partialstorage") or (pt.charge >= cur_weapon:get(pt,"chargetime"))))
 						pt.storedcharge = pt.charge
@@ -1605,7 +1617,7 @@ addHook("PlayerSpawn",function(p)
 end)
 
 local move_lerp = FU / 3
-addHook("PreThinkFrame",do for p in players.iterate
+addHook("PreThinkFrame",do setalpha = false; for p in players.iterate
 	local me = p.mo
 	local pt = p.paint
 	if not pt then continue end
@@ -1629,164 +1641,190 @@ addHook("PreThinkFrame",do for p in players.iterate
 end; end)
 
 local team_markers = {}
-addHook("PostThinkFrame",do for p in players.iterate
-	local me = p.mo
-	local pt = p.paint
-	if not pt then continue end
-	
-	if (p.playerstate == PST_REBORN)
-		local overlay = pt.paintoverlay
-		if (overlay and overlay.valid)
-			P_RemoveMobj(overlay)
-		end
-	end
-	
-	do
-		local cb = pt.calledbacks
-		cb.onfire = false
-	end
-	
-	-- signals
-	if (pt.signaltime) then pt.signaltime = $ - 1; end
-	if (p.cmd.buttons & (BT_CUSTOM1|BT_CUSTOM2)
-	and not (p.lastbuttons & (BT_CUSTOM1|BT_CUSTOM2)))
-	and not pt.signaltime
-		pt.signaltime = Paint.SIGNAL_TIME
-		local type
-		local sfx
+addHook("PostThinkFrame", do
+	for p in players.iterate
+		local me = p.mo
+		local pt = p.paint
+		if not pt then continue end
 		
-		if p.cmd.buttons & BT_CUSTOM1
-			-- This way!
-			if (me and me.valid and me.health and not p.lifesaver)
-				type = Paint.SIGNAL_THISWAY
-				sfx = sfx_s3kc1s
-			else
-				-- Help!
-				if (p.lifesaver or me.deathtimer)
-					type = Paint.SIGNAL_HELP
-					sfx = sfx_s3kd6s
-				-- Ouch...
-				--TODO: maybe find a better sound for this?
+		if (p.playerstate == PST_REBORN)
+			local overlay = pt.paintoverlay
+			if (overlay and overlay.valid)
+				P_RemoveMobj(overlay)
+			end
+		end
+		
+		do
+			local cb = pt.calledbacks
+			cb.onfire = false
+		end
+		
+		-- signals
+		if (pt.signaltime) then pt.signaltime = $ - 1; end
+		if (p.cmd.buttons & (BT_CUSTOM1|BT_CUSTOM2)
+		and not (p.lastbuttons & (BT_CUSTOM1|BT_CUSTOM2)))
+		and not pt.signaltime
+			pt.signaltime = Paint.SIGNAL_TIME
+			local type
+			local sfx
+			
+			if p.cmd.buttons & BT_CUSTOM1
+				-- This way!
+				if (me and me.valid and me.health and not p.lifesaver)
+					type = Paint.SIGNAL_THISWAY
+					sfx = sfx_s3kc1s
 				else
-					type = Paint.SIGNAL_OUCH
-					sfx = sfx_kc3e
+					-- Help!
+					if (p.lifesaver or me.deathtimer)
+						type = Paint.SIGNAL_HELP
+						sfx = sfx_s3kd6s
+					-- Ouch...
+					--TODO: maybe find a better sound for this?
+					else
+						type = Paint.SIGNAL_OUCH
+						sfx = sfx_kc3e
+					end
+				end
+			-- Booyah!
+			elseif p.cmd.buttons & BT_CUSTOM2
+				type = Paint.SIGNAL_BOOYAH
+				sfx = sfx_ncspec
+			end
+			
+			pt.signaltype = type
+			for play in players.iterate
+				if play.spectator then continue end
+				if not (play.realmo and play.realmo.valid) then continue end
+				if not Paint:mobjsOnTeam(p.realmo, play.realmo) then continue end
+				
+				S_StartSound(nil, sfx, play)
+				Paint.HUD:addSignal(play, p, type)
+			end
+			S_StartSoundAtVolume(nil, sfx_pt_sig, 255*3/5, p)
+		end
+		
+		if not (me and me.valid and me.health)
+			local overlay = pt.paintoverlay
+			if (overlay and overlay.valid)
+				overlay.flags2 = $|MF2_DONTDRAW
+			end
+			pt.deployshield = false
+			pt.wasdeployed = false
+			continue
+		end
+		
+		if R_PointToDist(me.x, me.y) <= 128*me.scale
+			addalpha(p)
+		end
+		if local_raycasts
+			local ray = local_raycasts.hitcast
+			if (ray and ray.valid)
+			and R_PointTo3DDist(me.x,me.y,me.z + me.height/2, ray.x,ray.y,ray.z) <= 128*me.scale 
+				addalpha(p)
+			end
+			ray = local_raycasts.dhitcast
+			if (ray and ray.valid)
+			and R_PointTo3DDist(me.x,me.y,me.z + me.height/2, ray.x,ray.y,ray.z) <= 128*me.scale 
+				addalpha(p)
+			end
+		end
+		
+		if p == displayplayer
+		and alphatrans
+			me.alpha = P_Lerp(FixedDiv(alphatrans*FU, MAX_TRANSTIME*FU), $, FU * 2/10)
+		end
+		
+		do
+			local overlay = pt.paintoverlay
+			if not (overlay and overlay.valid)
+				local ov = P_SpawnMobjFromMobj(me,0,0,0,MT_OVERLAY)
+				ov.state = S_PLAY_STND
+				ov.target = me
+				ov.tics,ov.fuse = -1,-1
+				ov.dontdrawforviewmobj = me
+				ov.colorized = true
+				ov.blendmode = AST_TRANSLUCENT
+				ov.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+				if Paint:getPlayerColor(p) ~= SKINCOLOR_NONE
+					ov.color = ColorOpposite(Paint:getPlayerColor(p))
+				else
+					ov.color = SKINCOLOR_GREEN
+				end
+				overlay = ov
+				pt.paintoverlay = ov
+			end
+			overlay.skin = me.skin
+			overlay.alpha = FixedMul(me.alpha, FU - FixedDiv(pt.hp, 100*FU))
+			overlay.sprite = me.sprite
+			overlay.frame = A
+			overlay.sprite2 = me.sprite2
+			overlay.frame = me.frame
+			overlay.angle = p.drawangle
+			overlay.spritexscale = me.spritexscale
+			overlay.spriteyscale = me.spriteyscale
+			overlay.spritexoffset = me.spritexoffset
+			overlay.spriteyoffset = me.spriteyoffset
+			overlay.pitch = me.pitch
+			overlay.roll = me.roll
+			overlay.dispoffset = me.dispoffset + 1
+			if overlay.color == SKINCOLOR_NONE
+				overlay.color = ColorOpposite(Paint:getPlayerColor(p))
+			end
+			if (pt.hidden)
+				overlay.flags2 = $|MF2_DONTDRAW
+			else
+				overlay.flags2 = $ &~MF2_DONTDRAW
+			end
+		end
+		
+		if not me.paint_inactive
+			local cur_weapon = Paint.weapons[pt.weapon_id]
+			BP.doInkTank(p)
+			if pt.weapon_id ~= nil
+				local reset_interp = pt.weapon_id ~= pt.old_weaponid
+				BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
+				if (cur_weapon.guntype == WPT_DUALIES)
+					BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
+				end
+				
+				local dd = pt.dodgeroll
+				if (dd.tics or dd.getup or pt.turretmode)
+				and me.state ~= S_PLAY_GLIDE_LANDING
+					me.state = S_PLAY_GLIDE_LANDING
 				end
 			end
-		-- Booyah!
-		elseif p.cmd.buttons & BT_CUSTOM2
-			type = Paint.SIGNAL_BOOYAH
-			sfx = sfx_ncspec
 		end
+		pt.justrestored = false
+		pt.angdiff = P_Lerp(FU / 4, $, p.drawangle)
 		
-		pt.signaltype = type
-		for play in players.iterate
-			if play.spectator then continue end
-			if not (play.realmo and play.realmo.valid) then continue end
-			if not Paint:mobjsOnTeam(p.realmo, play.realmo) then continue end
+		/*
+		local changed = false
+		me.superready = $ or false
+		if (p.cmd.buttons & BT_CUSTOM3)
+		and not (p.lastbuttons & BT_CUSTOM3)
+			me.superready = not $
+			changed = true
+		end
+		if me.superready
+			me.renderflags = $|RF_FULLBRIGHT
+			me.eflags = $|MFE_FORCESUPER
 			
-			S_StartSound(nil, sfx, play)
-			Paint.HUD:addSignal(play, p, type)
-		end
-		S_StartSoundAtVolume(nil, sfx_pt_sig, 255*3/5, p)
-	end
-	
-	if not (me and me.valid and me.health)
-		local overlay = pt.paintoverlay
-		if (overlay and overlay.valid)
-			overlay.flags2 = $|MF2_DONTDRAW
-		end
-		pt.deployshield = false
-		pt.wasdeployed = false
-		continue
-	end
-	
-	do
-		local overlay = pt.paintoverlay
-		if not (overlay and overlay.valid)
-			local ov = P_SpawnMobjFromMobj(me,0,0,0,MT_OVERLAY)
-			ov.state = S_PLAY_STND
-			ov.target = me
-			ov.tics,ov.fuse = -1,-1
-			ov.dontdrawforviewmobj = me
-			ov.colorized = true
-			ov.blendmode = AST_TRANSLUCENT
-			ov.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
-			if Paint:getPlayerColor(p) ~= SKINCOLOR_NONE
-				ov.color = ColorOpposite(Paint:getPlayerColor(p))
-			else
-				ov.color = SKINCOLOR_GREEN
-			end
-			overlay = ov
-			pt.paintoverlay = ov
-		end
-		overlay.skin = me.skin
-		overlay.alpha = FU - FixedDiv(pt.hp, 100*FU)
-		overlay.sprite = me.sprite
-		overlay.frame = A
-		overlay.sprite2 = me.sprite2
-		overlay.frame = me.frame
-		overlay.angle = p.drawangle
-		overlay.spritexscale = me.spritexscale
-		overlay.spriteyscale = me.spriteyscale
-		overlay.spritexoffset = me.spritexoffset
-		overlay.spriteyoffset = me.spriteyoffset
-		overlay.pitch = me.pitch
-		overlay.roll = me.roll
-		overlay.dispoffset = me.dispoffset + 1
-		if overlay.color == SKINCOLOR_NONE
-			overlay.color = ColorOpposite(Paint:getPlayerColor(p))
-		end
-		if (pt.hidden)
-			overlay.flags2 = $|MF2_DONTDRAW
+			me.color = (Paint:getPlayerColor(p)) - abs( ((leveltime>>1) % 9) - 4 )
 		else
-			overlay.flags2 = $ &~MF2_DONTDRAW
+			me.renderflags = $ &~RF_FULLBRIGHT
+			me.eflags = $ &~MFE_FORCESUPER
+			me.color = Paint:getPlayerColor(p)
 		end
-	end
-	
-	if not me.paint_inactive
-		local cur_weapon = Paint.weapons[pt.weapon_id]
-		BP.doInkTank(p)
-		if pt.weapon_id ~= nil
-			local reset_interp = pt.weapon_id ~= pt.old_weaponid
-			BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
-			if (cur_weapon.guntype == WPT_DUALIES)
-				BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
-			end
-			
-			local dd = pt.dodgeroll
-			if (dd.tics or dd.getup or pt.turretmode)
-			and me.state ~= S_PLAY_GLIDE_LANDING
-				me.state = S_PLAY_GLIDE_LANDING
-			end
+		if changed
+			P_MovePlayer(p)
+			me.state = $
 		end
+		*/
 	end
-	pt.justrestored = false
-	pt.angdiff = P_Lerp(FU / 4, $, p.drawangle)
-	
-	/*
-	local changed = false
-	me.superready = $ or false
-	if (p.cmd.buttons & BT_CUSTOM3)
-	and not (p.lastbuttons & BT_CUSTOM3)
-		me.superready = not $
-		changed = true
+	if not setalpha
+		alphatrans = max($ - 1, 0)
 	end
-	if me.superready
-		me.renderflags = $|RF_FULLBRIGHT
-		me.eflags = $|MFE_FORCESUPER
-		
-		me.color = (Paint:getPlayerColor(p)) - abs( ((leveltime>>1) % 9) - 4 )
-	else
-		me.renderflags = $ &~RF_FULLBRIGHT
-		me.eflags = $ &~MFE_FORCESUPER
-		me.color = Paint:getPlayerColor(p)
-	end
-	if changed
-		P_MovePlayer(p)
-		me.state = $
-	end
-	*/
-end; end)
+end)
 
 addHook("SeenPlayer",function(p, p2)
 	if not (p.paint) then return end

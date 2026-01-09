@@ -118,6 +118,11 @@ function Paint:countTeams()
 	return count
 end
 
+-- TODO:
+function Paint:teamSound(p, teamsfx, othersfx)
+	
+end
+
 function Paint:initPlayer(p)
 	p.paint = {
 		player = p,
