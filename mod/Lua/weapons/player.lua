@@ -12,8 +12,8 @@ local function isFriendlyFire(p1,p2)
 end
 Paint.isFriendlyFire = isFriendlyFire
 
--- shot and sorp can be nil, but inf should NEVER be nil
-function Paint:killPlayer(p, shot, sorp, inf)
+-- shot and source_player can be nil, but inf should NEVER be nil
+function Paint:killPlayer(p, shot, source_player, inf)
 	local pt = p.paint
 	local me = p.mo
 	if (p.gotflag)
@@ -40,12 +40,18 @@ function Paint:killPlayer(p, shot, sorp, inf)
 	end
 	
 	Paint.HUD:killNotice(p)
-	P_KillMobj(me, shot, (sorp and sorp.valid) and sorp.mo or inf)
-	if not Paint.isFriendlyFire(p,sorp)
+	if (gametyperules & GTR_TAG)
+	and (source_player and source_player.valid and source_player.pflags & PF_TAGIT)
+		P_DamageMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf, DMG_INSTAKILL)
+	else
+		P_KillMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf)
+	end
+	
+	if not Paint.isFriendlyFire(p,source_player)
 		--CONS_Printf(sorp, "\x82Killed "..p.name.."!")
-		if sorp and sorp.valid
-			P_AddPlayerScore(sorp, 100)
-			Paint.HUD:killConfirm(sorp, p)
+		if source_player and source_player.valid
+			P_AddPlayerScore(source_player, 100)
+			Paint.HUD:killConfirm(source_player, p)
 		end
 		if pt.hittime
 			local candidates = {}
@@ -54,7 +60,7 @@ function Paint:killPlayer(p, shot, sorp, inf)
 				if not (play and play.valid) then continue end
 				local info = pt.hitlist[i]
 				if (info == nil) then continue end
-				if (play == sorp) then continue end
+				if (play == source_player) then continue end
 				
 				table.insert(candidates, {player = play, damage = info.damage})
 			end
@@ -63,16 +69,18 @@ function Paint:killPlayer(p, shot, sorp, inf)
 			end)
 			if #candidates
 			and (candidates[1] ~= nil)
-			and candidates[1].player ~= sorp
+			and candidates[1].player ~= source_player
 				Paint.HUD:killConfirm(candidates[1].player, p, true)
 				P_AddPlayerScore(candidates[1].player, 50)
 			end
 		end
 	end
+	/*
 	if (gametyperules & GTR_TAG)
-	and (sorp and sorp.valid and sorp.pflags & PF_TAGIT)
+	and (source_player and source_player.valid and source_player.pflags & PF_TAGIT)
 		p.pflags = $|PF_TAGIT
 	end
+	*/
 	
 	local deathcolor
 	if (pt.paintoverlay and pt.paintoverlay.valid and pt.paintoverlay.color ~= self:getPlayerColor(p))
@@ -400,6 +408,7 @@ end
 
 -- checks mo2 against mo1 if they are on the same team
 function Paint:mobjsOnTeam(mo1, mo2)
+	if not mo1 and mo1.valid then return false; end
 	if not (mo1.player and mo1.player.valid)
 		if (mo2.player and mo2.player.valid)
 			return mo1.color == self:getPlayerColor(mo2.player)

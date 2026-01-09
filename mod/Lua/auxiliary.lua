@@ -64,6 +64,41 @@ function Paint.slopeInfluence(mobj,player, options, p_slope)
 	return slope.xydirection,thrust
 end
 
+function Paint.CheckFloorPic(me, checkgrounded)
+	if checkgrounded and not P_IsObjectOnGround(me) then return ""; end
+	
+	local sector = me.subsector.sector
+	local flip = (me.eflags & MFE_VERTICALFLIP == MFE_VERTICALFLIP)
+	local floorpic = sector.floorpic
+	if flip
+		floorpic = sector.ceilingpic
+	end
+	
+	for rover in sector.ffloors()
+		if (rover.flags & FOF_BLOCKPLAYER) == 0 then continue end
+		if (rover.flags & FF_EXISTS) == 0 then continue end
+		
+		local topheight = rover.topheight
+		local bottomheight = rover.bottomheight
+		if (rover.t_slope and rover.t_slope.valid)
+			topheight = P_GetZAt(rover.t_slope, me.x,me.y)
+		end
+		if (rover.b_slope and rover.b_slope.valid)
+			bottomheight = P_GetZAt(rover.b_slope, me.x,me.y)
+		end
+		
+		-- over/under
+		if (me.z > topheight and checkgrounded)
+		or me.z + me.height < bottomheight -- FU
+			continue
+		end
+		
+		floorpic = flip and rover.bottompic or rover.toppic
+		sector = rover.sector
+	end
+	return floorpic, sector
+end
+
 freeslot("S_PAINT_SPLASH")
 states[S_PAINT_SPLASH] = {
 	sprite = SPR_PAINT_MISC,

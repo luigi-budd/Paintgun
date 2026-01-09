@@ -11,6 +11,8 @@ local function addalpha(p)
 	setalpha = true
 end
 
+local clrstr_lut = {}
+
 freeslot("SPR_PAINT_INKTANK")
 rawset(_G,"CA2_SQUIDFORM", 132)
 
@@ -443,10 +445,10 @@ addHook("PlayerThink",function(p)
 		p.charflags = $|(skin.flags & SF_DASHMODE)
 		p.charability = skin.ability
 		p.charability2 = skin.ability2
-		if (p.pflags & PF_TAGIT)
-			p.charability2 = CA2_SQUIDFORM
-		end
 		p.wasmode = nil
+	end
+	if (p.pflags & PF_TAGIT)
+		p.charability2 = CA2_SQUIDFORM
 	end
 	
 	me.alpha = FU
@@ -781,6 +783,17 @@ addHook("PlayerThink",function(p)
 	end
 	
 	-- squid form / swim form
+	local clrstr = clrstr_lut[Paint:getPlayerColor(p)]
+	if clrstr == nil
+		clrstr_lut[Paint:getPlayerColor(p)] = ("~%.3d"):format(skincolors[Paint:getPlayerColor(p)].ramp[6])
+	end
+	
+	local standing_pic,standing_sector = Paint.CheckFloorPic(me, true)
+	if P_IsObjectOnGround(me)
+	and standing_pic == clrstr
+		Paint:setPlayerInInk(p, Paint.ININK_FRIENDLY)
+	end
+	
 	p.shieldscale = skin.shieldscale
 	pt.squidtoggle = false
 	do
