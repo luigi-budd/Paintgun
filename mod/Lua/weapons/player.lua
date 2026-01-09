@@ -86,19 +86,19 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	if (pt.paintoverlay and pt.paintoverlay.valid and pt.paintoverlay.color ~= self:getPlayerColor(p))
 		deathcolor = pt.paintoverlay.color
 	else
-		deathcolor = (sorp and sorp.valid) and self:getPlayerColor(sorp) or ColorOpposite(self:getPlayerColor(p))
+		deathcolor = (source_player and source_player.valid) and self:getPlayerColor(source_player) or ColorOpposite(self:getPlayerColor(p))
 	end
 	for i = 0,30
 		local angle = FixedAngle(P_RandomFixedRange(0,360*FU))
 		local drop = P_SpawnMobjFromMobj(me,0,0,FU, MT_PAINT_SHOT)
 		if drop and drop.valid
-			drop.target = (sorp and sorp.valid) and sorp.mo or inf
+			drop.target = (source_player and source_player.valid) and source_player.mo or inf
 			drop.angle = angle
 			drop.color = deathcolor
 			drop.trail = true
 			drop.lifespan = 0
 			drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
-			drop.tracer_player = sorp
+			drop.tracer_player = source_player
 			P_SetObjectMomZ(drop, P_RandomFixedRange(1*FU,17*FU))
 			P_Thrust(drop, angle, P_RandomFixedRange(1*FU,17*FU))
 		end

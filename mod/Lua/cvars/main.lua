@@ -31,7 +31,7 @@ CV.paintnerfs = CV_RegisterVar({
 	name = "paint_nerfs",
 	defaultvalue = "Yes",
 	flags = CV_SHOWMODIF|CV_NETVAR,
-	PossibleValue = CV_YesNo
+	PossibleValue = {Yes = 1, No = 0, Swim = -1} 
 })
 
 -- local cvars

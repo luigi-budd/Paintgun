@@ -19,7 +19,6 @@ return function(v)
 	local flags = V_SNAPTOTOP
 	
 	do
-		
 		local time = 0
 		local cmap = 0
 		if (TurfWar.time ~= TurfWar.const.NOTIMER)
@@ -48,6 +47,10 @@ return function(v)
 			else
 				time = consoleplayer.realtime
 			end
+		end
+		if TurfWar.overtime
+			time = "Overtime!"
+			cmap = (leveltime/(TR/2)) % 2 == 0 and V_YELLOWMAP or V_ORANGEMAP
 		end
 		
 		local minutes,seconds,str

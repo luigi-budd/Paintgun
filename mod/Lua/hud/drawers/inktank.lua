@@ -60,7 +60,7 @@ addHook("HUD",function(v,p,cam)
 		v.drawStretched(result.x,
 			result.y - FixedMul(23 * FixedMul(result.scale, animprogress), FixedDiv(sub_t:get(pt,"inkcost"), 100*FU)),
 			result.scale, FixedMul(result.scale, animprogress),
-			v.getSpritePatch(SPR_PAINT_INKTANK,5,0),
+			v.getSpritePatch(SPR_PAINT_INKTANK, (fast and pt.inktank >= sub_t:get(pt,"inkcost")) and 4 or 5,0),
 			blend,v.getColormap(TC_DEFAULT, color, nil)
 		)
 	end

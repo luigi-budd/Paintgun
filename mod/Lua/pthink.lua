@@ -432,9 +432,20 @@ addHook("PlayerThink",function(p)
 	end
 	pt.active = true
 	
+	if p.gotflag
+		local wepmo = pt.weaponmobj
+		if (wepmo and wepmo.valid)
+			P_RemoveMobj(wepmo)
+		end
+		wepmo = pt.weaponmobjdupe
+		if (wepmo and wepmo.valid)
+			P_RemoveMobj(wepmo)
+		end
+	end
+	
 	--lol
 	if Paint:isMode()
-	or (Paint.CV.paintnerfs.value)
+	or (Paint.CV.paintnerfs.value == 1)
 	and (not (p.pflags & PF_TAGIT))
 		p.dashmode = 0
 		p.charflags = $|SF_NOSHIELDABILITY &~SF_DASHMODE
@@ -448,6 +459,7 @@ addHook("PlayerThink",function(p)
 		p.wasmode = nil
 	end
 	if (p.pflags & PF_TAGIT)
+	or (Paint.CV.paintnerfs.value == -1)
 		p.charability2 = CA2_SQUIDFORM
 	end
 	
@@ -694,7 +706,7 @@ addHook("PlayerThink",function(p)
 	if p.exiting
 		p.cmd.buttons = $ &~BT_ATTACK
 	end
-	if not p.exiting
+	if not (p.exiting or p.gotflag)
 		if pt.store_lag
 			pt.buttons = $ &~BT_SPIN
 			p.cmd.buttons = $ &~BT_SPIN
@@ -1538,6 +1550,11 @@ addHook("PlayerThink",function(p)
 		p.normalspeed = FixedMul(skin.normalspeed * 60 / 100, slowdown)
 		p.charflags = $|SF_NOJUMPSPIN
 	end
+	if (p.gotflag)
+		p.normalspeed = $ * 8/10
+		p.acceleration = $ * 3/4
+	end
+	
 	pt.lastslowdown = doslowdown
 	
 	if not P_IsObjectOnGround(me)
@@ -1795,9 +1812,11 @@ addHook("PostThinkFrame", do
 			BP.doInkTank(p)
 			if pt.weapon_id ~= nil
 				local reset_interp = pt.weapon_id ~= pt.old_weaponid
-				BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
-				if (cur_weapon.guntype == WPT_DUALIES)
-					BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
+				if not p.gotflag
+					BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
+					if (cur_weapon.guntype == WPT_DUALIES)
+						BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
+					end
 				end
 				
 				local dd = pt.dodgeroll

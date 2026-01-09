@@ -2,7 +2,7 @@ local y
 return function(v)
 	if (TurfWar.time == TurfWar.const.NOTIMER) then return end
 	
-	if TurfWar.time > 0
+	if TurfWar.time > 0 or TurfWar.overtime
 		y = v.height() / v.dupy()
 		return
 	end

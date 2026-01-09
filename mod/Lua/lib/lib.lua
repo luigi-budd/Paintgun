@@ -59,9 +59,9 @@ rawset(_G,"P_Lerp",function(frac, from, to)
 	return from + FixedMul(to - from, frac)
 end)
 
-rawset(_G,"L_ZCollide",function(mo1,mo2)
-	if mo1.z > mo2.height+mo2.z then return false end
-	if mo2.z > mo1.height+mo1.z then return false end
+rawset(_G,"L_ZCollide",function(mo1,mo2, mo1height, mo2height)
+	if mo1.z > (mo2height or mo2.height) + mo2.z then return false end
+	if mo2.z > (mo1height or mo1.height) + mo1.z then return false end
 	return true
 end)
 

@@ -79,46 +79,10 @@ mobjinfo[MT_PAINT_GUN] = {
 	flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOCLIPTHING|MF_NOBLOCKMAP,
 	spawnstate = S_PAINT_GUN
 }
-freeslot("MT_PAINT_SPLATTER", "MT_PAINT_WALLSPLAT", "S_PAINT_SPLATTER", "S_PAINT_WALLSPLATTER")
-states[S_PAINT_SPLATTER] = {
-	sprite = SPR_PAINT_MISC,
-	frame = 17,
-	tics = -1,
-	nextstate = S_PAINT_SPLATTER
-}
-states[S_PAINT_WALLSPLATTER] = {
-	sprite = SPR_PAINT_MISC,
-	frame = 16|FF_PAPERSPRITE,
-	tics = -1,
-	nextstate = S_PAINT_WALLSPLATTER
-}
 
 local REAL_SPLATRAD = 32*FU
 local SPLAT_SIZEMUL = FU * 3/2
 local SPLAT_MAXSIZE = (SPLAT_SIZEMUL)*2
-mobjinfo[MT_PAINT_SPLATTER] = {
-	doomednum = -1,
-	radius = 3*FU,
-	height = 5*FU,
-	flags = MF_SPECIAL,
-	spawnstate = S_PAINT_SPLATTER,
-	spawnhealth = 1,
-	deathstate = S_PAINT_SPLATTER,
-}
-mobjinfo[MT_PAINT_WALLSPLAT] = {
-	doomednum = -1,
-	radius = 32*FU,
-	height = 55*FU,
-	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_SPECIAL,
-	spawnstate = S_PAINT_WALLSPLATTER,
-	spawnhealth = 1,
-	deathstate = S_PAINT_WALLSPLATTER,
-}
-
-for i = 0,3
-	sfxinfo[freeslot("sfx_pt_nm"..i)].caption = "Bullet whiz"
-end
-
 local function splattersound(shot, collided)
 	if shot.nosound
 		return
@@ -151,6 +115,186 @@ local function splattersound(shot, collided)
 		S_StartSoundAtVolume(sfx, sound, volume)
 		S_StartSoundAtVolume(sfx, sound, volume)
 	end
+end
+local function SetSplatSkew(splat,slope,skew)
+	skew.o = {
+		x = splat.x,
+		y = splat.y,
+		z = splat.floorz,
+	}
+	skew.xydirection = slope.xydirection
+	skew.zdelta = slope.zdelta
+	skew.zangle = slope.zangle
+	--P_SetOrigin(splat, splat.x,splat.y,splat.z)
+end
+local function HandleFloorSplat(shot)
+	if shot.z + shot.height >= shot.ceilingz
+	or shot.z <= shot.floorz
+	or (shot.eflags & MFE_JUSTSTEPPEDDOWN)
+		local ceil = shot.z+shot.height >= shot.ceilingz
+		
+		local bull_z
+		if ceil
+			bull_z = P_CeilingzAtPos(shot.x,shot.y,shot.z,shot.height) - 1
+		else
+			bull_z = P_FloorzAtPos(shot.x,shot.y,shot.z,shot.height) + 1
+		end
+		do
+			local hole = P_SpawnMobjFromMobj(shot, 0,0,0, MT_PAINT_SPLATTER)			
+			hole.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT
+			hole.color = shot.color
+			hole.mirrored = P_RandomChance(FU/2)
+			hole.angle = shot.angle
+			if CV.splatter_lifetime.value == -1
+				hole.fuse = -1
+			else
+				hole.fuse = CV.splatter_lifetime.value * TICRATE
+			end
+			hole.target = shot.target
+			hole.tracer_player = shot.target.player
+			hole.weapon_id = shot.weapon_id
+			hole.eflags = $|(ceil and MFE_VERTICALFLIP or 0)
+			hole.revgrav = hole.eflags & MFE_VERTICALFLIP
+			hole.dispoffset = -100
+			hole.scale = FixedMul($, SPLAT_SIZEMUL)
+			P_SetOrigin(hole, shot.x, shot.y, bull_z)
+		end
+		
+		splattersound(shot, not shot.trail)
+		P_RemoveMobj(shot); return true
+	end
+end
+
+freeslot("MT_PAINT_SPLATTER", "MT_PAINT_WALLSPLAT", "S_PAINT_SPLATTER", "S_PAINT_WALLSPLAT")
+states[S_PAINT_SPLATTER] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 17,
+	tics = 1,
+	action = function(splat)
+		splat.flags = $|MF_SPECIAL
+		splat.health = splat.info.spawnhealth
+		
+		local CV_VALUE = CV.splatter_lifetime.value * TR
+		if splat.fuse > CV_VALUE
+			splat.fuse = CV_VALUE
+		elseif splat.fuse <= -1 and CV.splatter_lifetime.value ~= -1
+			splat.fuse = CV_VALUE
+		elseif CV.splatter_lifetime.value == 0
+			P_RemoveMobj(splat)
+			return
+		end
+		
+		if splat.lifespan == nil
+			splat.lifespan = -1
+			splat.collided = {}
+		end
+		splat.lifespan = $ + 1
+		
+		if (splat.lifespan % (3*TR)) == 0
+			splat.collided = {}
+		end
+		
+		local slope = splat.standingslope
+		local skew = splat.floorspriteslope
+		if (slope and slope.valid)
+			if not (skew and skew.valid)
+				P_CreateFloorSpriteSlope(splat); skew = splat.floorspriteslope
+			end
+			if slope ~= splat.lastslope
+				SetSplatSkew(splat, slope, skew)
+				splat.height = $ + abs(slope.zdelta)*5
+			end
+		elseif (skew and skew.valid)
+			P_RemoveFloorSpriteSlope(splat)
+		end
+		if not (splat and splat.valid) then return end
+		if (splat.scale ~= splat.lastscale)
+			if (slope and slope.valid)
+				splat.height = $ + abs(slope.zdelta)*5
+			end
+			splat.collided = {}
+		end
+		
+		splat.lastslope = slope
+		splat.lastscale = splat.scale
+		
+		splat.momx,splat.momy = 0,0
+		splat.eflags = $|splat.revgrav
+		if splat.lifespan == 0
+			if splat.revgrav
+				splat.z = P_CeilingzAtPos(splat.x,splat.y,splat.z,splat.height)
+			else
+				splat.z = P_FloorzAtPos(splat.x,splat.y,splat.z,splat.height)
+			end
+			if not (splat and splat.valid) then return end
+		end
+		splat.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+		
+		if not (splat.extravalue1)
+			splat.extravalue1 = 1
+			--P_TryMove(splat,splat.x,splat.y,true)
+			--P_CheckPosition(splat, splat.x,splat.y,splat.z)
+		elseif splat.extravalue1 == 1
+			splat.extravalue1 = 2
+			splat.flags = $|MF_NOCLIP
+			splat.radius = FixedMul(REAL_SPLATRAD, splat.scale)
+		end
+	end,
+	nextstate = S_PAINT_SPLATTER
+}
+states[S_PAINT_WALLSPLAT] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 16|FF_PAPERSPRITE,
+	tics = 1,
+	action = function(splat)
+		splat.flags = $|MF_SPECIAL
+		splat.health = splat.info.spawnhealth
+		splat.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+		
+		local CV_VALUE = CV.splatter_lifetime.value * TR
+		if splat.fuse > CV_VALUE
+			splat.fuse = CV_VALUE
+		elseif splat.fuse <= -1 and CV.splatter_lifetime.value ~= -1
+			splat.fuse = CV_VALUE
+		elseif CV.splatter_lifetime.value == 0
+			P_RemoveMobj(splat)
+			return
+		end
+		
+		if splat.lifespan == nil
+			splat.lifespan = -1
+			splat.collided = {}
+		end
+		splat.lifespan = $ + 1
+		
+		if (splat.lifespan % (3*TR)) == 0
+			splat.collided = {}
+		end
+	end,
+	nextstate = S_PAINT_WALLSPLAT
+}
+
+mobjinfo[MT_PAINT_SPLATTER] = {
+	doomednum = -1,
+	radius = 3*FU,
+	height = 12*FU,
+	flags = MF_SPECIAL,
+	spawnstate = S_PAINT_SPLATTER,
+	spawnhealth = 1,
+	deathstate = S_PAINT_SPLATTER,
+}
+mobjinfo[MT_PAINT_WALLSPLAT] = {
+	doomednum = -1,
+	radius = 32*FU,
+	height = 55*FU,
+	flags = MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_SPECIAL,
+	spawnstate = S_PAINT_WALLSPLAT,
+	spawnhealth = 1,
+	deathstate = S_PAINT_WALLSPLAT,
+}
+
+for i = 0,3
+	sfxinfo[freeslot("sfx_pt_nm"..i)].caption = "Bullet whiz"
 end
 
 local hitmark_tic = 0
@@ -200,54 +344,6 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo)
 	Paint.HUD:hitMarker(shot.target.player, pos, rollangle, (shot.pellet and FU/2 or FU), shot.powerful, nullify)
 end
 
-local function SetSplatSkew(splat,slope,skew)
-	skew.o = {
-		x = splat.x,
-		y = splat.y,
-		z = splat.floorz,
-	}
-	skew.xydirection = slope.xydirection
-	skew.zdelta = slope.zdelta
-	skew.zangle = slope.zangle
-	--P_SetOrigin(splat, splat.x,splat.y,splat.z)
-end
-local function HandleFloorSplat(shot)
-	if shot.z + shot.height >= shot.ceilingz
-	or shot.z <= shot.floorz
-	or (shot.eflags & MFE_JUSTSTEPPEDDOWN)
-		local ceil = shot.z+shot.height >= shot.ceilingz
-		
-		local bull_z
-		if ceil
-			bull_z = P_CeilingzAtPos(shot.x,shot.y,shot.z,shot.height) - 1
-		else
-			bull_z = P_FloorzAtPos(shot.x,shot.y,shot.z,shot.height) + 1
-		end
-		do
-			local hole = P_SpawnMobjFromMobj(shot, 0,0,0, MT_PAINT_SPLATTER)			
-			hole.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT
-			hole.color = shot.color
-			hole.mirrored = P_RandomChance(FU/2)
-			hole.angle = shot.angle
-			if CV.splatter_lifetime.value == -1
-				hole.fuse = -1
-			else
-				hole.fuse = CV.splatter_lifetime.value * TICRATE
-			end
-			hole.target = shot.target
-			hole.tracer_player = shot.target.player
-			hole.weapon_id = shot.weapon_id
-			hole.eflags = $|(ceil and MFE_VERTICALFLIP or 0)
-			hole.revgrav = hole.eflags & MFE_VERTICALFLIP
-			hole.dispoffset = -100
-			hole.scale = FixedMul($, SPLAT_SIZEMUL)
-			P_SetOrigin(hole, shot.x, shot.y, bull_z)
-		end
-		
-		splattersound(shot, not shot.trail)
-		P_RemoveMobj(shot); return true
-	end
-end
 --direct hits most likely wouldve been handled by the mobjcollide before this is ran
 local function splash_blockmap(ray, mo)
 	if not (ray and ray.valid) then return end
@@ -689,7 +785,6 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 		else
 			hole.fuse = CV.splatter_lifetime.value * TICRATE
 		end
-		hole.tics = hole.fuse
 		
 		P_SetOrigin(hole,
 			bull_x - P_ReturnThrustX(nil, mo.angle, mo.scale),
@@ -738,95 +833,14 @@ addHook("MobjSpawn",function(splat)
 	splat.splatid = Paint.splatterid
 	Paint.splatterid = $ + 1
 end,MT_PAINT_SPLATTER)
-addHook("MobjThinker",function(splat)
-	splat.flags = $|MF_SPECIAL
-	splat.health = splat.info.spawnhealth
-	
-	local CV_VALUE = CV.splatter_lifetime.value * TR
-	if splat.fuse > CV_VALUE
-		splat.fuse = CV_VALUE
-	elseif splat.fuse <= -1 and CV.splatter_lifetime.value ~= -1
-		splat.fuse = CV_VALUE
-	elseif CV.splatter_lifetime.value == 0
-		P_RemoveMobj(splat)
-		return
-	end
-	
-	if splat.lifespan == nil
-		splat.lifespan = -1
-		splat.collided = {}
-	end
-	splat.lifespan = $ + 1
-	
-	if (splat.lifespan % (3*TR)) == 0
-		splat.collided = {}
-	end
-	
-	local slope = splat.standingslope
-	local skew = splat.floorspriteslope
-	if (slope and slope.valid)
-		if not (skew and skew.valid)
-			P_CreateFloorSpriteSlope(splat); skew = splat.floorspriteslope
-		end
-		if slope ~= splat.lastslope
-			SetSplatSkew(splat, slope, skew)
-			splat.height = $ + abs(slope.zdelta)*5
-		end
-	elseif (skew and skew.valid)
-		P_RemoveFloorSpriteSlope(splat)
-	end
-	if not (splat and splat.valid) then return end
-	if (splat.scale ~= splat.lastscale)
-		if (slope and slope.valid)
-			splat.height = $ + abs(slope.zdelta)*5
-		end
-		splat.collided = {}
-	end
-	
-	splat.lastslope = slope
-	splat.lastscale = splat.scale
-	
-	splat.momx,splat.momy = 0,0
-	splat.eflags = $|splat.revgrav
-	if splat.lifespan == 0
-		if splat.revgrav
-			splat.z = P_CeilingzAtPos(splat.x,splat.y,splat.z,splat.height)
-		else
-			splat.z = P_FloorzAtPos(splat.x,splat.y,splat.z,splat.height)
-		end
-		if not (splat and splat.valid) then return end
-	end
-	splat.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
-	
-	if not (splat.extravalue1)
-		splat.extravalue1 = 1
-		--P_TryMove(splat,splat.x,splat.y,true)
-		--P_CheckPosition(splat, splat.x,splat.y,splat.z)
-	elseif splat.extravalue1 == 1
-		splat.extravalue1 = 2
-		splat.flags = $|MF_NOCLIP
-		splat.radius = FixedMul(REAL_SPLATRAD, splat.scale)
-	end
-end,MT_PAINT_SPLATTER)
+addHook("MobjSpawn",function(splat)
+	splat.splatid = Paint.splatterid
+	Paint.splatterid = $ + 1
+end,MT_PAINT_WALLSPLAT)
+
 addHook("MobjLineCollide",function(mo)
 	return false
 end,MT_PAINT_SPLATTER)
-
-addHook("MobjThinker",function(splat)
-	splat.flags = $|MF_SPECIAL
-	splat.health = splat.info.spawnhealth
-	splat.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
-	
-	local CV_VALUE = CV.splatter_lifetime.value * TR
-	if splat.fuse > CV_VALUE
-		splat.fuse = CV_VALUE
-	elseif splat.fuse <= -1 and CV.splatter_lifetime.value ~= -1
-		splat.fuse = CV_VALUE
-	elseif CV.splatter_lifetime.value == 0
-		P_RemoveMobj(splat)
-		return
-	end
-end,MT_PAINT_WALLSPLAT)
 
 --man fuck this retarded ass game bro
 local function nope(splat,mo)
@@ -874,6 +888,7 @@ addHook("TouchSpecial",function(splat,mo)
 	end
 	return nope(splat,mo);
 end,MT_PAINT_SPLATTER)
+
 addHook("MobjCollide",function(splat,mo)
 	if mo.type ~= splat.type then return end
 	if (mo.revgrav ~= splat.revgrav) then return end
@@ -904,6 +919,39 @@ addHook("MobjCollide",function(splat,mo)
 	end
 	splat.collided[mo.splatid] = true
 end,MT_PAINT_SPLATTER)
+
+addHook("MobjCollide",function(splat,mo)
+	if mo.type ~= splat.type then return end
+	if not L_ZCollide(splat,mo, splat.height * 4/5, mo.height * 4/5) then return end
+	if (splat.collided == nil) then return end
+	if (mo.splatid == nil) then return end
+	--if (splat.collided[mo.splatid] ~= nil) then return end
+	
+	if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) <= splat.radius * 4/5
+		local friendly = Paint:mobjsOnTeam(
+			(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
+			(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
+		)
+		
+		if friendly
+			if splat.scale < SPLAT_MAXSIZE
+				splat.scale = $ + FU/4
+				splat.z = $ - 4*FU
+			else
+				splat.scale = max($, SPLAT_MAXSIZE)
+			end
+			if mo and mo.valid
+				P_RemoveMobj(mo)
+			end
+			return false
+		elseif (mo.lifespan ~= nil and splat.lifespan ~= nil)
+		and (mo.lifespan < splat.lifespan or mo.splatid > splat.splatid)
+			P_RemoveMobj(splat)
+			return false
+		end
+	end
+	splat.collided[mo.splatid] = true
+end,MT_PAINT_WALLSPLAT)
 
 /*
 local function splat_destruct(mo)
@@ -1009,7 +1057,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 			--P_DamageMobj(sh,mo,mo, damage*5) --debug
 			Paint:doProjHitmarker(sh, mo, true)
 			Paint.HUD:damageNumber(p, mo, damage)
-
+			
 			sh.cooldown = cooldown
 			Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
 		end
@@ -1035,6 +1083,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 	end
 end,MT_BRELLA_SHIELD)
 
+-- reused boatmode code lol
 local PROPEL_EASE = Paint.CANOPY_ANIM
 addHook("MobjThinker",function(b)
 	if not (b and b.valid) then return end

@@ -23,6 +23,9 @@ local function func(v,game)
 		end
 	end
 	
+	local gt = TurfWar.gamemodes[gametype]
+	local pointlimit = gt.pointlimit
+	
 	for i = -1,1,2
 		local x = (160) + spacing*i
 		local alpha = (i == 1)
@@ -59,9 +62,13 @@ local function func(v,game)
 			box_width - 2, 1,
 			flags|ramp
 		)
-		v.drawString(x, y + 1, "Score", flags|V_ALLOWLOWERCASE|vmap, "thin-center")
-		
-		v.drawString(x, y + 10, score, flags|vmap, "center")
+		if (pointlimit)
+			v.drawString(x, y + 3, "Remaining", flags|V_ALLOWLOWERCASE|vmap, "small-thin-center")
+			v.drawString(x, y + 8, pointlimit - score, flags|vmap, "center")
+		else
+			v.drawString(x, y + 1, "Score", flags|V_ALLOWLOWERCASE|vmap, "thin-center")
+			v.drawString(x, y + 10, score, flags|vmap, "center")
+		end
 		
 		if not inscores
 		and (gametyperules & GTR_TEAMFLAGS)

@@ -13,6 +13,7 @@ TurfWar.const.MSG_TIME = 2*TR + (TR/2)
 
 TurfWar.time = TurfWar.const.NOTIMER
 TurfWar.minutewarning = false
+TurfWar.overtime = false
 
 TurfWar.old = {
 	alphascore = 0,
@@ -35,10 +36,11 @@ sfxinfo[freeslot("sfx_p_rest")].caption = "/"
 sfxinfo[freeslot("sfx_p_pos")].caption = "/"
 sfxinfo[freeslot("sfx_p_neg")].caption = "/"
 sfxinfo[freeslot("sfx_p_led")].caption = "/"
+sfxinfo[freeslot("sfx_p_over")].caption = "/"
 
 freeslot("TOL_PAINTGUN")
 G_AddGametype({
-    name = "Paintball",
+    name = "Team Paintball",
     identifier = "TURFWAR",
     typeoflevel = TOL_PAINTGUN|TOL_MATCH,
     rules = GTR_SPECTATORS|GTR_TEAMS|GTR_DEATHMATCHSTARTS|GTR_SPAWNINVUL|GTR_RESPAWNDELAY,
@@ -46,10 +48,31 @@ G_AddGametype({
     headercolor = 164,
 	description = "Team Deathmatch"
 })
+G_AddGametype({
+    name = "FFA Paintball",
+    identifier = "FFATURFWAR",
+    typeoflevel = TOL_PAINTGUN|TOL_MATCH,
+    rules = GTR_SPECTATORS|GTR_DEATHMATCHSTARTS|GTR_SPAWNINVUL|GTR_RESPAWNDELAY,
+    intermissiontype = int_match,
+    headercolor = 164,
+	description = "Free-for-all"
+})
+freeslot("TOL_CTFPAINTGUN")
+G_AddGametype({
+    name = "CTF Paintball",
+    identifier = "CTFTURFWAR",
+    typeoflevel = TOL_CTFPAINTGUN|TOL_CTF,
+    rules = GTR_SPECTATORS|GTR_TEAMS|GTR_TEAMFLAGS|GTR_DEATHMATCHSTARTS|GTR_SPAWNINVUL|GTR_RESPAWNDELAY,
+    intermissiontype = int_ctf,
+    headercolor = 164,
+	description = "Capture the Flag"
+})
 
 
 local gamemode_t = {
 	starttime = TurfWar.const.NOTIMER,
+	pointlimit = 0,
+	allowovertime = false,
 	nohud = false,
 }
 registerMetatable(gamemode_t)
@@ -61,6 +84,18 @@ TurfWar.registerGamemode = function(gt, props)
 	})
 	TurfWar.gamemodes[gt] = props
 end
+
+TurfWar.registerGamemode(GT_TURFWAR, {
+	starttime = TurfWar.const.ROUNDTIME
+})
+TurfWar.registerGamemode(GT_FFATURFWAR, {
+	starttime = TurfWar.const.ROUNDTIME
+})
+TurfWar.registerGamemode(GT_CTFTURFWAR, {
+	starttime = 5*60*TR,
+	pointlimit = 3,
+	allowovertime = true,
+})
 
 TurfWar.HUDS = {
 	game = {},
@@ -82,6 +117,7 @@ local function dofolder(files)
 	end
 end
 dofolder{
+	"flagrunners.lua",
 	"oneminute.lua",
 	"topinfo.lua",
 	"scores.lua",
@@ -110,10 +146,6 @@ addHook("HUD",function(v)
 	end
 end,"scores")
 
-TurfWar.registerGamemode(GT_TURFWAR, {
-	starttime = TurfWar.const.ROUNDTIME
-})
-
 local cv_allowmusic = CV_RegisterVar({
 	name = "paint_1minutemusic",
 	defaultvalue = "Off",
@@ -139,6 +171,8 @@ addHook("MapChange",function(nextmap)
 		
 		local gm = TurfWar.gamemodes[gametype]
 		TurfWar.time = gm.starttime
+		TurfWar.minutewarning = false
+		TurfWar.overtime = false
 		
 		for item,_ in pairs(items)
 			hud.disable(item)
@@ -251,7 +285,7 @@ addHook("ThinkFrame",do
 		local setlead = false
 		
 		if redscore > old.bravoscore
-		and ((old.alphascore == 0 and old.bravoscore == 0) or old.alphascore < old.bravoscore)
+		and (old.alphascore < old.bravoscore)
 			StateSound("lead", TurfWar.const.TEAM_ALPHA)
 			SetMessage(TurfWar.const.TEAM_ALPHA, "We took the lead!", "We lost the lead!")
 			COM_BufInsertText(consoleplayer, 'cecho ""')
@@ -259,7 +293,7 @@ addHook("ThinkFrame",do
 			setlead = true
 		end
 		if bluescore > old.alphascore
-		and ((old.alphascore == 0 and old.bravoscore == 0) or old.bravoscore < old.alphascore)
+		and (old.bravoscore < old.alphascore)
 			StateSound("lead", TurfWar.const.TEAM_BRAVO)
 			SetMessage(TurfWar.const.TEAM_BRAVO, "We took the lead!", "We lost the lead!")
 			COM_BufInsertText(consoleplayer, 'cecho ""')
@@ -356,17 +390,56 @@ addHook("ThinkFrame",do
 	end
 	
 	TurfWar.minutewarning = false
+	if TurfWar.gamemodes[gametype].pointlimit
+		local limit = TurfWar.gamemodes[gametype].pointlimit
+		
+		-- in timed gamemodes, force the time to 1 tic so the game over
+		-- sequence will start
+		if TurfWar.time ~= TurfWar.const.NOTIMER
+			if (redscore >= limit or bluescore >= limit)
+			and TurfWar.time > 1
+				TurfWar.time = 1
+			end
+		elseif (redscore >= limit or bluescore >= limit)
+			G_ExitLevel()
+		end
+	end
+	
 	if TurfWar.time ~= TurfWar.const.NOTIMER
+		if TurfWar.gamemodes[gametype].allowovertime and G_GametypeHasTeams()
+		and (redscore == bluescore)
+		and TurfWar.time == 1
+			local picked = (redscore ~= 0) and (bluescore ~= 0)
+			if old.alphaobj_picked or old.bravoobj_picked
+			and not picked
+				picked = true
+			end
+			
+			if picked
+				TurfWar.overtime = true
+				S_StartSound(nil, sfx_p_over)
+			end
+		end
+		if TurfWar.overtime
+		and (redscore ~= bluescore)
+			TurfWar.overtime = false
+			TurfWar.time = 1
+		end
+		
 		for p in players.iterate
 			p.realtime = max(TurfWar.time,0)
 			
 			if TurfWar.time <= 0
+			and not TurfWar.overtime
 				p.pflags = $|PF_FULLSTASIS
 				p.powers[pw_nocontrol] = 4
 				p.exiting = 400
 			end
 		end
 		TurfWar.time = $ - 1
+		if TurfWar.overtime
+			TurfWar.time = max($, 0)
+		end
 		
 		if TurfWar.time == 60*TR
 			S_StartSound(nil,sfx_1min)
@@ -377,6 +450,7 @@ addHook("ThinkFrame",do
 			S_ChangeMusic(mus,false)
 			mapmusname = mus
 		elseif TurfWar.time == 0
+		and not TurfWar.overtime
 			S_StartSound(nil,sfx_lvpass)
 			S_StartSound(nil,sfx_nxbump)
 			S_StopMusic(consoleplayer)
