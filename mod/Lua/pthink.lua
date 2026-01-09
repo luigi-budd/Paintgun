@@ -831,9 +831,32 @@ addHook("PlayerThink",function(p)
 		p.accelstart = skin.accelstart
 		p.acceleration = skin.acceleration
 		if (pt.squidtime >= MAX_SQUIDTIME)
+			local touchingwall = false
+			local wallangle = me.angle - ANGLE_90
+			if (p.lastlinehit ~= -1)
+				local line = lines[p.lastlinehit]
+				local ox,oy = P_ClosestPointOnLine(me.x,me.y, line)
+				wallangle = R_PointToAngle2(
+					line.v1.x, line.v1.y, line.v2.x, line.v2.y
+				) - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1)
+				wallangle = $ - ANGLE_90 -- lol
+				
+				if R_PointToDist2(me.x + me.momx, me.y + me.momy, ox,oy) <= me.radius + 12*me.scale
+					touchingwall = true
+					local ang = R_PointToAngle2(me.x + me.momx, me.y + me.momy, ox,oy)
+					if abs(ang) ~= ANGLE_45
+						P_Thrust(me,
+							ang,
+							me.scale / 8
+						)
+					end
+				end
+			end
+			local wallclimb = (pt.wallink and (p.powers[pw_pushing] or touchingwall))
+			
 			p.charflags = $|SF_NOSKID
 			if (pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me))
-			or (pt.wallink and p.powers[pw_pushing])
+			or wallclimb
 				me.flags2 = $|MF2_DONTDRAW
 				pt.hidden = true
 				p.shieldscale = 0
@@ -846,9 +869,12 @@ addHook("PlayerThink",function(p)
 				
 				p.normalspeed = skin.normalspeed
 				p.thrustfactor = $*6/4
-				if pt.substrafe
+				if pt.substrafe 
 					p.accelstart = $ * 4
 					p.acceleration = $ * 2
+				elseif (wallclimb and not P_IsObjectOnGround(me))
+					p.accelstart = 0
+					p.acceleration = 0
 				end
 				
 				me.friction = FixedMul($, FU*97/100)
@@ -861,26 +887,25 @@ addHook("PlayerThink",function(p)
 				p.normalspeed = $/3
 			end
 			
-			/*
-			local old_x,old_y = me.x,me.y
-			local trymove = P_TryMove(me,
-				me.x + (38 * cos(p.drawangle)),
-				me.y + (38 * sin(p.drawangle)),
-				true
-			)
-			if trymove
-				P_MoveOrigin(me, old_x,old_y,me.z)
-			end
-			print(trymove)
-			*/
-			if (pt.wallink and p.powers[pw_pushing])
+			if wallclimb
 				if not (pt.wasclimbing) and me.last_speed
 					P_SetObjectMomZ(me,FixedDiv(me.last_speed,me.scale)/2,true)
 				end
 				
-				P_SetObjectMomZ(me, p.normalspeed/28, true)
+				if (p.cmd.forwardmove > 0)
+					P_SetObjectMomZ(me, p.normalspeed/28, true)
+				elseif (me.momz * P_MobjFlip(me) < 0)
+					me.momz = $ + P_GetMobjGravity(me)/2
+				end
+				if (p.cmd.sidemove ~= 0)
+					local frac = FixedDiv(p.cmd.sidemove*FU, 50*FU)
+					P_Thrust(me, wallangle, FixedMul(me.scale, frac))
+				end
+				
 				if (pt.jumpheld == 1)
 					P_SetObjectMomZ(me, 3*FU, true)
+					S_StartSound(me, sfx_pt_ijm, p)
+					pt.spreadjump = cur_weapon:get(pt,"spread_jump")
 				end
 				
 				me.momz = FixedMul($, FU*98/100)
@@ -894,7 +919,12 @@ addHook("PlayerThink",function(p)
 			end
 			
 			if pt.hidden
+				local cando = true
+				if (wallclimb and not (p.cmd.forwardmove > 0 or p.cmd.sidemove ~= 0))
+					cando = false
+				end
 				if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 8*me.scale)
+				and cando
 					if not S_SoundPlaying(me, sfx_pt_swm)
 						S_StartSoundAtVolume(me,sfx_pt_swm,255/2, p)
 					end

@@ -40,6 +40,7 @@ sfxinfo[freeslot("sfx_pt_toh")].caption = "/"
 sfxinfo[freeslot("sfx_pt_tos")].caption = "/"
 sfxinfo[freeslot("sfx_pt_swm")].caption = "Swimming"
 sfxinfo[freeslot("sfx_pt_kth")].caption = "/" -- charge restore
+sfxinfo[freeslot("sfx_pt_ijm")].caption = "/" -- charge restore
 
 --srb2 edit flags
 rawset(_G, "MFE_NOPITCHROLLEASING", MFE_NOPITCHROLLEASING or (1<<14))

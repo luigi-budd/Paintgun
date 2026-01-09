@@ -47,3 +47,9 @@ CV.nametags = CV_RegisterVar({
 	flags = CV_SHOWMODIF,
 	PossibleValue = CV_OnOff 
 })
+CV.damagenumbers = CV_RegisterVar({
+	name = "paint_damagenumbers",
+	defaultvalue = "Off",
+	flags = CV_SHOWMODIF,
+	PossibleValue = CV_OnOff 
+})

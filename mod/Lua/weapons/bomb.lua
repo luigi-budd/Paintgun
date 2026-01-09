@@ -64,6 +64,7 @@ local function splash_blockmap(ray, mo)
 		if ray.allowhitmarkers
 			Paint:doProjHitmarker(ray, mo, false)
 		end
+		Paint.HUD:damageNumber(ray.target.player, mo, damage)
 		return
 	end
 	
@@ -77,6 +78,7 @@ local function splash_blockmap(ray, mo)
 			Paint:playHurtSound(mo.player)
 			if ray.allowhitmarkers
 				Paint:doProjHitmarker(ray, mo, false)
+				Paint.HUD:damageNumber(ray.target.player, mo, damage)
 			end
 		elseif Paint_canHurtPlayer(p, mo.player, true)
 		and not Paint:isFriendlyFire(p,mo.player)

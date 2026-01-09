@@ -273,6 +273,7 @@ local function splash_blockmap(ray, mo)
 		
 		P_DamageMobj(mo, ray, ray.target, damage)
 		Paint:doProjHitmarker(ray, mo, false, false, true)
+		Paint.HUD:damageNumber(ray.target.player, mo, damage)
 		return
 	end
 	
@@ -287,6 +288,7 @@ local function splash_blockmap(ray, mo)
 			Paint:damagePlayer(mo.player, ray, p, damage)
 			Paint:playHurtSound(mo.player)
 			Paint:doProjHitmarker(ray, mo, false)
+			Paint.HUD:damageNumber(ray.target.player, mo, damage)
 		elseif Paint_canHurtPlayer(p, mo.player, true, true)
 		and not Paint:isFriendlyFire(p,mo.player)
 			Paint:doProjHitmarker(ray, mo, false, true, true)
@@ -597,6 +599,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 	or mo.type == MT_TNTBARREL
 		P_DamageMobj(mo,shot,me, shot.damage)
 		Paint:doProjHitmarker(shot, mo, true)
+		Paint.HUD:damageNumber(p, mo, shot.damage)
 		
 		if (wep.guntype == WPT_CHARGER
 		and shot.charge >= wep:get(pt,"chargetime"))
@@ -632,6 +635,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 			Paint:damagePlayer(play,shot,p, shot.damage)
 			Paint:playHurtSound(play)
 			Paint:doProjHitmarker(shot, mo, true)
+			Paint.HUD:damageNumber(p, mo, shot.damage)
 			if (wep.guntype == WPT_CHARGER
 			and shot.charge >= wep:get(pt,"chargetime"))
 			or (wep.guntype == WPT_BLASTER)
@@ -1002,8 +1006,10 @@ addHook("MobjMoveCollide",function(sh,mo)
 	or mo.type == MT_TNTBARREL
 		if not sh.cooldown
 			P_DamageMobj(mo,sh,me, damage)
-			P_DamageMobj(sh,mo,mo, damage*5) --debug
+			--P_DamageMobj(sh,mo,mo, damage*5) --debug
 			Paint:doProjHitmarker(sh, mo, true)
+			Paint.HUD:damageNumber(p, mo, damage)
+
 			sh.cooldown = cooldown
 			Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
 		end
@@ -1019,6 +1025,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 			if not sh.cooldown
 				Paint:damagePlayer(play,sh,p, damage)
 				Paint:doProjHitmarker(sh, mo, true)
+				Paint.HUD:damageNumber(p, mo, damage)
 				Paint:playHurtSound(play)
 				sh.cooldown = cooldown
 				Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)

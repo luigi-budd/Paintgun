@@ -22,6 +22,7 @@ dofiles("drawers/",{
 	"killconf.lua",
 	"inv.lua",
 	"tooltips.lua",
+	"damagenumbers.lua",
 	
 	"cameralag.lua",
 })
