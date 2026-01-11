@@ -37,6 +37,9 @@ sfxinfo[freeslot("sfx_p_pos")].caption = "/"
 sfxinfo[freeslot("sfx_p_neg")].caption = "/"
 sfxinfo[freeslot("sfx_p_led")].caption = "/"
 sfxinfo[freeslot("sfx_p_over")].caption = "/"
+for i = 0,3
+	sfxinfo[freeslot("sfx_p_c"..i)].caption = "/"
+end
 
 freeslot("TOL_PAINTGUN")
 G_AddGametype({
@@ -73,6 +76,7 @@ local gamemode_t = {
 	starttime = TurfWar.const.NOTIMER,
 	pointlimit = 0,
 	allowovertime = false,
+	allowpinchmusic = true,
 	nohud = false,
 }
 registerMetatable(gamemode_t)
@@ -95,6 +99,7 @@ TurfWar.registerGamemode(GT_CTFTURFWAR, {
 	starttime = 5*60*TR,
 	pointlimit = 3,
 	allowovertime = true,
+	allowpinchmusic = false,
 })
 
 TurfWar.HUDS = {
@@ -124,7 +129,7 @@ dofolder{
 	"gameset.lua",
 	"timer.lua",
 	"gamestate_text.lua",
-	--"countdown.lua",
+	"countdown.lua",
 }
 
 addHook("HUD",function(v,p,c)
@@ -241,7 +246,7 @@ local function StateSound(type, team)
 	end
 	
 	local sfx = typetosfx[type]
-	S_StartSound(nil, sfx, p)
+	S_StartSoundAtVolume(nil, sfx, 255 * 9/10, p)
 end
 
 addHook("MobjSpawn",function(f)
@@ -445,7 +450,7 @@ addHook("ThinkFrame",do
 			S_StartSound(nil,sfx_1min)
 			TurfWar.minutewarning = true
 		elseif TurfWar.time == 30*TR
-		and cv_allowmusic.value
+		and (cv_allowmusic.value == 1 and TurfWar.gamemodes[gametype].allowpinchmusic)
 			local mus = "_PINCH"
 			S_ChangeMusic(mus,false)
 			mapmusname = mus

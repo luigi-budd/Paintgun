@@ -444,6 +444,9 @@ addHook("PlayerThink",function(p)
 		pt.disable.main = true
 		pt.disable.sub = true
 	end
+	if (p.exiting)
+		pt.disable.swimming = true
+	end
 
 	if pt.disable.main
 		local wepmo = pt.weaponmobj
@@ -1434,7 +1437,7 @@ addHook("PlayerThink",function(p)
 	-- sub stuff
 	-- AIMING A SUB / AIMING SUB
 	local wasaiming = pt.aimingsub
-	if not (pt.fireheld or pt.squidtoggle)
+	if not (pt.fireheld or pt.squidtoggle or p.exiting)
 	and (p.cmd.buttons & BT_FIRENORMAL)
 		pt.aimingsub = true
 	else
