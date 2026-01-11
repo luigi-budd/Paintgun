@@ -365,6 +365,8 @@ local function makeBlob(p,me,pt, rad,hei)
 	blob.renderflags = $|RF_NOCOLORMAPS|RF_SEMIBRIGHT
 	return blob
 end
+
+local cv_hidetime = CV.FindVar("hidetime")
 addHook("PlayerThink",function(p)
 	local me = p.mo
 	if p.playerstate == PST_REBORN
@@ -433,6 +435,12 @@ addHook("PlayerThink",function(p)
 	pt.active = true
 	
 	if p.gotflag
+		pt.disable.main = true
+		pt.disable.sub = true
+	end
+	if (gametyperules & GTR_HIDEFROZEN)
+	and not (p.pflags & PF_TAGIT)
+	and (leveltime >= cv_hidetime.value*TR)
 		pt.disable.main = true
 		pt.disable.sub = true
 	end
