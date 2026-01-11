@@ -1802,10 +1802,11 @@ addHook("PostThinkFrame", do
 			continue
 		end
 		
-		if R_PointToDist(me.x, me.y) <= 128*me.scale
+		if R_PointToDist(me.x, me.y) <= 100*me.scale
 			addalpha(p)
 		end
 		if local_raycasts
+		and not (p.exiting or pt.disable.main)
 			local ray = local_raycasts.hitcast
 			if (ray and ray.valid)
 			and R_PointTo3DDist(me.x,me.y,me.z + me.height/2, ray.x,ray.y,ray.z) <= 128*me.scale 

@@ -572,6 +572,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		proj.momx = $ + mom_vec.x
 		proj.momy = $ + mom_vec.y
 	end
+	proj.momz = $ + me.pmomz
 	local wep_damage = cur_weapon:get(pt,"damage")
 	proj.damage = wep_damage
 	proj.charge = pt.charge
@@ -631,9 +632,9 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		proj.progress = chargeprogress
 		if (p == displayplayer or p == secondarydisplayplayer)
 		and proj.powerful
-			P_StartQuake(15 * max(chargeprogress, FU/5), 12)
+			P_StartQuake(5 * max(chargeprogress, FU/5), 12)
 		end
-
+		
 		if (chargeprogress >= FU)
 			proj.damage = cur_weapon:get(pt,"maxdamage")
 		else

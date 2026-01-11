@@ -40,6 +40,8 @@ sfxinfo[freeslot("sfx_p_over")].caption = "/"
 for i = 0,3
 	sfxinfo[freeslot("sfx_p_c"..i)].caption = "/"
 end
+sfxinfo[freeslot("sfx_p_db0")].caption = "/"
+sfxinfo[freeslot("sfx_p_db1")].caption = "/"
 
 freeslot("TOL_PAINTGUN")
 G_AddGametype({
@@ -75,8 +77,11 @@ G_AddGametype({
 local gamemode_t = {
 	starttime = TurfWar.const.NOTIMER,
 	pointlimit = 0,
+	
 	allowovertime = false,
 	allowpinchmusic = true,
+	dieinwater = true,
+	
 	nohud = false,
 }
 registerMetatable(gamemode_t)
@@ -468,6 +473,177 @@ addHook("ThinkFrame",do
 		if (timelimit*60*TR) - leveltime == 60*TR
 			S_StartSound(nil,sfx_1min)
 			TurfWar.minutewarning = true
+		end
+	end
+end)
+
+local WATER_TIME = 3*TR
+local WATER_ANIM = TR/2
+
+local DEAD_TIME = 5*TR + (TR/2)
+local DEAD_ANIM = TR*3/2
+
+addHook("PlayerThink",function(p)
+	local me = p.mo
+	if not (me and me.valid) then return end
+	if not Paint:isMode() then return end
+	if not TurfWar.gamemodes[gametype].dieinwater then return end
+
+	local pt = p.paint
+	
+	if me.health
+	and (me.eflags & MFE_UNDERWATER)
+		S_StartSound(me, sfx_p_db0)
+		me.waterdeath = 3*TR
+		me.waterheight = me.z
+		me.oldwatertop = me.watertop
+		me.watermomz = 0
+		me.wateradjust = -16*me.scale + (me.momz * 2)
+		
+		Paint.HUD:killNotice(p)
+		
+		local bubbles = FixedDiv(abs(me.wateradjust)/4, me.scale)>>(FRACBITS-1)
+		if bubbles > 128
+			bubbles = 128
+		end
+		local dist = FixedDiv(me.radius, me.scale) + 3*FU
+		for i = 0, bubbles
+			local ang = FixedAngle(P_RandomRange(0, 360)*FU)
+			local bub = P_SpawnMobjFromMobj(me,
+				P_ReturnThrustX(nil, ang, dist),
+				P_ReturnThrustY(nil, ang, dist),
+				0, MT_PARTICLE
+			)
+			bub.z = me.oldwatertop
+			bub.scale = $ * 2
+			P_SetMobjStateNF(bub, mobjinfo[MT_MEDIUMBUBBLE].spawnstate)
+			bub.tics = -1
+			bub.fuse = 3*TR
+			bub.flags = $ &~MF_NOGRAVITY
+			bub.momz = 2*bub.scale + FixedMul(abs(me.wateradjust)/6, P_RandomFixed())
+			P_Thrust(bub, ang, me.scale + FixedMul(3*me.scale, P_RandomFixed()))
+		end
+		
+		me.momx,me.momy,me.momz = 0,0,0
+		me.health = 0
+		p.playerstate = PST_DEAD
+		if (p.gotflag)
+			P_PlayerFlagBurst(p,false)
+		end
+		P_PlayerWeaponAmmoBurst(p)
+		P_PlayerWeaponPanelBurst(p)
+		P_PlayerEmeraldBurst(p)
+	end
+	
+	if (me.waterdeath ~= nil)
+		me.fuse = 3*TR
+		me.flags = $|MF_NOCLIPHEIGHT
+		me.flags2 = $ &~MF2_DONTDRAW
+		me.waterdeath = $ - 1
+		me.paint_overlayhp = pt.hp
+		
+		me.momx,me.momy,me.momz = 0,0,0
+		me.z = (me.oldwatertop - (me.height/2))
+		
+		local state = S_PLAY_PAIN
+		if me.waterdeath > WATER_TIME - WATER_ANIM
+			local tics = WATER_ANIM - (me.waterdeath - (WATER_TIME - WATER_ANIM))
+			
+			local frac = FixedDiv(tics*FU, WATER_ANIM*FU)
+			me.z = $ + ease.inquad(frac, me.wateradjust, 0)
+		else
+			state = S_PLAY_DRWN
+		end
+		if me.state ~= state
+			me.state = state
+		end
+		
+		me.spriteyoffset = 2 * sin(FixedAngle(leveltime*FU*50))
+		if me.waterdeath <= 2*TR
+			if me.waterdeath == 2*TR
+				S_StartSound(me, sfx_p_db1)
+				if (P_IsLocalPlayer(p))
+					P_StartQuake(10*FU, 10)
+				end
+				
+				local deathcolor = Paint:getPlayerColor(p)
+				for i = 0,30
+					local angle = FixedAngle(P_RandomFixedRange(0,360*FU))
+					local drop = P_SpawnMobjFromMobj(me,0,0,FU, MT_PAINT_SHOT)
+					if drop and drop.valid
+						drop.target = me
+						drop.angle = angle
+						drop.color = deathcolor
+						drop.trail = true
+						drop.lifespan = 0
+						drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
+						drop.tracer_player = sorp
+						drop.fuse = 2 * TR
+						P_SetObjectMomZ(drop, P_RandomFixedRange(1*FU,17*FU))
+						P_Thrust(drop, angle, P_RandomFixedRange(1*FU,17*FU))
+					end
+				end
+				local spr_scale = FU * 2
+				local tntstate = S_TNTBARREL_EXPL3
+				local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
+				local bam = P_SpawnMobjFromMobj(me, 0,0,0, MT_THOK)
+				P_SetMobjStateNF(bam, tntstate)
+				bam.spritexscale = FixedMul($, spr_scale)
+				bam.spriteyscale = bam.spritexscale
+				bam.renderflags = $|rflags
+				bam.blendmode = AST_ADD
+				bam.colorized = true
+				bam.color = deathcolor
+				local t = P_SpawnMobjFromMobj(me,0,0,0,MT_THOK)
+				t.color = deathcolor
+				t.spritexscale = FU * 3
+				t.spriteyscale = t.spritexscale
+				
+				for i = 0,2
+					local outline = P_SpawnMobjFromMobj(me, 0,0,0, MT_PAINT_SHOT)
+					outline.visualfadestupidshit = true
+					outline.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
+					outline.fuse = 9
+					outline.radius = 40*me.scale
+					outline.sprite = SPR_PAINT_MISC
+					outline.frame = ($ &~FF_FRAMEMASK)|18
+					outline.spritexscale = FU * 3
+					outline.spriteyscale = outline.spritexscale
+					outline.renderflags = $|rflags|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
+					outline.blendmode = AST_ADD
+					outline.colorized = true
+					outline.color = deathcolor
+					outline.angle = me.angle + (ANGLE_90 * i)
+					if i == 2
+						outline.renderflags = $|RF_FLOORSPRITE &~RF_PAPERSPRITE
+					end
+				end
+			end
+			me.flags2 = $|MF2_DONTDRAW
+		else
+			local ang = FixedAngle(P_RandomRange(0, 360)*FU)
+			local dist = FixedDiv(me.radius, me.scale) + 3*FU
+			if (leveltime % 3 == 0)
+				local splash = P_SpawnMobjFromMobj(me,
+					P_ReturnThrustX(nil, ang, dist),
+					P_ReturnThrustY(nil, ang, dist),
+					0, MT_SPLISH
+				)
+				splash.z = me.oldwatertop
+			end
+			local bub = P_SpawnMobjFromMobj(me,
+				P_ReturnThrustX(nil, ang, dist),
+				P_ReturnThrustY(nil, ang, dist),
+				0, MT_PARTICLE
+			)
+			bub.z = me.oldwatertop
+			bub.scale = $ * 2
+			P_SetMobjStateNF(bub, mobjinfo[MT_SMALLBUBBLE].spawnstate)
+			bub.tics = -1
+			bub.fuse = TR
+			bub.flags = $ &~MF_NOGRAVITY
+			bub.momz = 2*bub.scale + FixedMul(P_RandomRange(0, 3)*bub.scale, P_RandomFixed())
+			P_Thrust(bub, ang, me.scale + FixedMul(P_RandomRange(0, 2)*me.scale, P_RandomFixed()))
 		end
 	end
 end)
