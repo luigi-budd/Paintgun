@@ -171,6 +171,11 @@ states[S_PAINT_SPLATTER] = {
 	frame = 17,
 	tics = 1,
 	action = function(splat)
+		if P_IsObjectInGoop(splat)
+			P_RemoveMobj(splat)
+			return
+		end
+		
 		splat.flags = $|MF_SPECIAL
 		splat.health = splat.info.spawnhealth
 		
@@ -247,6 +252,11 @@ states[S_PAINT_WALLSPLAT] = {
 	frame = 16|FF_PAPERSPRITE,
 	tics = 1,
 	action = function(splat)
+		if P_IsObjectInGoop(splat)
+			P_RemoveMobj(splat)
+			return
+		end
+		
 		splat.flags = $|MF_SPECIAL
 		splat.health = splat.info.spawnhealth
 		splat.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
@@ -274,6 +284,7 @@ states[S_PAINT_WALLSPLAT] = {
 	nextstate = S_PAINT_WALLSPLAT
 }
 
+-- these cant have MF_SCENERY otherwise the slopeskew effect doesnt work
 mobjinfo[MT_PAINT_SPLATTER] = {
 	doomednum = -1,
 	radius = 3*FU,
@@ -287,7 +298,7 @@ mobjinfo[MT_PAINT_WALLSPLAT] = {
 	doomednum = -1,
 	radius = 32*FU,
 	height = 55*FU,
-	flags = MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_SPECIAL,
+	flags = MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_SPECIAL|MF_SCENERY,
 	spawnstate = S_PAINT_WALLSPLAT,
 	spawnhealth = 1,
 	deathstate = S_PAINT_WALLSPLAT,
@@ -552,15 +563,14 @@ addHook("MobjThinker",function(shot)
 		shot.roll, shot.pitch = 0,0
 	end
 	
-	local old_ng = (shot.flags & MF_NOGRAVITY)
-	shot.flags = $ &~MF_NOGRAVITY
-	if shot.eflags & MFE_GOOWATER
+	-- only works on trails but whatever
+	if (shot.eflags & MFE_GOOWATER)
 	or P_IsObjectInGoop(shot)
 		P_SpawnMobj(shot.x,shot.y,shot.watertop,MT_SPLISH)
 		splattersound(shot)
 		P_RemoveMobj(shot); return
 	end
-	shot.flags = $|old_ng
+	
 	if shot.trail
 		shot.flags = $ &~MF_NOGRAVITY
 		shot.momz = $ + P_GetMobjGravity(shot)
@@ -639,6 +649,7 @@ addHook("MobjThinker",function(shot)
 		local sfxid = P_RandomRange(sfx_pt_nm0,sfx_pt_nm3)
 		local dp = displayplayer
 		if (dp and dp.valid and dp.mo and dp.mo.valid and not dp.spectator and dp.mo ~= shot.target)
+		and not (Paint:mobjsOnTeam(shot.target.player, dp))
 		and not shot.whizzed
 			if R_PointTo3DDist(shot.x,shot.y,shot.z, dp.mo.x,dp.mo.y,dp.mo.z) <= 100*dp.mo.scale
 				local sfx = P_SpawnGhostMobj(shot)
@@ -922,12 +933,12 @@ end,MT_PAINT_SPLATTER)
 
 addHook("MobjCollide",function(splat,mo)
 	if mo.type ~= splat.type then return end
-	if not L_ZCollide(splat,mo, splat.height * 4/5, mo.height * 4/5) then return end
+	if not L_ZCollide(splat,mo, splat.height * 3/5, mo.height * 3/5) then return end
 	if (splat.collided == nil) then return end
 	if (mo.splatid == nil) then return end
 	--if (splat.collided[mo.splatid] ~= nil) then return end
 	
-	if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) <= splat.radius * 4/5
+	if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) <= splat.radius * 3/5
 		local friendly = Paint:mobjsOnTeam(
 			(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
 			(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo

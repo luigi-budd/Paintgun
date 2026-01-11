@@ -119,7 +119,7 @@ function Paint:countTeams()
 end
 
 -- TODO:
-function Paint:teamSound(p, teamsfx, othersfx)
+function Paint:teamSound(p, mysfx, teamsfx, othersfx)
 	
 end
 
@@ -134,6 +134,21 @@ function Paint:initPlayer(p)
 		forwardmove = 0, sidemove = 0,buttons = 0,
 		-- fixed varients of forward/sidemoves for sub stuff
 		fixed_fmove = 0, fixed_smove = 0,
+		
+		-- cant perform any of these actions if true
+		-- all reset the next tic
+		disable = {
+			main = false,
+			sub = false,
+			inktank = false,
+			swimming = false,
+		},
+		wasdisabled = {
+			main = false,
+			sub = false,
+			inktank = false,
+			swimming = false,
+		},
 		
 		jumpheld = 0,
 		spinheld = 0,

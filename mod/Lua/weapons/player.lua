@@ -16,6 +16,18 @@ Paint.isFriendlyFire = isFriendlyFire
 function Paint:killPlayer(p, shot, source_player, inf)
 	local pt = p.paint
 	local me = p.mo
+
+	if (p.powers[pw_shield] ~= 0)
+		pt.hp = 100*FU
+		S_StartSound(me, sfx_pt_ow3)
+		p.powers[pw_shield] = 0
+		
+		if (p == displayplayer or p == secondarydisplayplayer)
+			P_StartQuake(15*FU, TR)
+		end
+		return
+	end
+	
 	if (p.gotflag)
 		P_PlayerFlagBurst(p,false)
 	end
@@ -25,18 +37,6 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	
 	if (p == displayplayer or p == secondarydisplayplayer)
 		P_StartQuake(15*FU, 14)
-	end
-	
-	if (p.powers[pw_shield] ~= 0)
-		pt.hp = 100*FU
-		S_StartSound(me, sfx_pt_ow3)
-		p.powers[pw_shield] = 0
-		
-		if (p == displayplayer or p == secondarydisplayplayer)
-			P_StartQuake(15*FU, TR)
-		end
-		
-		return
 	end
 	
 	Paint.HUD:killNotice(p)

@@ -3,6 +3,7 @@ local MAXTICS = TR
 local HALFTICS = MAXTICS/2
 local tics = 0
 local starttic = 0
+local cantusemode = false
 
 function HUD:lowInkWarning(p, cooldown)
 	if displayplayer ~= p then return end
@@ -11,6 +12,17 @@ function HUD:lowInkWarning(p, cooldown)
 		starttic = leveltime
 	end
 	tics = max(MAXTICS, (cooldown or 0) + 1)
+	cantusemode = false
+end
+
+function HUD:cantUseWarning(p, cooldown)
+	if displayplayer ~= p then return end
+	if not tics
+		S_StartSound(nil, sfx_pt_noi, p)
+		starttic = leveltime
+	end
+	tics = max(MAXTICS, (cooldown or 0) + 1)
+	cantusemode = true
 end
 
 addHook("HUD",function(v,p,cam)
@@ -57,11 +69,18 @@ addHook("HUD",function(v,p,cam)
 		-- bg
 		HUD.drawSplashBG(v, x + 2*FU, y + 2*FU, abs(leveltime)*FU/2,abs(leveltime)*FU/2, 64*FU,23*FU, flags|V_50TRANS, clrmp, true)
 		
-		v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_TXT"), flags)
-		v.drawScaled(x,y + fade/2, FU, v.cachePatch("PT_LOW_TNK"), flags)
-		v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_X"), flags|V_ADD|(
-			(FixedInt(10 * abs(fade)) & 10)<<V_ALPHASHIFT
-		))
+		if cantusemode
+			v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_TXT2"), flags)
+			v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_X2"), flags|V_ADD|(
+				(FixedInt(10 * abs(fade)) & 10)<<V_ALPHASHIFT
+			))			
+		else
+			v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_TXT"), flags)
+			v.drawScaled(x,y + fade/2, FU, v.cachePatch("PT_LOW_TNK"), flags)
+			v.drawScaled(x,y, FU, v.cachePatch("PT_LOW_X"), flags|V_ADD|(
+				(FixedInt(10 * abs(fade)) & 10)<<V_ALPHASHIFT
+			))
+		end
 		
 		-- marquee
 		do

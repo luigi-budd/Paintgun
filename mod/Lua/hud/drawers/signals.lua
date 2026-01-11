@@ -36,13 +36,17 @@ addHook("HUD",function(v,p,cam)
 	
 	if not (CV.nametags.value) then return end
 	
+	local toremove = {}
 	for k,v in ipairs(HUD.memory.signals)
 		if v.tics <= 0
 		or not (v.from and v.from.valid)
-			table.remove(HUD.memory.signals, k)
+			table.insert(toremove, {key = k})
 			continue
 		end
 		v.tics = $ - 1
+	end
+	for k,v in ipairs(toremove)
+		table.remove(HUD.memory.signals, v.key)
 	end
 	
 	local tmp = {}
@@ -66,7 +70,12 @@ addHook("HUD",function(v,p,cam)
 	local sch_w = (sci_w - BASEVIDWIDTH)*FU/2
 	local sch_h = (sci_h - BASEVIDHEIGHT)*FU/2
 	for k, va in ipairs(tmp)
+		if va.tics <= 0 then continue end
+		
 		local pos = va.from.realmo
+		if not va.from.realmo.health
+			pos = va.from.realmo.paint_alivepos
+		end
 		local pro = K_GetScreenCoords(v,p,cam, pos, {anglecliponly = true})
 		local x = pro.x
 		local y = pro.y

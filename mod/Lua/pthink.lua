@@ -114,7 +114,7 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 		pt.holsteranim = max($-1, 0)
 	end
 	local handoffset = {Paint:getWeaponOffset(me,pt,fireangle - ANGLE_90, cur_weapon, dualieflip, false)}
-	local zoffset = (41*me.height)/48 - (12 * me.scale) + FixedMul(pt.weaponzoffset, me.scale)
+	local zoffset = (41*me.height)/48 - (12 * me.scale) + FixedMul(pt.weaponzoffset, me.scale)*P_MobjFlip(me)
 	teleport(wepmo,
 		me.x + handoffset[1] + offx,
 		me.y + handoffset[2] + offy,
@@ -433,12 +433,26 @@ addHook("PlayerThink",function(p)
 	pt.active = true
 	
 	if p.gotflag
+		pt.disable.main = true
+		pt.disable.sub = true
+	end
+
+	if pt.disable.main
 		local wepmo = pt.weaponmobj
 		if (wepmo and wepmo.valid)
 			P_RemoveMobj(wepmo)
 		end
 		wepmo = pt.weaponmobjdupe
 		if (wepmo and wepmo.valid)
+			P_RemoveMobj(wepmo)
+		end
+	end
+	if pt.disable.inktank
+		local wepmo = pt.tankmobj
+		if (wepmo and wepmo.valid)
+			if (wepmo.tracer and wepmo.tracer.valid)
+				P_RemoveMobj(wepmo.tracer)
+			end
 			P_RemoveMobj(wepmo)
 		end
 	end
@@ -673,6 +687,12 @@ addHook("PlayerThink",function(p)
 			me.y + P_ReturnThrustY(nil,fireangle,move) + me.momy,
 			me.z + me.momz
 		)
+		if (P_MobjFlip(me) == -1)
+			sh.z = $ - sh.height
+			sh.eflags = $|MFE_VERTICALFLIP
+		else
+			sh.eflags = $ &~MFE_VERTICALFLIP
+		end
 		sh.health = sh.info.spawnhealth
 		sh.lasthit = nil
 		sh.cooldown = max($ - 1, 0)
@@ -706,7 +726,7 @@ addHook("PlayerThink",function(p)
 	if p.exiting
 		p.cmd.buttons = $ &~BT_ATTACK
 	end
-	if not (p.exiting or p.gotflag)
+	if not (p.exiting)
 		if pt.store_lag
 			pt.buttons = $ &~BT_SPIN
 			p.cmd.buttons = $ &~BT_SPIN
@@ -719,7 +739,7 @@ addHook("PlayerThink",function(p)
 		end
 		
 		if (p.cmd.buttons & BT_ATTACK)
-		and not pt.nofiring
+		and not (pt.nofiring or pt.disable.main)
 			if not pt.fireheld
 				justpressedfire = true
 				pt.firewait = cur_weapon.startlag
@@ -758,6 +778,10 @@ addHook("PlayerThink",function(p)
 				end
 			end
 		else
+			if (pt.fireheld or (p.cmd.buttons & BT_ATTACK)) and pt.disable.main
+				Paint.HUD:cantUseWarning(p, TR/2)
+			end
+
 			pt.fireheld = 0
 			if not (p.cmd.buttons & BT_ATTACK)
 				pt.nofiring = false
@@ -821,6 +845,7 @@ addHook("PlayerThink",function(p)
 		and not (pt.dodgeroll.tics or pt.dodgeroll.getup)
 		and not (pt.squidlag)
 		and not (pt.fireheld > 1)
+		and not (pt.disable.swimming)
 			if not pt.wasinsquid
 				S_StartSound(me,sfx_pt_tos)
 			end
@@ -871,6 +896,7 @@ addHook("PlayerThink",function(p)
 			local touchingwall = false
 			local wallangle = me.angle - ANGLE_90
 			if (p.lastlinehit ~= -1)
+			and (pt.wallink and not P_IsObjectOnGround(me))
 				local line = lines[p.lastlinehit]
 				local ox,oy = P_ClosestPointOnLine(me.x,me.y, line)
 				wallangle = R_PointToAngle2(
@@ -1406,6 +1432,13 @@ addHook("PlayerThink",function(p)
 	else
 		pt.aimingsub = false
 	end
+	if (pt.disable.sub)
+		if pt.aimingsub
+			Paint.HUD:cantUseWarning(p, TR/2)
+		end
+		pt.aimingsub = false
+	end
+
 	if pt.aimingsub
 		pt.aimingtime = $ + 1
 		local easefrac = 0
@@ -1622,6 +1655,7 @@ addHook("JumpSpecial",function(p)
 	if not pt.active then return end
 	if (pt.squidtime) then return end
 	if pt.firewait then return end
+	if (pt.disable.main or pt.wasdisabled.main) then return end
 	
 	local dd = pt.dodgeroll
 	if (dd.tics or dd.getup) then return true; end
@@ -1652,16 +1686,30 @@ addHook("PreThinkFrame",do setalpha = false; for p in players.iterate
 	local pt = p.paint
 	if not pt then continue end
 	
-	if (me and me.valid)
-		me.alpha = FU
-	end
-	
 	pt.forwardmove = p.cmd.forwardmove
 	pt.sidemove = p.cmd.sidemove
 	pt.buttons = p.cmd.buttons
 	pt.fixed_fmove = $ + FixedMul((pt.forwardmove*FU) - $, move_lerp)
 	pt.fixed_smove = $ + FixedMul((pt.sidemove*FU) - $, move_lerp)
 	
+	pt.wasdisabled.main = pt.disable.main
+	pt.wasdisabled.sub = pt.disable.sub
+	pt.wasdisabled.inktank = pt.disable.inktank
+	pt.wasdisabled.swimming = pt.disable.swimming
+	pt.disable.main = false
+	pt.disable.sub = false
+	pt.disable.inktank = false
+	pt.disable.swimming = false
+	
+	if (me and me.valid)
+		me.alpha = FU
+		if me.health
+			me.paint_alivepos = {
+				x = me.x, y = me.y, z = me.z
+			}
+		end
+	end
+
 	if not pt.active then continue end
 	
 	if pt.inink == Paint.ININK_ENEMY
@@ -1808,11 +1856,14 @@ addHook("PostThinkFrame", do
 		end
 		
 		if not me.paint_inactive
+			if not pt.disable.inktank
+				BP.doInkTank(p)
+			end
+
 			local cur_weapon = Paint.weapons[pt.weapon_id]
-			BP.doInkTank(p)
 			if pt.weapon_id ~= nil
 				local reset_interp = pt.weapon_id ~= pt.old_weaponid
-				if not p.gotflag
+				if not (pt.disable.main)
 					BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, false, reset_interp)
 					if (cur_weapon.guntype == WPT_DUALIES)
 						BP.doWeaponMobj(p,me,pt, cur_weapon, p.drawangle, true, reset_interp)
