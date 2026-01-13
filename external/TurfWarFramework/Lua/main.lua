@@ -85,6 +85,7 @@ local gamemode_t = {
 	nohud = false,
 }
 registerMetatable(gamemode_t)
+
 TurfWar.gamemodes = {}
 TurfWar.registerGamemode = function(gt, props)
 	Paint.modes[gt] = true
@@ -484,10 +485,10 @@ local DEAD_TIME = 5*TR + (TR/2)
 local DEAD_ANIM = TR*3/2
 
 addHook("PlayerThink",function(p)
+	if not Paint:isMode() then return end
+	if not (TurfWar.gamemodes[gametype].dieinwater) then return end
 	local me = p.mo
 	if not (me and me.valid) then return end
-	if not Paint:isMode() then return end
-	if not TurfWar.gamemodes[gametype].dieinwater then return end
 
 	local pt = p.paint
 	
@@ -499,8 +500,6 @@ addHook("PlayerThink",function(p)
 		me.oldwatertop = me.watertop
 		me.watermomz = 0
 		me.wateradjust = -16*me.scale + (me.momz * 2)
-		
-		Paint.HUD:killNotice(p)
 		
 		local bubbles = FixedDiv(abs(me.wateradjust)/4, me.scale)>>(FRACBITS-1)
 		if bubbles > 128
@@ -528,11 +527,21 @@ addHook("PlayerThink",function(p)
 		me.health = 0
 		p.playerstate = PST_DEAD
 		if (p.gotflag)
+			local gotflag = p.gotflag
 			P_PlayerFlagBurst(p,false)
+			
+			local flag = redflag
+			if (gotflag == GF_BLUEFLAG)
+				flag = blueflag
+			end
+			flag.fuse = 3*TR
 		end
 		P_PlayerWeaponAmmoBurst(p)
 		P_PlayerWeaponPanelBurst(p)
 		P_PlayerEmeraldBurst(p)
+		
+		Paint.HUD:killNotice(p)
+		Paint:checkWipeout()
 	end
 	
 	if (me.waterdeath ~= nil)
@@ -650,14 +659,14 @@ end)
 
 addHook("NetVars",function(n)
 	--TurfWar = n($)
+	--TurfWar.gamemodes = n($)
 	TurfWar.const = n($)
 	TurfWar.time = n($)
 	TurfWar.minutewarning = n($)
+	TurfWar.overtime = n($)
 
 	TurfWar.old = n($)
 	TurfWar.messagestate = n($)
 	TurfWar.gotflags = n($)
-
-	TurfWar.gamemodes = n($)
 end)
 

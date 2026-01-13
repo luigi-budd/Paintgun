@@ -898,14 +898,15 @@ addHook("PlayerThink",function(p)
 		if pt.squidlag then pt.squidlag = $ - 1; end
 		pt.justfired = false
 		
+		local dostoreaura = false
 		p.charflags = ($ &~(SF_NOSKID|SF_NOJUMPSPIN))|(skin.flags & (SF_NOSKID|SF_NOJUMPSPIN))
 		p.normalspeed = skin.normalspeed * 60 / 100
 		p.thrustfactor = skin.thrustfactor
 		p.accelstart = skin.accelstart
 		p.acceleration = skin.acceleration
+		local wallangle = me.angle - ANGLE_90
 		if (pt.squidtime >= MAX_SQUIDTIME)
 			local touchingwall = false
-			local wallangle = me.angle - ANGLE_90
 			if (p.lastlinehit ~= -1)
 			and (pt.wallink and not P_IsObjectOnGround(me))
 				local line = lines[p.lastlinehit]
@@ -1004,7 +1005,7 @@ addHook("PlayerThink",function(p)
 					end
 					local blob = makeBlob(p,me,pt, 0,0)
 					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
-					P_SetOrigin(blob, me.x+me.momx, me.y+me.momy, blob.z)
+					P_SetOrigin(blob, me.x, me.y, blob.z)
 					if (pt.wasclimbing)
 						local h_ang = Paint:controlDir(p)
 						local v_ang = FixedAngle(P_RandomFixedRange(-25*FU,25*FU))
@@ -1020,6 +1021,23 @@ addHook("PlayerThink",function(p)
 						
 						blob.momx = $ + me.momx
 						blob.momy = $ + me.momy
+						
+						if (leveltime % 2 == 0)
+						and (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 16*me.scale)
+							local range = 128
+							local wind = P_SpawnMobjFromMobj(me,
+								P_RandomRange(-range, range)*FU,
+								P_RandomRange(-range, range)*FU,
+								P_RandomRange(0, range)*FU,
+								MT_THOK
+							)
+							wind.blendmode = AST_ADD
+							wind.renderflags = RF_SEMIBRIGHT|RF_PAPERSPRITE
+							wind.sprite = SPR_RAIN
+							wind.rollangle = ANGLE_90
+							wind.angle = R_PointToAngle2(0,0,me.momx,me.momy)
+							wind.drawonlyforplayer = p
+						end
 					end
 					
 					blob.destscale = 0
@@ -1050,20 +1068,9 @@ addHook("PlayerThink",function(p)
 			pt.wallink = max($ - 1, 0)
 			
 			if pt.storedcharge
-				local maxtime = cur_weapon:get(pt,"storagetime")
-				local g = P_SpawnMobjFromMobj(me, 0,0,2*FU, MT_PARTICLE)
-				g.sprite = SPR_PAINT_MISC
-				g.frame = 32|FF_FULLBRIGHT|FF_ADD
-				g.renderflags = $|RF_NOCOLORMAPS
-				if (pt.hidden)
-					g.renderflags = $|RF_FLOORSPRITE
-				end
-				g.color = Paint:getPlayerColor(p)
-				g.fuse = 2
-				if pt.store_time > maxtime - TR/2
-					g.alpha = FU - FixedDiv((pt.store_time - (maxtime - TR/2))*FU, (TR/2)*FU)
-				end
+				dostoreaura = true
 				
+				local maxtime = cur_weapon:get(pt,"storagetime")
 				pt.store_time = $ + 1
 				if pt.store_time >= maxtime
 				or not (p.cmd.buttons & BT_ATTACK)
@@ -1094,6 +1101,36 @@ addHook("PlayerThink",function(p)
 		end
 		me.last_hidden = pt.hidden
 		me.last_speed = FixedHypot(me.momx,me.momy)
+		if dostoreaura
+			local aura = pt.store_aura
+			if not (aura and aura.valid)
+				local g = P_SpawnMobjFromMobj(me, 0,0,2*FU, MT_PARTICLE)
+				g.sprite = SPR_PAINT_MISC
+				g.frame = 32|FF_FULLBRIGHT|FF_ADD
+				g.renderflags = $|RF_NOCOLORMAPS
+				pt.store_aura = g
+				aura = g
+			end
+			
+			aura.angle = wallangle
+			local maxtime = cur_weapon:get(pt,"storagetime")
+			if (pt.hidden)
+				aura.renderflags = $|RF_FLOORSPRITE
+				if (pt.wallink and not P_IsObjectOnGround(me))
+					aura.renderflags = $|RF_PAPERSPRITE &~RF_FLOORSPRITE
+				end
+			else
+				aura.renderflags = $ &~(RF_FLOORSPRITE|RF_PAPERSPRITE)
+			end
+			aura.color = Paint:getPlayerColor(p)
+			if pt.store_time > maxtime - TR/2
+				aura.alpha = FU - FixedDiv((pt.store_time - (maxtime - TR/2))*FU, (TR/2)*FU)
+			end
+			P_MoveOrigin(aura, me.x + me.momx, me.y + me.momy, me.z + me.momz + (6*me.scale))
+		elseif (pt.store_aura and pt.store_aura.valid)
+			P_RemoveMobj(pt.store_aura)
+			pt.store_aura = nil
+		end
 		
 		if pt.inink == Paint.ININK_ENEMY
 			p.normalspeed = $ * 3/5
@@ -1148,6 +1185,7 @@ addHook("PlayerThink",function(p)
 		pt.store_firelag = $ - 1
 	end
 	
+	pt.fastrefill = false
 	if pt.inkdelay
 		if not pt.fireheld
 			pt.inkdelay = $ - 1
@@ -1160,6 +1198,7 @@ addHook("PlayerThink",function(p)
 		local oldtank = pt.inktank
 		if pt.hidden
 			pt.inktank = $ + fast_ink_refill_rate
+			pt.fastrefill = true
 		else
 			pt.inktank = $ + ink_refill_rate
 		end
@@ -1297,8 +1336,8 @@ addHook("PlayerThink",function(p)
 					S_StopSoundByID(me, slow_charge_sound)
 				end
 				local mincost = cur_weapon:get(pt,"mininkcost")
-				local chargeprogress = min(FixedDiv(pt.charge, cur_weapon.chargetime), FU)
-				pt.inkqueue = mincost + FixedMul(cur_weapon:get(pt,"inkcost") - mincost, chargeprogress)
+				local chargeprogress = min(FixedDiv(pt.charge, charge_time), FU)
+				pt.inkqueue = mincost + FixedMul(cur_weapon.inkcost - mincost, chargeprogress)
 				pt.wasfastcharging = not slowcharge
 				
 				pt.anglefix = max($, 1)

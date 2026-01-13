@@ -42,6 +42,9 @@ sfxinfo[freeslot("sfx_pt_swm")].caption = "Swimming"
 sfxinfo[freeslot("sfx_pt_kth")].caption = "/" -- charge restore
 sfxinfo[freeslot("sfx_pt_ijm")].caption = "/" -- charge restore
 
+sfxinfo[freeslot("sfx_pwip_a")].caption = "\x82Wipeout!"
+sfxinfo[freeslot("sfx_pwip_d")].caption = "\x8FWipeout!"
+
 --srb2 edit flags
 rawset(_G, "MFE_NOPITCHROLLEASING", MFE_NOPITCHROLLEASING or (1<<14))
 rawset(_G, "RF_ALWAYSONTOP", RF_ALWAYSONTOP or 0x00010000)
@@ -171,6 +174,7 @@ function Paint:initPlayer(p)
 		store_time = 0,
 		store_lag = 0,
 		store_firelag = 0,
+		store_aura = nil,
 		maxcharged = false,
 		justcharged = true,
 		wasfastcharging = false,
@@ -223,6 +227,7 @@ function Paint:initPlayer(p)
 		maxinkdelay = 0,
 		inkdelay = 0, -- delay before restoring ink
 		tankmobj = nil,
+		fastrefill = false,
 		
 		inventory = {
 			items = {},

@@ -11,7 +11,7 @@ Paint:registerWeapon({
 	
 	name = "charger",
 	handoffset = 6*FU,
-	range = 1224*FU,
+	range = FixedMul(tofixed("25.75"), Paint.DU2FU),
 	dropoff = 0,
 	damage = 40*FU, -- damage here is the minimum damage
 	firerate = 4,

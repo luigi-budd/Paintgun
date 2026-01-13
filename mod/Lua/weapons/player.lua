@@ -12,6 +12,91 @@ local function isFriendlyFire(p1,p2)
 end
 Paint.isFriendlyFire = isFriendlyFire
 
+-- even if we're all dead, if the enemy wipes out, THAT should take priority,
+-- so dont show the disadvantage one when that happens
+function Paint:checkWipeout()
+	if not G_GametypeHasTeams() then return end
+	local alphacount = 0
+	local alphaplaying = 0
+	local bravocount = 0
+	local bravoplaying = 0
+	
+	for play in players.iterate
+		if play.spectator then continue end
+		
+		if play.ctfteam == 1
+			if play.playerstate ~= PST_DEAD
+				alphacount = $ + 1
+			end
+			alphaplaying = $ + 1
+		else
+			if play.playerstate ~= PST_DEAD
+				bravocount = $ + 1
+			end
+			bravoplaying = $ + 1
+		end
+	end
+	
+	local wipedteam = 0
+	local myteam = 0
+	if (consoleplayer and consoleplayer.valid)
+		if consoleplayer.spectator
+			myteam = 1
+		else
+			myteam = consoleplayer.ctfteam
+		end
+	end
+	
+	local alphawiped = alphacount == 0 and (alphaplaying > 0)
+	local bravowiped = bravocount == 0 and (bravoplaying > 0)
+	local imwiped = false
+	local theyrewiped = false
+	if (myteam == 1)
+		imwiped = alphawiped
+		theyrewiped = bravowiped
+	else
+		imwiped = bravowiped
+		theyrewiped = alphawiped
+	end
+
+	/*
+	print(
+		alphaplaying,alphacount, "",
+		bravoplaying,bravocount, "",
+		alphawiped, bravowiped, myteam
+	)
+	*/
+
+	-- dont "wipeout" the enemy team if no ones ON that team
+	if not imwiped
+		if alphawiped and alphaplaying == 0
+			return
+		end
+		if bravowiped and bravoplaying == 0
+			return
+		end
+	end
+	local enemyplaying = 0
+	if myteam == 1
+		enemyplaying = bravoplaying
+	else
+		enemyplaying = alphaplaying
+	end
+	
+	local disadvantage = imwiped
+	if theyrewiped and enemyplaying
+		disadvantage = false
+		imwiped = false
+	end
+
+	if disadvantage
+		S_StartSound(nil, sfx_pwip_d)
+	else
+		S_StartSound(nil, sfx_pwip_a)
+	end
+	Paint.HUD:wipeoutAnim(disadvantage and myteam or (3 - myteam))
+end
+
 -- shot and source_player can be nil, but inf should NEVER be nil
 function Paint:killPlayer(p, shot, source_player, inf)
 	local pt = p.paint
@@ -46,6 +131,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	else
 		P_KillMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf)
 	end
+	Paint:checkWipeout()
 	
 	if not Paint.isFriendlyFire(p,source_player)
 		--CONS_Printf(sorp, "\x82Killed "..p.name.."!")

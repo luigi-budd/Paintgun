@@ -8,6 +8,72 @@ addHook("HUD",function(v,p,cam)
 	if not Paint:playerIsActive(p) then return end
 	local pt = p.paint
 	
+	if not cam.chase
+		local strength = FU
+		local speed = 14*FU
+		local clrmp = v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p))
+		local wclrmp = v.getColormap(TC_RAINBOW, SKINCOLOR_SUPERSILVER1)
+		
+		local fast = (pt.inktank ~= 100*FU and pt.inkdelay == 0)
+		
+		local wid = 80*FU
+		local x = 160*FU - wid/2
+		local y = 150*FU
+		
+		local whiteink = pt.inkdelay ~= 0 or pt.inkqueue ~= 0
+		
+		local prog = FixedDiv(max(pt.inktank - pt.inkqueue, 0), 100*FU)
+		local whiteprog = FixedDiv(pt.oldinkanim,100*FU)
+		local f_wid = FixedMul(wid,prog)
+		local w_wid = FixedMul(wid,whiteprog)
+		
+		local pad = 2
+		v.drawFill((x/FU) - pad  , (y/FU) - pad  , (wid/FU) + pad*2, 10 + pad*2, 23)
+		v.drawFill((x/FU) - pad/2, (y/FU) - pad/2, (wid/FU) + pad  , 6         , 25)
+		v.drawFill((x/FU)        , (y/FU)        , (wid/FU)        , 10        , 27)
+		
+		local ox = (leveltime*FU)/8
+		local oy = (leveltime*FU)/8
+		for i = 0,9
+			local sinoff = abs(sin(FixedAngle((leveltime+i*4)*FU*4)))/2
+			if whiteink
+				HUD.drawSplashBG(v, x,y + i*FU, 
+					0,i*FU,
+					clamp(0, w_wid + sinoff, wid),
+					FU, V_50TRANS, wclrmp, true
+				)
+			end
+			
+			HUD.drawSplashBG(v, x,y + i*FU, 
+				ox,oy + i*FU,
+				clamp(0, f_wid + sinoff, wid),
+				FU, 0, clrmp, pt.fastrefill
+			)
+		end
+		local weapon_t = Paint.weapons[pt.weapon_id]
+		local sub_t
+		if weapon_t
+			sub_t = Paint.subs[weapon_t.subtype]
+		end
+		if sub_t
+			local color = Paint:getPlayerColor(p) + 1
+			local blend = 0
+			color = clamp(SKINCOLOR_WHITE, $, SKINCOLOR_VOLCANIC - 1)
+			if color <= SKINCOLOR_BLACK
+				color = SKINCOLOR_WHITE
+				blend = V_SUBTRACT
+			end
+			
+			v.drawScaled(x + FixedMul(wid, FixedDiv(sub_t:get(pt,"inkcost"), 100*FU)),
+				y,
+				FU,
+				v.cachePatch("PAINT_FPSUBLINE"),
+				blend,v.getColormap(TC_DEFAULT, color, nil)
+			)
+		end
+		return
+	end
+	
 	if not (pt.squidtime and pt.hidden)
 		anim = max($ - 1, 0)
 		if not anim then return end

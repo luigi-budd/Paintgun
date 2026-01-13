@@ -18,7 +18,9 @@ return function(v)
 			sfx = $ + number
 		end
 		S_StartSound(nil, sfx)
-		S_StartSound(nil, sfx)
+		if sfx == sfx_p_c0
+			S_StartSound(nil, sfx)
+		end
 	end
 	lastnumber = number
 	

@@ -399,12 +399,12 @@ local function drawCharger(v,p,cam, dx,dy)
 		charger_vfx = $ - 1
 	end
 	if wep.guntype == WPT_CHARGER
-	and pt.charge
+	and (pt.charge or pt.storedcharge)
 		local chargetime = wep:get(pt,"chargetime")
 		if pt.justcharged
 			charger_vfx = 10
 		end
-		local progress = FixedDiv(min(pt.charge, chargetime), chargetime)
+		local progress = FixedDiv(min(max(pt.charge, pt.storedcharge), chargetime), chargetime)
 		local maxsegs = 50
 		local rad = 3
 		progress = FixedDiv(FixedMul(360*FU,$), maxsegs*FU)

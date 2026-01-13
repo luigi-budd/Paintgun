@@ -23,6 +23,7 @@ dofiles("drawers/",{
 	"inv.lua",
 	"tooltips.lua",
 	"damagenumbers.lua",
+	"wipeout.lua",
 	
 	"cameralag.lua",
 })

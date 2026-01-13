@@ -164,7 +164,7 @@ local weapon_meta = {
 	--charger specific
 	chargetime = TR*FU,
 	mincharge = 5, -- 5 tics
-	minrange = 140*FU,
+	minrange = FixedMul(tofixed("10.75"), Paint.DU2FU),
 	mininkcost = 2*FU + (FU/4),
 	charge_sound = sfx_p_s2_0,
 	weak_sounds = {
