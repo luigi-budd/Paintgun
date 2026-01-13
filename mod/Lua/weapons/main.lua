@@ -50,6 +50,8 @@ local sub_meta = {
 	
 	-- function(mobj_t "sub", boolean "hitceiling", [line_t "line"])
 	blockedfunc = nil,
+	-- function(mobj_t "sub", string "subtype", boolean "aimline")
+	physicsthink = nil,
 }
 registerMetatable(sub_meta)
 

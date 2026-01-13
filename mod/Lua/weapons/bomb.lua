@@ -253,10 +253,8 @@ addHook("MobjThinker",function(sub)
 		flashtime = $ * 3/5
 		flashtime = min(8, max($ >> 4, 2))
 		if (timer % flashtime ~= 0)
-			sub.colorized = false
 			sub.translation = nil
 		else
-			sub.colorized = true
 			sub.translation = "AllWhite"
 		end
 	end

@@ -40,5 +40,9 @@ Paint:registerSubWeapon({
 		bomb.pitch = 0
 		
 		return true
+	end,
+	physicsthink = function(bomb, _, aim)
+		if aim then return end
+		bomb.colorized = true
 	end
 })
