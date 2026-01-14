@@ -270,7 +270,7 @@ BP.doInkTank = function(p)
 	tank.destscale = me.scale
 	tank.scalespeed = tank.destscale + 1
 	tank.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
-	tank.alpha = me.alpha
+	--tank.alpha = me.alpha
 	if (tank.sparkfx and tank.sparkfx.valid)
 		sparkmove(tank.sparkfx,
 			tank.x, tank.y,
@@ -659,6 +659,37 @@ addHook("PlayerThink",function(p)
 				p.cmd.buttons = $ &~BT_ATTACK
 				pt.shieldjustbroke = true
 				S_StartSound(nil, cur_weapon:get(pt,"releasesound") or sfx_p_s5_9, p)
+
+				local dupe = P_SpawnMobjFromMobj(me, 0,0,0, MT_BRELLA_SHIELD)
+				dupe.tracer = me
+				dupe.target = me
+				dupe.paint_maxhp = cur_weapon:get(pt,"shieldhp")
+				dupe.paint_hp = sh.paint_maxhp
+				dupe.paint_delay = 0
+				dupe.paint_shield = true
+				dupe.paint_destroyed = false
+				dupe.paint_explodebombs = true
+				dupe.paint_released = true
+				dupe.shieldspeed = FixedMul(cur_weapon:get(pt,"shieldspeed"), me.scale)
+				dupe.cooldown = 0
+				dupe.weapon_id = pt.weapon_id
+				dupe.angle = sh.angle
+				dupe.fuse = cur_weapon:get(pt,"shieldlifetime")
+				dupe.spritexscale = sh.paint_scale
+				dupe.spriteyscale = sh.paint_scale
+				dupe.paint_scale = sh.paint_scale
+				dupe.color = sh.color
+				dupe.state = sh.state
+				dupe.flags = $|MF_SLIDEME &~(MF_NOGRAVITY|MF_NOCLIPHEIGHT)
+				dupe.shieldsound = cur_weapon:get(pt,"shieldsound") or sfx_p_s5_a
+				
+				dupe.paint_overlay = P_SpawnMobjFromMobj(dupe, 0,0,0, MT_OVERLAY)
+				dupe.paint_overlay.target = dupe
+				dupe.paint_overlay.tics, dupe.paint_overlay.fuse = -1,-1
+				dupe.paint_overlay.dontdrawforviewmobj = me
+				dupe.paint_overlay.colorized = true
+				dupe.paint_overlay.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+				P_SetOrigin(dupe, sh.x, sh.y, sh.z)
 			end
 			
 			if (P_IsObjectOnGround(me))
@@ -1861,6 +1892,9 @@ addHook("PostThinkFrame", do
 		if p == displayplayer
 		and alphatrans
 			me.alpha = P_Lerp(FixedDiv(alphatrans*FU, MAX_TRANSTIME*FU), $, FU * 2/10)
+		end
+		if (pt.shield and pt.shield.valid)
+			pt.shield.alpha = me.alpha
 		end
 		
 		do

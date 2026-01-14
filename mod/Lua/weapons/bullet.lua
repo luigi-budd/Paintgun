@@ -1005,6 +1005,28 @@ addHook("TouchSpecial",function(splat,mo)
 	return nope(splat,mo);
 end,MT_PAINT_WALLSPLAT)
 
+local function brella_destroyfx(mo, p)
+	local rad = FixedDiv(mo.radius, mo.scale)
+	local hei = FixedDiv(mo.height, mo.scale)
+	local ang_s = mo.angle - ANGLE_90
+	local ang_f = mo.angle
+	local clr = Paint:getPlayerColor(p)
+	for i = 0, 15
+		local push = FixedMul(rad, P_RandomFixedSigned())
+		local nudge = FixedMul(rad/4, P_RandomFixedSigned())
+		local zadj = FixedMul(hei, P_RandomFixed())
+		local dust = P_SpawnMobjFromMobj(mo,
+			P_ReturnThrustX(nil,ang_s, push) + P_ReturnThrustX(nil,ang_f, nudge),
+			P_ReturnThrustY(nil,ang_s, push) + P_ReturnThrustY(nil,ang_f, nudge),
+			zadj, MT_SPINDUST
+		)
+		dust.colorized = true
+		dust.color = clr
+		P_Thrust(dust, FixedAngle(P_RandomFixedRange(0,360*FU)), 5 * P_RandomFixed())
+		P_SetObjectMomZ(dust, 2 * P_RandomFixed())
+	end
+end
+
 local function brella_pain(mo, inf,sor, damage)
 	mo.paint_healdelay = TR*3/2
 	if not (inf.color == nil or inf.color == SKINCOLOR_NONE)
@@ -1018,25 +1040,7 @@ local function brella_pain(mo, inf,sor, damage)
 		local pt = p.paint
 		local soundid = wep:get(pt, "breaksound") or sfx_none
 		S_StartSound(mo.tracer, soundid)
-		
-		local rad = FixedDiv(mo.radius, mo.scale)
-		local hei = FixedDiv(mo.height, mo.scale)
-		local ang_s = mo.angle - ANGLE_90
-		local ang_f = mo.angle
-		for i = 0, 15
-			local push = FixedMul(rad, P_RandomFixedSigned())
-			local nudge = FixedMul(rad/4, P_RandomFixedSigned())
-			local zadj = FixedMul(hei, P_RandomFixed())
-			local dust = P_SpawnMobjFromMobj(mo,
-				P_ReturnThrustX(nil,ang_s, push) + P_ReturnThrustX(nil,ang_f, nudge),
-				P_ReturnThrustY(nil,ang_s, push) + P_ReturnThrustY(nil,ang_f, nudge),
-				zadj, MT_SPINDUST
-			)
-			dust.colorized = true
-			dust.color = Paint:getPlayerColor(p)
-			P_Thrust(dust, FixedAngle(P_RandomFixedRange(0,360*FU)), 5 * P_RandomFixed())
-			P_SetObjectMomZ(dust, 2 * P_RandomFixed())
-		end
+		brella_destroyfx(mo, p)
 		pt.shieldjustbroke = true
 	end
 	--print(("DAMAGE: %f"):format(damage))
@@ -1060,6 +1064,9 @@ addHook("MobjMoveCollide",function(sh,mo)
 	
 	local damage = wep:get(pt, "contactdamage")
 	local cooldown = wep:get(pt, "contactcooldown")
+	if sh.paint_released
+		damage = FixedMul($, wep:get(pt, "releasedmultiplier"))
+	end
 	
 	if Paint_canHurtEnemy(p, mo)
 	or mo.type == MT_TNTBARREL
@@ -1070,7 +1077,9 @@ addHook("MobjMoveCollide",function(sh,mo)
 			Paint.HUD:damageNumber(p, mo, damage)
 			
 			sh.cooldown = cooldown
-			Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
+			if not sh.paint_released
+				Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
+			end
 		end
 		
 		Knockback.addKnockback(mo, TR, R_PointToAngle2(mo.x,mo.y, me.x,me.y), -16*mo.scale)
@@ -1083,11 +1092,13 @@ addHook("MobjMoveCollide",function(sh,mo)
 			local play = mo.player
 			if not sh.cooldown
 				Paint:damagePlayer(play,sh,p, damage)
+				Paint:playHurtSound(play)
 				Paint:doProjHitmarker(sh, mo, true)
 				Paint.HUD:damageNumber(p, mo, damage)
-				Paint:playHurtSound(play)
 				sh.cooldown = cooldown
-				Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
+				if not sh.paint_released
+					Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
+				end
 			end
 			Knockback.addKnockback(mo, TR, R_PointToAngle2(mo.x,mo.y, me.x,me.y), -16*mo.scale)
 		end
@@ -1096,9 +1107,28 @@ end,MT_BRELLA_SHIELD)
 
 -- reused boatmode code lol
 local PROPEL_EASE = Paint.CANOPY_ANIM
+local function makeBlob(me, rad,hei)
+	local blob = P_SpawnMobjFromMobj(me,
+		P_RandomRange(-rad,rad)*FU,
+		P_RandomRange(-rad,rad)*FU,
+		P_RandomRange(0,hei)*FU,
+		MT_PARTICLE
+	)
+	P_SetMobjStateNF(blob, S_GOOP1)
+	blob.sprite = SPR_PAINT_MISC
+	blob.frame = 15
+	
+	blob.tics = -1
+	blob.fuse = TR*3/4
+	
+	blob.color = me.color
+	blob.renderflags = $|RF_NOCOLORMAPS|RF_SEMIBRIGHT
+	return blob
+end
 addHook("MobjThinker",function(b)
 	if not (b and b.valid) then return end
 	if not (b.tracer and b.tracer.valid and b.tracer.health)
+	and not b.paint_released
 		P_RemoveMobj(b)
 		return
 	end
@@ -1106,6 +1136,46 @@ addHook("MobjThinker",function(b)
 	local me = b.tracer
 	local p = me.player
 	local pt = p.paint
+	
+	if b.paint_released
+		P_InstaThrust(b, b.angle, b.shieldspeed)
+		if b.cooldown
+			b.cooldown = $ - 1
+		end
+		if not S_SoundPlaying(b, b.shieldsound)
+			S_StartSound(b, b.shieldsound)
+		end
+
+		if (P_IsObjectOnGround(b))
+		and (leveltime % 3 == 0)
+			local trail = P_SpawnMobjFromMobj(b, 0,0,FU, MT_PAINT_SHOT)
+			trail.target = me
+			trail.tracer_p = p
+			trail.color = b.color
+			trail.angle = b.angle
+			trail.trail = true
+			trail.lifespan = 0
+			trail.nosound = true
+			trail.flags = $|MF_NOCLIPTHING &~(MF_NOGRAVITY|MF_NOCLIPHEIGHT|MF_NOCLIP)
+			trail.frame = ($ &~FF_FRAMEMASK)|2
+			trail.weapon_id = b.weapon_id
+			trail.flags2 = $|MF2_DONTDRAW
+		end
+		local blob = makeBlob(b, 0, (FixedDiv(b.height, b.scale)/FU)/2)
+		local ha = b.angle + FixedAngle(P_RandomFixedRange(-45*FU,45*FU))
+		local va = FixedAngle(P_RandomFixedRange(-45*FU,45*FU))
+		P_3DInstaThrust(blob, ha,va, 3 * b.scale)
+		blob.destscale = 0
+		blob.fuse = 10
+		blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
+		blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
+
+		if b.fuse == 1
+			local soundid = Paint.weapons[b.weapon_id]:get(pt, "breaksound") or sfx_none
+			S_StartSound(b, soundid)
+			brella_destroyfx(b, p)
+		end
+	end
 	
 	local xscale,yscale = FU,FU
 	
