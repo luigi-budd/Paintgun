@@ -552,13 +552,11 @@ addHook("MobjThinker",function(shot)
 	
 	if HandleFloorSplat(shot) then return end
 	
-    local angle = R_PointToAngle2(0,0, shot.momx,shot.momy)
-    local mang = R_PointToAngle2(0,0, FixedHypot(shot.momx, shot.momy), shot.momz)
-    mang = InvAngle($)
-	
 	if not (shot.trail and (shot.frame & FF_FRAMEMASK == 2))
-		shot.roll = FixedMul(mang, sin(angle))
-		shot.pitch = FixedMul(mang, cos(angle))
+		local ha, va = R_PointTo3DAngles(0,0,0, shot.momx,shot.momy,shot.momz)
+		
+		shot.pitch = FixedMul(va, -cos(ha))
+		shot.roll = FixedMul(va, -sin(ha))
 	else
 		shot.roll, shot.pitch = 0,0
 	end
