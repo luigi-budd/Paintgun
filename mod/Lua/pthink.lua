@@ -1029,7 +1029,7 @@ addHook("PlayerThink",function(p)
 				if (wallclimb and not (p.cmd.forwardmove > 0 or p.cmd.sidemove ~= 0))
 					cando = false
 				end
-				if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 8*me.scale)
+				if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 12*me.scale)
 				and cando
 					if not S_SoundPlaying(me, sfx_pt_swm)
 						S_StartSoundAtVolume(me,sfx_pt_swm,255/2, p)
@@ -1054,7 +1054,7 @@ addHook("PlayerThink",function(p)
 						blob.momy = $ + me.momy
 						
 						if (leveltime % 2 == 0)
-						and (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 16*me.scale)
+						and (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 20*me.scale)
 							local range = 128
 							local wind = P_SpawnMobjFromMobj(me,
 								P_RandomRange(-range, range)*FU,
