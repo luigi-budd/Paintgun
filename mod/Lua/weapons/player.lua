@@ -230,7 +230,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	
 end
 
-function Paint:damagePlayer(p, shot, sorp, damage, inf) -- mobj if no player
+function Paint:damagePlayer(p, shot, source_player, damage, inf) -- mobj if no player
 	if damage == nil
 		damage = self.weapons[shot.weapon_id].damage
 	end
@@ -251,28 +251,47 @@ function Paint:damagePlayer(p, shot, sorp, damage, inf) -- mobj if no player
 		end
 	end
 	
-	if (sorp and sorp.valid)
-		if pt.hitlist[#sorp] == nil
-			pt.hitlist[#sorp] = {damage = 0}
+	if (source_player and source_player.valid)
+		if pt.hitlist[#source_player] == nil
+			pt.hitlist[#source_player] = {damage = 0}
 		end
-		pt.hitlist[#sorp].damage = $ + damage
+		pt.hitlist[#source_player].damage = $ + damage
 		pt.hittime = 3*TR
 	end
 	
 	--print(leveltime.." damaged "..p.name)
 	--print(("%f"):format(damage))
 	local oldhp = pt.hp
+	
+	-- cap damage if necessary
+	if (shot and shot.valid)
+	and (shot.fired_at ~= nil)
+		if pt.hurtat[shot.fired_at] == nil
+			pt.hurtat[shot.fired_at] = {
+				damage = 0,
+				maxdamage = shot.totaldamage
+			}
+		end
+		local ind = pt.hurtat[shot.fired_at]
+		ind.damage = $ + shot.damage
+		if ind.damage > ind.maxdamage
+			damage = max($ - (ind.damage - ind.maxdamage), 0)
+		end
+	end
+	
 	pt.hp = $ - damage
 	if oldhp > 85*FU
 	and pt.hp <= 85*FU
 		Paint.HUD:painSurge(p)
 	end
+	
 	if pt.hp <= 0
 		pt.hp = 0
-		Paint:killPlayer(p, shot, sorp, inf)
-		return
+		Paint:killPlayer(p, shot, source_player, inf)
+		return damage
 	end
-	pt.timetoheal = TR*5/4
+	pt.timetoheal = TR -- *5/4
+	return damage
 end
 
 function Paint:playHurtSound(p)

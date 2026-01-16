@@ -70,11 +70,11 @@ Paint:registerWeapon({
 	
 	-- brellas... DONT... use bulletsimple..... :scream:
 	-- this is close enough to how the brella was before
-	spawnspeed = FixedMul(tofixed("2.266"), Paint.DU2FU), -- 2.266 splat3 distance units
-	str_tics = 2, -- straight state lasts this many tics
-	str2brk_maxspeed = FixedMul(tofixed("1.993"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
-	brk_airresist = FU * 80/100, -- xy AND z moms are affected by air resistance
-	brk_gravity = FixedMul(tofixed("0.03"), Paint.DU2FU),
+	spawnspeed = FixedMul(tofixed("2.6"), Paint.DU2FU), -- 2.266 splat3 distance units
+	str_tics = 3, -- straight state lasts this many tics
+	str2brk_maxspeed = FixedMul(tofixed("1.652"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
+	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
+	brk_gravity = FixedMul(tofixed("0.06"), Paint.DU2FU),
 	brk2fre_minz = FixedMul(tofixed("-0.15"), Paint.DU2FU), -- go to free when momz is below this
 	brk2fre_minxy = FixedMul(tofixed("0.2355"), Paint.DU2FU), -- or go to free when xyspeed is below this
 	brk2fre_tics = 4, -- or when brake state lasts this many tics

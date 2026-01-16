@@ -216,8 +216,13 @@ local weapon_meta = {
 	--brella specific
 	pelletspread = 8*FU,
 	pelletnoise = FU*3/2,
+	-- these 2 do not apply to the center most pellet
+	pelletradius = 6*FU,
+	pelletheight = 12*FU,
 	-- charger "maxdamage" is also used for brella pellets,
-	-- damage is chosen from [wep.damage, wep.maxdamage]
+	-- damage is chosen from [wep.damage, wep.maxdamage],
+	-- then is capped to wep.totaldamage if necessary
+	totaldamage = 81*FU,
 	deploywait = (TR/2)*4/5,
 	deployend = Paint.CANOPY_ANIM, -- use endlag if nil
 	deploydelay = 11, -- hold fire for this long before deploying

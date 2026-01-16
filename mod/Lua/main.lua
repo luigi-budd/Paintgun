@@ -236,6 +236,7 @@ function Paint:initPlayer(p)
 		},
 		
 		hp = 100*FU,
+		hurtat = {}, -- leveltime indices for capping damage for certain guntypes
 		hurttic = 0,
 		timetoheal = 0,
 		inink = 0, -- 0 = not in ink, -1 = friendly ink, 1 = enemy ink
@@ -274,6 +275,7 @@ function Paint:resetPlayer(p)
 	local pt = p.paint
 	pt.timetoheal = 0
 	pt.hp = 100*FU
+	pt.hurtat = {}
 	pt.oldinktank = 100*FU
 	pt.oldtankanim = 100*FU
 	pt.inktank = 100*FU

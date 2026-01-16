@@ -788,6 +788,7 @@ addHook("PlayerThink",function(p)
 		pt.spreadjump = $ - 1
 	end
 	
+	local waspressingattack = (p.cmd.buttons & BT_ATTACK)
 	local justpressedfire = false
 	if p.exiting
 		p.cmd.buttons = $ &~BT_ATTACK
@@ -1131,7 +1132,7 @@ addHook("PlayerThink",function(p)
 				local maxtime = cur_weapon:get(pt,"storagetime")
 				pt.store_time = $ + 1
 				if pt.store_time >= maxtime
-				or not (p.cmd.buttons & BT_ATTACK)
+				or not ((p.cmd.buttons & BT_ATTACK) or waspressingattack)
 					pt.storedcharge = 0
 				end
 			else
@@ -1352,6 +1353,8 @@ addHook("PlayerThink",function(p)
 			if pt.fireheld and (pt.cooldown == 0)
 				doslowdown = true
 				if not pt.charge
+					-- this is the little click sound
+					S_StartSound(nil, cur_weapon.charge_sound, p)
 					S_StartSound(me, charge_sound, p)
 					pt.oldinktank = pt.inktank
 					pt.oldinkanim = pt.oldinktank

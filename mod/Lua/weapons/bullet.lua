@@ -42,7 +42,7 @@ states[S_PAINT_SHOT_PELLET] = {
 }
 mobjinfo[MT_PAINT_SHOT] = {
 	doomednum = -1,
-	radius = 16*FU,
+	radius = 12*FU,
 	height = 24*FU,
 	flags = MF_NOGRAVITY,
 	spawnstate = S_PAINT_SHOT
@@ -392,10 +392,10 @@ local function splash_blockmap(ray, mo)
 		if Paint_canHurtPlayer(p, mo.player)
 			local progress = FixedDiv(dist, splashrad)
 			local damage = wep.splashdamage[1] + FixedMul(wep.splashdamage[2] - wep.splashdamage[1], progress)
-			Paint:damagePlayer(mo.player, ray, p, damage)
+			local newdamage = Paint:damagePlayer(mo.player, ray, p, damage)
 			Paint:playHurtSound(mo.player)
 			Paint:doProjHitmarker(ray, mo, false)
-			Paint.HUD:damageNumber(ray.target.player, mo, damage)
+			Paint.HUD:damageNumber(ray.target.player, mo, newdamage)
 		elseif Paint_canHurtPlayer(p, mo.player, true, true)
 		and not Paint:isFriendlyFire(p,mo.player)
 			Paint:doProjHitmarker(ray, mo, false, true, true)
@@ -639,9 +639,15 @@ addHook("MobjThinker",function(shot)
 			return
 		end
 	else
-		if ((leveltime + shot.lifespan) % 3 == 0)
-		and P_RandomChance(FU/2)
-			CreateTrail(shot)
+		if shot.s_state ~= SS_FREE
+			if shot.centerpellet
+				CreateTrail(shot)
+			elseif not shot.pellet
+				if ((leveltime + shot.lifespan) % 3 == 0)
+				and P_RandomChance(FU/2)
+					CreateTrail(shot)
+				end
+			end
 		end
 		
 		-- near miss
@@ -742,10 +748,10 @@ addHook("MobjMoveCollide",function(shot,mo)
 	and mo ~= me
 		if Paint_canHurtPlayer(p, mo.player)
 			local play = mo.player
-			Paint:damagePlayer(play,shot,p, shot.damage)
+			local newdamage = Paint:damagePlayer(play,shot,p, shot.damage)
 			Paint:playHurtSound(play)
 			Paint:doProjHitmarker(shot, mo, true)
-			Paint.HUD:damageNumber(p, mo, shot.damage)
+			Paint.HUD:damageNumber(p, mo, newdamage)
 			if (wep.guntype == WPT_CHARGER
 			and shot.charge >= wep:get(pt,"chargetime"))
 			or (wep.guntype == WPT_BLASTER)
