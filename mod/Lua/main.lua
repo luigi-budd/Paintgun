@@ -210,7 +210,7 @@ function Paint:initPlayer(p)
 		
 		shield = nil, -- shield mobj for brellas
 		shieldwait = 0, -- dont deploy for this long
-		shieldlag = 0, -- keep deployed for this long
+		shieldlag = Paint.CANOPY_ANIM, -- keep deployed for this long
 		shieldregen = 0, -- timer until regen
 		shieldtime = 0, -- timer until canopy release
 		shieldlost = false, -- lost is only used when you shoot off the canopy, not when it is destroyed
@@ -341,6 +341,7 @@ Paint.SIGNAL_HELP		= 4
 -- distance-unit 2 fracunit scale factor
 -- .35 du = 16 fu (player radii)
 -- 45.714 is the scale factor cause, of math reasons :think:
+-- multiply 1.71428 to get 1/60 -> 1/35
 Paint.DU2FU = 46*FU
 
 dofile("cvars/main.lua")

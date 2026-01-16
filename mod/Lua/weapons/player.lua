@@ -8,7 +8,7 @@ local function isFriendlyFire(p1,p2)
 	elseif G_TagGametype()
 		return (p1.pflags & PF_TAGIT) == (p2.pflags & PF_TAGIT)
 	end
-	return false
+	return CV.FindVar("friendlyfire").value == 0
 end
 Paint.isFriendlyFire = isFriendlyFire
 

@@ -14,7 +14,7 @@ local function drawReticle(v,x,y, p, type)
 	
 	-- when brella-class loses its shield
 	if (wep.guntype == WPT_BRELLA)
-	and (pt.shield and pt.shield.valid and pt.shield.paint_hp <= 0)
+	and (pt.shield and pt.shield.valid and pt.shield.paint_hp <= 0 or pt.shieldlost)
 		prefix = "PAINT_CROPEN_"
 	end
 	

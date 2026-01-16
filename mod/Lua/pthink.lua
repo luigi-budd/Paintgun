@@ -88,7 +88,7 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 	local firing = false
 	if ((pt.deployshield or pt.shieldlag)
 	or (pt.firewait or pt.fireheld or pt.endlag))
-	and (pt.anglefix)
+	and (pt.anglefix or pt.firewait)
 		firing = true
 	end
 	
@@ -315,7 +315,7 @@ BP.doInkTank = function(p)
 	mid.destscale = me.scale
 	mid.scalespeed = mid.destscale + 1
 	mid.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
-	mid.alpha = me.alpha
+	--mid.alpha = me.alpha
 	
 	local line = tank.linemobj
 	line.angle = tank.angle
@@ -599,6 +599,7 @@ addHook("PlayerThink",function(p)
 			sh.threshold = Paint.CANOPY_ANIM
 		end
 		
+		-- this keeps the shield out
 		if not (pt.shieldwait)
 		and (pt.fireheld >= cur_weapon:get(pt,"deploydelay"))
 		and (pt.shotsfired)
@@ -608,8 +609,14 @@ addHook("PlayerThink",function(p)
 			if not pt.wasdeployed
 				S_StartSound(me, cur_weapon:get(pt,"deploysound") or sfx_none)
 				sh.threshold = Paint.CANOPY_ANIM
+				
+				sh.spritexscale = FixedMul($, FU*4/3)
+				sh.spriteyscale = 1
 				P_SetOrigin(sh, sh.x,sh.y,sh.z)
+				sh.resetinterp = true
 			end
+			pt.inkdelay = cur_weapon:get(pt,"inkdelay_held")
+			pt.maxinkdelay = pt.inkdelay
 		end
 		if not pt.deployshield
 		and pt.wasdeployed
@@ -624,7 +631,9 @@ addHook("PlayerThink",function(p)
 		end
 		if pt.shieldlag
 			pt.fireheld = 0
-			p.cmd.buttons = $ &~BT_ATTACK
+			if not pt.nofiring
+				p.cmd.buttons = $ &~BT_ATTACK
+			end
 		end
 		
 		if (pt.shieldlost)
@@ -650,16 +659,31 @@ addHook("PlayerThink",function(p)
 			if (pt.shotsfired >= 1)
 				shieldout = true
 				pt.shieldtime = $ + 1
+				
+				local inkcost = cur_weapon:get(pt,"inkcost")
+				local abovefiring = pt.inktank >= inkcost
+				pt.inktank = max($ - cur_weapon:get(pt,"shieldinkuse"), 0)
+				if pt.inktank <= 0
+				or (abovefiring and pt.inktank < inkcost)
+					pt.fireheld = 0
+					pt.nofiring = true
+					Paint.HUD:lowInkWarning(p, TR/2)
+				end
 			end
 			
 			-- release the shield / canopy
-			if pt.shieldtime == cur_weapon:get(pt,"shieldrelease")
+			-- this should also release BT_ATTACK once the canopy releases
+			if pt.shieldtime >= cur_weapon:get(pt,"shieldrelease")
+			and (p.cmd.buttons & BT_ATTACK)
 				pt.shieldlost = true
-				pt.fireheld = 0
-				p.cmd.buttons = $ &~BT_ATTACK
 				pt.shieldjustbroke = true
+				pt.fireheld = 0
+				pt.nofiring = true
+				
+				pt.inkdelay = max($, cur_weapon:get(pt,"inkdelay_release"))
+				pt.maxinkdelay = max($, pt.inkdelay)
 				S_StartSound(nil, cur_weapon:get(pt,"releasesound") or sfx_p_s5_9, p)
-
+				
 				local dupe = P_SpawnMobjFromMobj(me, 0,0,0, MT_BRELLA_SHIELD)
 				dupe.tracer = me
 				dupe.target = me
@@ -823,12 +847,15 @@ addHook("PlayerThink",function(p)
 			if (pt.fireheld or (p.cmd.buttons & BT_ATTACK)) and pt.disable.main
 				Paint.HUD:cantUseWarning(p, TR/2)
 			end
-
+			
 			pt.fireheld = 0
 			if not (p.cmd.buttons & BT_ATTACK)
 				pt.nofiring = false
+			elseif pt.nofiring
+				p.cmd.buttons = $ &~BT_ATTACK
 			end
 		end
+		
 		if pt.firewait == 1
 			justpressedfire = true
 			pt.fireheld = $ + 1
@@ -1204,9 +1231,9 @@ addHook("PlayerThink",function(p)
 			end
 			
 			local charge_sound = cur_weapon:get(pt,"charging_sound", p)
-			local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound", p)
+			--local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound", p)
 			if pt.charge < cur_weapon:get(pt,"chargetime")
-				S_StartSound(me,charge_sound)
+				S_StartSound(me,charge_sound, p)
 			end
 		elseif me.state ~= S_PLAY_ROLL
 			me.state = S_PLAY_ROLL
@@ -1325,8 +1352,7 @@ addHook("PlayerThink",function(p)
 			if pt.fireheld and (pt.cooldown == 0)
 				doslowdown = true
 				if not pt.charge
-					S_StartSound(nil, cur_weapon.charge_sound, p)
-					S_StartSound(me, charge_sound)
+					S_StartSound(me, charge_sound, p)
 					pt.oldinktank = pt.inktank
 					pt.oldinkanim = pt.oldinktank
 				end
@@ -1337,14 +1363,14 @@ addHook("PlayerThink",function(p)
 					S_StopSoundByID(me, charge_sound)
 					if (pt.wasfastcharging or pt.charge == 0)
 					and pt.charge < charge_time
-						S_StartSound(me, slow_charge_sound)
+						S_StartSound(me, slow_charge_sound, p)
 					end
 					slowcharge = true
 				elseif S_SoundPlaying(me, slow_charge_sound)
 				and (slow_charge_sound ~= charge_sound)
 					S_StopSoundByID(me, slow_charge_sound)
 					if pt.charge <= charge_time
-						S_StartSound(me, charge_sound)
+						S_StartSound(me, charge_sound, p)
 					end
 				end
 				
@@ -1895,6 +1921,9 @@ addHook("PostThinkFrame", do
 		end
 		if (pt.shield and pt.shield.valid)
 			pt.shield.alpha = me.alpha
+			if (pt.shield.paint_overlay and pt.shield.paint_overlay.valid)
+				pt.shield.paint_overlay.alpha = FixedMul($, me.alpha)
+			end
 		end
 		
 		do

@@ -219,7 +219,7 @@ local weapon_meta = {
 	-- charger "maxdamage" is also used for brella pellets,
 	-- damage is chosen from [wep.damage, wep.maxdamage]
 	deploywait = (TR/2)*4/5,
-	deployend = nil, -- use endlag if nil
+	deployend = Paint.CANOPY_ANIM, -- use endlag if nil
 	deploydelay = 11, -- hold fire for this long before deploying
 	releasetime = 64, -- wait this long AFTER deploying the canopy to release it
 	shieldingspeed = (FU*78/100)*7/10, -- `shootspeed` but for when you shield
@@ -239,9 +239,12 @@ local weapon_meta = {
 	shieldregen = 150*FU, -- heal this much hp per second
 	shieldrecover = 5*TR + (TR/2), -- wait this much before "respawning" the shield (either launched or destroyed)
 	shieldlifetime = 5*TR, -- released canopies last for this long
-	shieldspeed = FixedMul(tofixed("0.132"), Paint.DU2FU), -- released canopies travel this fast
+	shieldspeed = FixedMul(tofixed("0.226"), Paint.DU2FU), -- released canopies travel this fast
 	shieldsound = nil, -- released canopies repeat this sound
 	shieldrelease = 64, -- release canopies this many tics after opening
+	shieldinkuse = FixedDiv(20*FU, 64*FU),
+	inkdelay_held = 12, -- set inkdelay to this when HOLDING a canopy, but not releasing it
+	inkdelay_release = 2*TR, -- set inkdelay to this when RELEASING a canopy
 	shootwhiledeployed = false, -- undercover brella
 	nocanopy = false, -- brella has no canopy (grizzco brella)
 	
@@ -505,6 +508,10 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 			
 			S_StartSound(me, P_RandomRange(sfx_pt_dr0, sfx_pt_dr3), p)
 			pt.oldinktank = min(max(pt.oldinkanim, pt.inktank), 100*FU)
+			
+			if cur_weapon.guntype == WPT_BRELLA
+				pt.nofiring = true
+			end
 			return
 		end
 	end
@@ -707,11 +714,6 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 		41*FixedDiv(p.mo.height,p.mo.scale)/48 - 8*FU,
 		(aimline) and MT_RAY or MT_PAINT_BOMB
 	)
-	P_SetOrigin(bomb,
-		bomb.x + handoffset[1] + me.momx,
-		bomb.y + handoffset[2] + me.momy,
-		bomb.z + me.momz
-	)
 	local vec = SphereToCartesian(angle, aiming)
 	bomb.momx = FixedMul(FixedMul(SUBMOVE_LATERAL, me.scale), vec.x * 8/5)
 	bomb.momy = FixedMul(FixedMul(SUBMOVE_LATERAL, me.scale), vec.y * 8/5)
@@ -766,6 +768,12 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 		if backfact > 0 then backfact = 0; end
 		P_Thrust(bomb, angle, 15 * backfact)
 	end
+
+	P_SetOrigin(bomb,
+		bomb.x + handoffset[1] + me.momx,
+		bomb.y + handoffset[2] + me.momy,
+		bomb.z + me.momz
+	)
 	return bomb
 end
 

@@ -644,18 +644,22 @@ addHook("MobjThinker",function(shot)
 			CreateTrail(shot)
 		end
 		
+		-- near miss
 		local sfxid = P_RandomRange(sfx_pt_nm0,sfx_pt_nm3)
 		local dp = displayplayer
-		if (dp and dp.valid and dp.mo and dp.mo.valid and not dp.spectator and dp.mo ~= shot.target)
-		and not (Paint:mobjsOnTeam(shot.target.player, dp))
-		and not shot.whizzed
-			if R_PointTo3DDist(shot.x,shot.y,shot.z, dp.mo.x,dp.mo.y,dp.mo.z) <= 100*dp.mo.scale
-				local sfx = P_SpawnGhostMobj(shot)
-				sfx.flags2 = $|MF2_DONTDRAW
-				sfx.fuse = TR
-				sfx.tics = sfx.fuse
-				S_StartSoundAtVolume(sfx, sfxid, 255 * 4/5, dp)
-				shot.whizzed = true
+		if (dp and dp.valid and dp.mo and dp.mo.valid and not dp.spectator and dp.mo ~= shot.target and dp.playerstate == PST_LIVE)
+			local friendly = Paint.isFriendlyFire(p, dp)
+			
+			if not shot.whizzed
+			and not friendly
+				if R_PointTo3DDist(shot.x,shot.y,shot.z, dp.mo.x,dp.mo.y,dp.mo.z) <= 100*dp.mo.scale
+					local sfx = P_SpawnGhostMobj(shot)
+					sfx.flags2 = $|MF2_DONTDRAW
+					sfx.fuse = TR
+					sfx.tics = sfx.fuse
+					S_StartSoundAtVolume(sfx, sfxid, 255 * 4/5, dp)
+					shot.whizzed = true
+				end
 			end
 		end
 		
@@ -673,7 +677,8 @@ addHook("MobjThinker",function(shot)
 	
 	shot.angle = shot.baseangle + shot.angoffset
 	shot.angoffset = $ * 6/7
-	if shot.lifespan <= 4
+	
+	if shot.lifespan <= shot.str_tics
 	and ((shot.frame & FF_FRAMEMASK == 0)
 	or (shot.frame & FF_FRAMEMASK == 3))
 		local stretch = 7*FU
