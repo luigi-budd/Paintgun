@@ -557,6 +557,7 @@ addHook("PlayerThink",function(p)
 			local s = P_SpawnMobjFromMobj(me,0,0,0,MT_BRELLA_SHIELD)
 			s.tracer = me
 			s.target = me --im a lazy bum
+			s.tracer_player = p
 			s.paint_maxhp = cur_weapon:get(pt,"shieldhp")
 			s.paint_hp = s.paint_maxhp
 			s.paint_delay = 0
@@ -687,6 +688,7 @@ addHook("PlayerThink",function(p)
 				local dupe = P_SpawnMobjFromMobj(me, 0,0,0, MT_BRELLA_SHIELD)
 				dupe.tracer = me
 				dupe.target = me
+				dupe.tracer_player = p
 				dupe.paint_maxhp = cur_weapon:get(pt,"shieldhp")
 				dupe.paint_hp = sh.paint_maxhp
 				dupe.paint_delay = 0

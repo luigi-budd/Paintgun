@@ -1068,6 +1068,9 @@ addHook("MobjMoveCollide",function(sh,mo)
 	
 	local wep = Paint.weapons[sh.weapon_id]
 	local me = sh.tracer
+	if not (me and me.valid)
+		me = sh.tracer_player.mo
+	end
 	local p = me.player
 	local pt = p.paint
 	
@@ -1143,6 +1146,9 @@ addHook("MobjThinker",function(b)
 	end
 	if b.paint_scale == nil then return end
 	local me = b.tracer
+	if not (me and me.valid)
+		me = b.tracer_player.mo
+	end
 	local p = me.player
 	local pt = p.paint
 	
