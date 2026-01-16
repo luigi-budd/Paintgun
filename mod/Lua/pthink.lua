@@ -1830,7 +1830,24 @@ addHook("PreThinkFrame",do setalpha = false; for p in players.iterate
 	end
 end; end)
 
-local team_markers = {}
+addHook("ThinkFrame", do
+	for p in players.iterate
+		local me = p.realmo
+		if not (me and me.valid) then continue end
+		if not (p.paint and p.paint.active) then continue end
+		
+		-- doing this since editing p.bob from lua
+		-- does NOTHING since playerthinks are ran
+		-- too early for it to even have an effect
+		-- (p.bob is set in P_PlayerAfterThink)
+		local viewheight = 41*me.height/48
+		p.viewz = me.z + viewheight
+		if P_MobjFlip(me) == -1
+			p.viewz = me.z + me.height - viewheight
+		end
+	end
+end)
+
 addHook("PostThinkFrame", do
 	for p in players.iterate
 		local me = p.mo

@@ -71,6 +71,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 			camAiming = p.aiming
 		--if we ARE on 2.2.16 then do nothing, everythings already correct
 		end
+		camPos.z = p.viewz
 	end
 	if (p.awayviewmobj and p.awayviewmobj.valid and p.awayviewtics > 0)
 		local away = p.awayviewmobj
