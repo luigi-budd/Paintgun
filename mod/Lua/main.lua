@@ -14,6 +14,10 @@ for j = 1, 3
 		sfxinfo[freeslot("sfx_pnt_"..pre..i)] = hitmarker_attribs
 	end
 end
+
+-- Nozzlenose/reeflux crit sound
+sfxinfo[freeslot("sfx_pnt_h6")] = hitmarker_attribs
+
 -- Revive shot
 sfxinfo[freeslot("sfx_pnt_r0")] = hitmarker_attribs
 

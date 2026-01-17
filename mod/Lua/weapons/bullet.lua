@@ -309,7 +309,7 @@ for i = 0,3
 end
 
 local hitmark_tic = 0
-function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo)
+function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo, critical)
 	local hitmarker
 	local startrange, endrange = sfx_pnt_h0, sfx_pnt_h5
 	if (mo.paint_shield)
@@ -322,6 +322,9 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo)
 		startrange, endrange = sfx_pnt_r0, sfx_pnt_r0
 	end
 	hitmarker = P_RandomRange(startrange, endrange)
+	if critical
+		hitmarker = sfx_pnt_h6
+	end
 	
 	if hitmark_tic ~= leveltime
 		S_StartSound(nil, hitmarker, shot.target.player)
@@ -352,7 +355,7 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo)
 	end
 	
 	local rollangle = FixedAngle(360 * P_RandomFixed())
-	Paint.HUD:hitMarker(shot.target.player, pos, rollangle, (shot.pellet and FU/2 or FU), shot.powerful, nullify)
+	Paint.HUD:hitMarker(shot.target.player, pos, rollangle, (shot.pellet and FU/2 or FU), shot.powerful or critical, nullify)
 end
 
 --direct hits most likely wouldve been handled by the mobjcollide before this is ran

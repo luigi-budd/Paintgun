@@ -269,12 +269,24 @@ function Paint:damagePlayer(p, shot, source_player, damage, inf) -- mobj if no p
 		if pt.hurtat[shot.fired_at] == nil
 			pt.hurtat[shot.fired_at] = {
 				damage = 0,
-				maxdamage = shot.totaldamage
+				maxdamage = shot.totaldamage,
+				shotslanded = 0,
+				shotsforcrit = shot.shotsforcrit,
+				critsound = shot.critsound,
 			}
 		end
 		local ind = pt.hurtat[shot.fired_at]
 		ind.damage = $ + shot.damage
-		if ind.damage > ind.maxdamage
+		ind.shotslanded = $ + 1
+		
+		if ind.critsound
+			if ind.shotslanded >= ind.shotsforcrit
+				Paint:doProjHitmarker(shot, p.realmo, false, false, false, true)
+			end
+		end
+		
+		if ind.maxdamage ~= nil
+		and ind.damage > ind.maxdamage
 			damage = max($ - (ind.damage - ind.maxdamage), 0)
 		end
 	end

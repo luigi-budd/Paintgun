@@ -118,6 +118,8 @@ local weapon_meta = {
 	firewithnoink = false, -- allow firing even if you have low ink
 	
 	--shooter-specific
+	critsound = false, -- nozzlenose stuff
+	shotsforcrit = 0,
 	h_spread = {6*FU, 6*FU},
 	v_spread = {3*FU, 3*FU}, -- visual only for the crosshair if `verticalspread` is false
 	verticalspread = false,
@@ -555,6 +557,12 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.fre_airresist		= cur_weapon:get(pt,"fre_airresist")
 	proj.fre_gravity		= cur_weapon:get(pt,"fre_gravity")
 	proj.crs_guideframe		= cur_weapon:get(pt,"crs_guideframe")
+	
+	if cur_weapon:get(pt,"critsound")
+		proj.fired_at = leveltime
+		proj.critsound = true
+		proj.shotsforcrit = cur_weapon:get(pt, "shotsforcrit")
+	end
 	
 	local mom_vec = {x = me.momx,y = me.momy}
 	local handoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, nil, false)}
