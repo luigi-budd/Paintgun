@@ -495,6 +495,12 @@ local function CreateTrail(shot)
 	return drop
 end
 
+-- lul
+local whizzedthisframe = false
+addHook("PreThinkFrame", do
+	whizzedthisframe = false
+end)
+
 Paint.bulletSimpleState = function(shot)
 	local state = shot.s_state
 	if state == SS_STRAIGHT
@@ -657,6 +663,7 @@ addHook("MobjThinker",function(shot)
 		local sfxid = P_RandomRange(sfx_pt_nm0,sfx_pt_nm3)
 		local dp = displayplayer
 		if (dp and dp.valid and dp.mo and dp.mo.valid and not dp.spectator and dp.mo ~= shot.target and dp.playerstate == PST_LIVE)
+		and not whizzedthisframe
 			local friendly = Paint.isFriendlyFire(p, dp)
 			
 			if not shot.whizzed
@@ -668,6 +675,7 @@ addHook("MobjThinker",function(shot)
 					sfx.tics = sfx.fuse
 					S_StartSoundAtVolume(sfx, sfxid, 255 * 4/5, dp)
 					shot.whizzed = true
+					whizzedthisframe = true
 				end
 			end
 		end

@@ -1,12 +1,16 @@
 local MID_X = BASEVIDWIDTH*FU / 2
 local MID_Y = BASEVIDHEIGHT*FU / 2
 local SCALE = FU
+
+local brella_vfx = 0
+
 local CRBASE_TRANS = V_10TRANS
 local CRTYPE_BASEONLY		= 0
 local CRTYPE_BLOCKED		= 1
 local CRTYPE_DIRECT			= 2
 local CRTYPE_STANDBY		= 3
 local CRTYPE_CHARGERBASE	= 4
+local CRTYPE_BRELLAVFX      = 5
 local function drawReticle(v,x,y, p, type)
 	local prefix = "PAINT_CR_"
 	local wep = Paint.weapons[p.paint.weapon_id]
@@ -30,6 +34,8 @@ local function drawReticle(v,x,y, p, type)
 		v.drawScaled(x,y, FU/4, v.cachePatch(prefix.."BASE"), CRBASE_TRANS)
 	elseif type == CRTYPE_CHARGERBASE
 		v.drawScaled(x,y, FU/4, v.cachePatch(prefix.."CBASE"), V_50TRANS)
+	elseif type == CRTYPE_BRELLAVFX
+		v.drawScaled(x,y, FU/4, v.cachePatch("PAINT_CR_BRES"), V_ADD|((10 - brella_vfx)<<V_ALPHASHIFT), v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)))
 	end
 end
 
@@ -388,7 +394,7 @@ local cross_x,cross_y = 0,0
 local interptag = 0
 local range_cache = {}
 local charger_vfx = 0
-local function drawCharger(v,p,cam, dx,dy)
+local function drawWeaponEVFX(v,p,cam)
 	local pt = p.paint
 	local wep = Paint.weapons[pt.weapon_id]
 	if charger_vfx
@@ -420,6 +426,15 @@ local function drawCharger(v,p,cam, dx,dy)
 			)
 		end
 		v.dointerp(5 + interptag)
+	elseif wep.guntype == WPT_BRELLA
+		if pt.shieldjustregened
+			brella_vfx = 10
+		end
+		
+		if brella_vfx
+			drawReticle(v, cross_x,cross_y, p, CRTYPE_BRELLAVFX)
+			brella_vfx = $ - 1
+		end
 	end
 end
 
@@ -428,8 +443,8 @@ local function drawCrosshair(v,p,cam, y, dflip)
 	if (dflip)
 		workray = dh_raycast2
 	end
-	if not (workray and workray.valid) then return drawCharger(v,p,cam); end
-	if not workray.hit then return drawCharger(v,p,cam); end
+	if not (workray and workray.valid) then return drawWeaponEVFX(v,p,cam); end
+	if not workray.hit then return drawWeaponEVFX(v,p,cam); end
 	local result = K_GetScreenCoords(v,p,cam, workray, {dontclip = true})
 	if not result then return; end
 	
@@ -438,8 +453,9 @@ local function drawCrosshair(v,p,cam, y, dflip)
 	v.dointerp(6 + interptag)
 	
 	drawReticle(v, MID_X,y, p, CRTYPE_BASEONLY)
-	drawCharger(v,p,cam);
+	drawWeaponEVFX(v,p,cam);
 	drawReticle(v, result.x,result.y, p, CRTYPE_BLOCKED)
+	
 	return true
 end
 local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)

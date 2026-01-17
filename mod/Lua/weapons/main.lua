@@ -573,12 +573,6 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	end
 	local aimoffset_vec = SphereToCartesian(angle,aiming)
 	local aimoffset_dist = 5 * me.scale
-	P_SetOrigin(proj,
-		me.x + handoffset[1] + mom_vec.x + FixedMul(aimoffset_dist, aimoffset_vec.x),
-		me.y + handoffset[2] + mom_vec.y + FixedMul(aimoffset_dist, aimoffset_vec.y),
-		proj.z + me.momz + FixedMul(aimoffset_dist, aimoffset_vec.z)
-	)
-	if not (proj and proj.valid) then return end
 	
 	if not doinertia
 		mom_vec.x, mom_vec.y = 0, 0
@@ -684,13 +678,20 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		pt.weaponmobjdupe.fireanim = 4
 	end
 	
+	
 	-- No recursion
 	if not pt.calledbacks.onfire
 	and (cur_weapon.callbacks and cur_weapon.callbacks.onfire ~= nil)
 		pt.calledbacks.onfire = true
 		cur_weapon.callbacks.onfire(p,pt,cur_weapon, proj, mom_vec, angle, aiming, dospread, doaiming)
 	end
-	return proj
+	
+	P_SetOrigin(proj,
+		me.x + handoffset[1] + mom_vec.x + FixedMul(aimoffset_dist, aimoffset_vec.x),
+		me.y + handoffset[2] + mom_vec.y + FixedMul(aimoffset_dist, aimoffset_vec.y),
+		proj.z + me.momz + FixedMul(aimoffset_dist, aimoffset_vec.z)
+	)
+	return proj -- may be invalid
 end
 
 -- also does the aiming for the sub

@@ -46,8 +46,8 @@ sfxinfo[freeslot("sfx_pt_swm")].caption = "Swimming"
 sfxinfo[freeslot("sfx_pt_kth")].caption = "/" -- charge restore
 sfxinfo[freeslot("sfx_pt_ijm")].caption = "/" -- charge restore
 
-sfxinfo[freeslot("sfx_pwip_a")].caption = "\x82Wipeout!"
-sfxinfo[freeslot("sfx_pwip_d")].caption = "\x8FWipeout!"
+sfxinfo[freeslot("sfx_pwip_a")].caption = "\x82Wipeout!\x80"
+sfxinfo[freeslot("sfx_pwip_d")].caption = "\x8FWipeout!\x80"
 
 --srb2 edit flags
 rawset(_G, "MFE_NOPITCHROLLEASING", MFE_NOPITCHROLLEASING or (1<<14))
@@ -212,6 +212,7 @@ function Paint:initPlayer(p)
 		holsteranim = 0,
 		weaponzoffset = 0,
 		
+		-- brella stuff
 		shield = nil, -- shield mobj for brellas
 		shieldwait = 0, -- dont deploy for this long
 		shieldlag = Paint.CANOPY_ANIM, -- keep deployed for this long
@@ -222,6 +223,7 @@ function Paint:initPlayer(p)
 		deployshield = false,
 		wasdeployed = false,
 		shieldjustbroke = false, -- ugh
+		shieldjustregened = false,
 		firequeued = false, -- pressing fire again shortly after a tapfire will queue another shot up
 		
 		oldinktank = 100*FU,

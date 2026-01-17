@@ -21,7 +21,7 @@ function Paint.wcallback_brella_onfire(p,pt,wep, proj, mom_vec, angle, aiming, d
 		local aim = FixedMul(noise, P_RandomFixed())
 		
 		local proj = Paint:fireWeapon(p,wep, angle, aiming, false, true, ang,aim)
-		if not proj then continue end
+		if not (proj and proj.valid) then continue end
 		proj.fired_at = leveltime
 		proj.radius = p_rad
 		proj.height = p_hei
@@ -42,7 +42,7 @@ function Paint.wcallback_brella_onfire(p,pt,wep, proj, mom_vec, angle, aiming, d
 			local aim = FixedMul(spread,v_frac) + FixedMul(noise, P_RandomFixed())
 			
 			local proj = Paint:fireWeapon(p,wep, angle, aiming, false, true, ang,aim)
-			if not proj then continue end
+			if not (proj and proj.valid) then continue end
 			proj.fired_at = leveltime
 			proj.radius = p_rad
 			proj.height = p_hei

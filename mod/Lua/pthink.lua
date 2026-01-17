@@ -127,6 +127,16 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 	else
 		wepmo.eflags = $ &~MFE_VERTICALFLIP
 	end
+	if (wepmo.ghost and wepmo.ghost.valid)
+		local gh = wepmo.ghost
+		P_MoveOrigin(gh, wepmo.x,wepmo.y,wepmo.z)
+		gh.eflags = ($ &~MFE_VERTICALFLIP)|(wepmo.eflags & MFE_VERTICALFLIP)
+		gh.flags2 = ($ &~MF2_DONTDRAW)|(wepmo.flags2 & MF2_DONTDRAW)
+		gh.angle = wepmo.angle
+		gh.pitch = wepmo.pitch
+		gh.roll = wepmo.roll
+	end
+	
 	if (cur_weapon.guntype == WPT_CHARGER)
 		if (pt.charge)
 			local s = P_SpawnMobjFromMobj(wepmo,
@@ -551,6 +561,7 @@ addHook("PlayerThink",function(p)
 	-- brella thinker / shield thinker
 	local shieldout = false
 	pt.deployshield = false
+	pt.shieldjustregened = false
 	if (cur_weapon.guntype == WPT_BRELLA)
 		local sh = pt.shield
 		if not (sh and sh.valid)
@@ -646,6 +657,17 @@ addHook("PlayerThink",function(p)
 				pt.shieldlost = false
 				sh.paint_hp = sh.paint_maxhp
 				pt.shieldlosttime = 0
+				pt.shieldjustregened = true
+				
+				local g = P_SpawnGhostMobj(pt.weaponmobj)
+				pt.weaponmobj.ghost = g
+				g.state = cur_weapon:get(pt,"weaponstate")
+				g.colorized = true
+				P_SetScale(g, g.scale * 3/2)
+				g.destscale = 0
+				g.frame = $ &~FF_TRANSMASK
+				g.blendmode = AST_ADD
+				g.renderflags = $|RF_FULLBRIGHT
 			end
 		else
 			pt.shieldlosttime = 0

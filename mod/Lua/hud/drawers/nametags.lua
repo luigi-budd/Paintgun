@@ -142,7 +142,7 @@ addHook("HUD",function(v,p,cam)
 		local tx = pro.x
 		
 		v.dointerp(va.id)
-		v.drawScaled(pro.x,pro.y + 12*pro.scale, pro.scale/2, v.getSpritePatch(SPR_PAINT_MISC,1,0), 0, wacmap)
+		v.drawScaled(pro.x - (7*pro.scale)/2, pro.y + 8*pro.scale, pro.scale, v.cachePatch("TNYFN027"), 0, wcmap)
 		
 		local str = (va.tag) and (va.name) or play.name
 		pro.x = $ - (v.stringWidth(str,0,"thin")*pro.scale)/2
