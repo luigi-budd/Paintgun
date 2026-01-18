@@ -678,7 +678,6 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		pt.weaponmobjdupe.fireanim = 4
 	end
 	
-	
 	-- No recursion
 	if not pt.calledbacks.onfire
 	and (cur_weapon.callbacks and cur_weapon.callbacks.onfire ~= nil)
@@ -689,7 +688,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	P_SetOrigin(proj,
 		me.x + handoffset[1] + mom_vec.x + FixedMul(aimoffset_dist, aimoffset_vec.x),
 		me.y + handoffset[2] + mom_vec.y + FixedMul(aimoffset_dist, aimoffset_vec.y),
-		proj.z + me.momz + FixedMul(aimoffset_dist, aimoffset_vec.z)
+		proj.z + me.momz + FixedMul(aimoffset_dist, aimoffset_vec.z) + me.pmomz
 	)
 	return proj -- may be invalid
 end

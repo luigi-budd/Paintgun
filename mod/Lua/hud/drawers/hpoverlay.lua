@@ -1,5 +1,4 @@
 local HUD = Paint.HUD
-local fudge = FU/5
 addHook("HUD",function(v,p,cam)
 	local me = p.mo
 	if not (me and me.valid) then return end
@@ -17,12 +16,12 @@ addHook("HUD",function(v,p,cam)
 		end
 		if hp >= 100*FU then return end
 		
-		local fadeprogress = ease.insine(FixedDiv(hp, 100*FU), FU, 0)
-		local fade = fadeprogress
+		local fadeprogress = ease.linear(FixedDiv(hp, 100*FU), FU, 0)
+		local fade = FU/2 + (fadeprogress/2)
 		local scale = FU
 		local patch_progress = (FixedMul(8*FU, fadeprogress)/FU) + 1
 		patch_progress = clamp(1,$,8)
-		local patch = v.cachePatch("PAINT_OVERLAY" .. patch_progress)
+		local patch = v.cachePatch("PAINT_IOVERLAY" .. patch_progress)
 		local wid = (v.width() / v.dupx()) + 1
 		local hei = (v.height() / v.dupy()) + 1
 		local p_w = patch.width
@@ -41,12 +40,14 @@ addHook("HUD",function(v,p,cam)
 		--local white = v.getColormap(TC_DEFAULT, SKINCOLOR_WHITE, "Grayscale")
 		
 		fade = (10*$)/FU
-		fade = max($, 2)
-		fade = 10 - min($,9)
+		fade = 9 - min($,9)
+		fade = 0
 		
-		local strength = 5*FixedMul(fadeprogress, scale)
-		local speed = 7*FU
+		local strength = 6*FixedMul(fadeprogress, scale)
+		local speed = 6*FU
 		local YPOS = 100*FU + FixedMul( strength/3, sin(FixedAngle(speed *leveltime)) )
+		local blending = V_SUBTRACT
+		
 		v.dointerp(100)
 		if (v.renderer() == "opengl")
 			for i = 0,p_h
@@ -54,16 +55,17 @@ addHook("HUD",function(v,p,cam)
 				local shift = FixedMul(strength, cos(FixedAngle( speed * (leveltime+i) )) )
 				
 				v.drawCropped(160*FU + shift, YPOS + FixedMul(ifrac,Y_STR),
-					X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp,
+					X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|blending, clrmp,
 					0, ifrac, p_w*FU, FU
 				)
-				if fade < 5
+				/*
+				if fade >= 5
 					v.drawCropped(160*FU + shift, YPOS + FixedMul(ifrac,Y_STR),
-						X_STR,Y_STR, patch, ((fade*2) << V_ALPHASHIFT)|V_ADD, clrmp,
+						X_STR,Y_STR, patch, ((fade*2) << V_ALPHASHIFT)|blending, clrmp,
 						0, ifrac, p_w*FU, FU
 					)
 				end
-				
+				*/
 				/*
 				v.drawCropped(160*FU + shift, YPOS + FixedMul(ifrac,Y_STR),
 					X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp,
@@ -76,7 +78,7 @@ addHook("HUD",function(v,p,cam)
 				*/
 			end
 		else
-			v.drawStretched(160*FU, YPOS, X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|V_ADD, clrmp)
+			v.drawStretched(160*FU, YPOS, X_STR,Y_STR, patch, (fade << V_ALPHASHIFT)|blending, clrmp)
 		end
 		v.dointerp(false)
 		
