@@ -72,7 +72,7 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 	and cur_weapon:get(pt,"dualie_weaponstate") ~= nil
 		finalstate = cur_weapon:get(pt,"dualie_weaponstate")
 	elseif (cur_weapon.guntype == WPT_BRELLA)
-		if (pt.deployshield or pt.shieldlag or (pt.shield and pt.shield.paint_hp <= 0) or pt.shieldlost)
+		if (pt.deployshield or pt.shieldlag or ((pt.shield and pt.shield.valid) and pt.shield.paint_hp <= 0) or pt.shieldlost)
 		and cur_weapon:get(pt,"open_weaponstate") ~= nil
 			finalstate = cur_weapon:get(pt,"open_weaponstate")
 		end

@@ -890,7 +890,7 @@ local function nope(splat,mo)
 	return true
 end
 
-local MIN_INK_HP = 40*FU
+local MIN_INK_HP = 1*FU --40*FU
 addHook("TouchSpecial",function(splat,mo)
 	if not (splat and splat.valid) then return end
 	if not (mo and mo.valid and mo.health) then return nope(splat); end
