@@ -16,7 +16,7 @@ function HUD:killConfirm(p, targ, wasassist)
 	table.insert(HUD.memory.killfeed, {
 		pos = {x=mo.x,y=mo.y,z=mo.z + mo.height/2},
 		name = targ.name,
-		tics = 3 * TR,
+		tics = len,
 		assist = wasassist,
 		id = (#targ) + leveltime --always a player
 	})
