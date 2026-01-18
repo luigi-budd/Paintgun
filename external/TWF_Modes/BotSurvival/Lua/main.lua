@@ -17,8 +17,8 @@ G_AddGametype({
 	description = "Salmon Run"
 })
 
-sfxinfo[freeslot("sfx_p_db0")].caption = "/"
-sfxinfo[freeslot("sfx_p_db1")].caption = "/"
+--sfxinfo[freeslot("sfx_p_db0")].caption = "/"
+--sfxinfo[freeslot("sfx_p_db1")].caption = "/"
 sfxinfo[freeslot("sfx_p_db2")].caption = "/"
 sfxinfo[freeslot("sfx_p_db3")] = {
 	flags = SF_TOTALLYSINGLE|SF_NOMULTIPLESOUND,
@@ -1194,6 +1194,7 @@ end)
 TurfWar.registerGamemode(GT_SALMONRUN, {
 	starttime = TurfWar.const.NOTIMER,
 	nohud = true,
+	dieinwater = false,
 })
 
 /*
