@@ -14,9 +14,19 @@ addHook("HUD",function(v,p,cam)
 	local pt = p.paint
 	local inv = pt.inventory
 	
+	local subscale = FU/8
 	local x = ((160 - ((6 + 2)*inv.slots)/2) + 4)*FU
 	local y = (200 - 6)*FU
 	local flags = V_SNAPTOBOTTOM
+	
+	local sub_t = Paint.subs[Paint.weapons[pt.weapon_id].subtype or ""]
+	if sub_t
+		x = $ - (80 * subscale)/2
+		v.drawScaled(x,y,subscale, v.cachePatch("PTSUB_BG"), flags)
+		v.drawScaled(x,y,subscale, v.cachePatch(sub_t.icon), flags, v.getColormap(nil,0, "AllBlack"))
+		x = $ + (80 * subscale)
+	end
+	
 	for i = 1,inv.slots
 		v.drawScaled(x,y,FU,
 			v.cachePatch("PAINT_BALL"),

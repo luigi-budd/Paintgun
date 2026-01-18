@@ -643,7 +643,12 @@ addHook("MobjThinker",function(shot)
 			P_SetObjectMomZ(d,-30*FU)
 		end
 		
-		if dist >= range
+		local momx, momy, momz = shot.momx,shot.momy,shot.momz
+		if shot.quartersteps
+			momx, momy, momz = $1 * 4, $2 * 4, $3 * 4
+		end
+		if dist >= range - R_PointTo3DDist(0,0,0, momx, momy, momz)
+			shot.momx,shot.momy,shot.momz = 0,0,0
 			ExplodeShot(shot)
 			return
 		end

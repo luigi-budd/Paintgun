@@ -9,6 +9,7 @@ sfxinfo[freeslot("sfx_pb_ht5")].caption = "Suction"
 Paint:registerSubWeapon({
 	realname = "Suction Bomb",
 	name = "suctionbomb",
+	icon = "PTSUB_SUCTION",
 	spawnstate = S_PAINT_SUCTIONBOMB,
 
 	fuse = 2*TR,

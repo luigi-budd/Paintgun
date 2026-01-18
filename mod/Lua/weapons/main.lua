@@ -26,6 +26,7 @@ rawset(_G, "SUBMOVE_OFFSET", 0)
 Paint.subs = {}
 local sub_meta = {
 	realname = "Sub Weapon",
+	icon = "MISSING",
 	spawnstate = nil,
 
 	airdrag = FU * 9/10,
