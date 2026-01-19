@@ -39,6 +39,7 @@ end
 sfxinfo[freeslot("sfx_pt_noi")].caption = "Low ink!"
 sfxinfo[freeslot("sfx_pt_sig")].caption = "Signal"
 sfxinfo[freeslot("sfx_pt_srd")].caption = "Sub ready!"
+sfxinfo[freeslot("sfx_pt_ctv")].caption = "/" -- center view
 
 sfxinfo[freeslot("sfx_pt_toh")].caption = "/"
 sfxinfo[freeslot("sfx_pt_tos")].caption = "/"

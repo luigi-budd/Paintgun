@@ -17,6 +17,7 @@ freeslot("SPR_PAINT_INKTANK")
 rawset(_G,"CA2_SQUIDFORM", 132)
 
 local ANGLE_CAP = FixedAngle(70*FU) >> 16
+local wascentering = 0
 addHook("PlayerCmd",function(p,cmd)
 	if not (p.paint and p.paint.active) then return end
 	if cmd.aiming > ANGLE_CAP
@@ -24,6 +25,18 @@ addHook("PlayerCmd",function(p,cmd)
 	elseif cmd.aiming < -ANGLE_CAP
 		cmd.aiming = -ANGLE_CAP
 	end
+	
+	local centering = input.gameControlDown(GC_CENTERVIEW)
+	if centering and not wascentering
+		local angle = p.paint.anglestand
+		if (cmd.forwardmove ~= 0) or (cmd.sidemove ~= 0)
+			angle = (cmd.angleturn << 16) + R_PointToAngle2(0, 0, cmd.forwardmove << 16, -cmd.sidemove << 16)
+		end
+		
+		cmd.angleturn = angle >> 16
+		S_StartSound(nil, sfx_pt_ctv, p)
+	end
+	wascentering = centering
 end)
 
 Paint.basePlayer = {}
