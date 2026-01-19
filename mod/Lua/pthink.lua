@@ -1,6 +1,9 @@
 local CV = Paint.CV
 local MAX_SQUIDTIME = 3
 local MAX_TRANSTIME = 6
+
+local clrstr_lut = {}
+
 local setalpha = false
 local alphatrans = 0
 local function addalpha(p)
@@ -10,8 +13,6 @@ local function addalpha(p)
 	end
 	setalpha = true
 end
-
-local clrstr_lut = {}
 
 freeslot("SPR_PAINT_INKTANK")
 rawset(_G,"CA2_SQUIDFORM", 132)
@@ -1704,14 +1705,21 @@ addHook("PlayerThink",function(p)
 					dot.blendmode = AST_ADD
 					P_SetOrigin(dot, dot.x,dot.y,dot.z)
 				end
-				local lock = P_SpawnMobj(pos.x,pos.y,pos.z, MT_PARTICLE)
-				lock.state = S_LOCKON1
-				lock.tics = 2
-				lock.fuse = 2
-				lock.scale = $ * 2
-				lock.shadowscale = 4*FU
-				if pos.ceiling
-					lock.renderflags = $|RF_VERTICALFLIP
+				local alpha = (FU/2) + abs(sin(FixedAngle(leveltime*FU*10)))/2
+				for i = 0,1
+					local lock = P_SpawnMobj(pos.x,pos.y,pos.z, MT_PARTICLE)
+					lock.state = S_LOCKON1
+					lock.sprite = SPR_PAINT_MISC
+					lock.frame = 33|FF_FULLBRIGHT|FF_ADD|FF_PAPERSPRITE
+					lock.angle = R_PointToAngle(lock.x,lock.y) + (ANGLE_90 * i) + ANGLE_45
+					lock.tics = 2
+					lock.fuse = 2
+					lock.shadowscale = 3*FU
+					lock.alpha = alpha
+					lock.color = me.color
+					if pos.ceiling
+						lock.renderflags = $|RF_VERTICALFLIP
+					end
 				end
 				if (test and test.valid)
 					P_RemoveMobj(test)

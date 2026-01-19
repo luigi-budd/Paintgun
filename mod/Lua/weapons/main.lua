@@ -28,6 +28,7 @@ local sub_meta = {
 	realname = "Sub Weapon",
 	icon = "MISSING",
 	spawnstate = nil,
+	spawnscale = FU/2,
 
 	airdrag = FU * 9/10,
 	gravmul = FU,
@@ -699,6 +700,7 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 	local me = p.realmo
 	local pt = p.paint
 	local sub_t = Paint.subs[wep.subtype]
+	aiming = $ + FixedAngle(5*FU)
 	
 	if (pt.inktank < sub_t:get(pt,"inkcost") - 1)
 		--pt.cooldown = firerate + 1
@@ -729,12 +731,17 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 		(aimline) and MT_RAY or MT_PAINT_BOMB
 	)
 	local vec = SphereToCartesian(angle, aiming)
-	bomb.momx = FixedMul(FixedMul(SUBMOVE_LATERAL, me.scale), vec.x * 8/5)
-	bomb.momy = FixedMul(FixedMul(SUBMOVE_LATERAL, me.scale), vec.y * 8/5)
+	bomb.momx = FixedMul(FixedMul(SUBMOVE_LATERAL, me.scale), vec.x)
+	bomb.momy = FixedMul(FixedMul(SUBMOVE_LATERAL, me.scale), vec.y)
 	bomb.momz = FixedMul(FixedMul(SUBMOVE_VERTICAL, me.scale), vec.z) + FixedMul(SUBMOVE_OFFSET, me.scale)
 	bomb.momz = $ * flip
 	
-	bomb.shadowscale = 2*FU
+	local sprscale = sub_t:get(pt,"spawnscale")
+	bomb.spritexscale = sprscale
+	bomb.spriteyscale = sprscale
+	bomb.paint_scale = sprscale
+	
+	bomb.shadowscale = FixedMul(2*FU, sprscale)
 	--bomb.fuse = 5 * TR
 	bomb.target = me
 	bomb.tracer_player = p

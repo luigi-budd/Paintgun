@@ -335,7 +335,7 @@ addHook("MobjThinker",function(sub)
 			sub.pitch = 0
 		end
 	end
-
+	
 	if dofuse
 		if sub.fusetimer <= TR
 		and not sub.playedalarm
