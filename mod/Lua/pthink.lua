@@ -1086,18 +1086,57 @@ addHook("PlayerThink",function(p)
 					if not S_SoundPlaying(me, sfx_pt_swm)
 						S_StartSoundAtVolume(me,sfx_pt_swm,255/2, p)
 					end
+					local off = 8*FU
 					local blob = makeBlob(p,me,pt, 0,0)
 					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
 					P_SetOrigin(blob, me.x, me.y, blob.z)
+					
 					if (pt.wasclimbing)
-						local h_ang = Paint:controlDir(p)
 						local v_ang = FixedAngle(P_RandomFixedRange(-25*FU,25*FU))
-						local v_speed = P_RandomRange(5,10)*me.scale
-						P_Thrust(blob,h_ang, -P_RandomRange(1,3)*me.scale)
-						P_Thrust(blob,h_ang+ANGLE_90, FixedMul(v_speed, sin(v_ang)) )
+						local xydisp = P_RandomFixedRange(-off, off)
+						P_SetOrigin(blob,
+							me.x + P_ReturnThrustX(nil, wallangle, xydisp),
+							me.y + P_ReturnThrustY(nil, wallangle, xydisp),
+							blob.z + P_RandomFixedRange(-off, off)
+						)
 						
+						local v_speed = P_RandomRange(5,10)*me.scale
+						P_Thrust(blob,wallangle - ANGLE_90, -P_RandomRange(1,3)*me.scale)
+						P_Thrust(blob,wallangle, FixedMul(v_speed, sin(v_ang)) )
 						blob.momz = $ + me.momz/2
+						
+						if (leveltime % 2 == 0)
+							local angstep = (60 / 4)*FU
+							local dist = FixedDiv(me.radius, me.scale) + 4*FU
+							for i = -4, 4
+								local va = ANGLE_90 + FixedAngle(angstep * i)
+								local xydist = FixedMul(cos(va), dist)
+								local splash = P_SpawnMobjFromMobj(me,
+									P_ReturnThrustX(nil, wallangle, xydist),
+									P_ReturnThrustY(nil, wallangle, xydist),
+									FixedMul(sin(va), dist), MT_PARTICLE
+								)
+								P_SetOrigin(splash, splash.x,splash.y,splash.z)
+								splash.state = S_PAINT_SPLASH2
+								splash.color = Paint:getPlayerColor(p)
+								splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+								P_SetScale(splash, splash.scale / 2, true)
+								local rand = P_RandomRange(0,2)
+								splash.frame = $ + rand
+								splash.tics = $ - rand
+								
+								splash.momx = me.momx * 3/4
+								splash.momy = me.momy * 3/4
+								splash.momz = me.momz / 2
+							end
+						end
 					else
+						P_SetOrigin(blob,
+							me.x + P_RandomFixedRange(-off, off),
+							me.y + P_RandomFixedRange(-off, off),
+							blob.z
+						)
+						
 						local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomFixedRange(-25*FU,25*FU))
 						P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
 						P_Thrust(blob,ang, -P_RandomRange(6,15)*me.scale)
@@ -1106,20 +1145,43 @@ addHook("PlayerThink",function(p)
 						blob.momy = $ + me.momy
 						
 						if (leveltime % 2 == 0)
-						and (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 20*me.scale)
-							local range = 128
-							local wind = P_SpawnMobjFromMobj(me,
-								P_RandomRange(-range, range)*FU,
-								P_RandomRange(-range, range)*FU,
-								P_RandomRange(0, range)*FU,
-								MT_THOK
-							)
-							wind.blendmode = AST_ADD
-							wind.renderflags = RF_SEMIBRIGHT|RF_PAPERSPRITE
-							wind.sprite = SPR_RAIN
-							wind.rollangle = ANGLE_90
-							wind.angle = R_PointToAngle2(0,0,me.momx,me.momy)
-							wind.drawonlyforplayer = p
+							local angstep = (60 / 4)*FU
+							local dist = FixedDiv(me.radius, me.scale) + 4*FU
+							for i = -4, 4
+								local fa = ang + FixedAngle(angstep * i)
+								local splash = P_SpawnMobjFromMobj(me,
+									P_ReturnThrustX(nil, fa, dist),
+									P_ReturnThrustY(nil, fa, dist),
+									2*FU, MT_PARTICLE
+								)
+								P_SetOrigin(splash, splash.x,splash.y, me.floorz)
+								splash.state = S_PAINT_SPLASH2
+								splash.color = Paint:getPlayerColor(p)
+								splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+								P_SetScale(splash, splash.scale / 2, true)
+								local rand = P_RandomRange(0,2)
+								splash.frame = $ + rand
+								splash.tics = $ - rand
+								
+								splash.momx = me.momx * 3/4
+								splash.momy = me.momy * 3/4
+							end
+							
+							if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 20*me.scale)
+								local range = 128
+								local wind = P_SpawnMobjFromMobj(me,
+									P_RandomRange(-range, range)*FU,
+									P_RandomRange(-range, range)*FU,
+									P_RandomRange(0, range)*FU,
+									MT_THOK
+								)
+								wind.blendmode = AST_ADD
+								wind.renderflags = RF_SEMIBRIGHT|RF_PAPERSPRITE
+								wind.sprite = SPR_RAIN
+								wind.rollangle = ANGLE_90
+								wind.angle = R_PointToAngle2(0,0,me.momx,me.momy)
+								wind.drawonlyforplayer = p
+							end
 						end
 					end
 					

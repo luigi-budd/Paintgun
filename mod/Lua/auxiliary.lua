@@ -107,6 +107,14 @@ states[S_PAINT_SPLASH] = {
 	var2 = 2,
 	tics = (14 - 6)*2,
 }
+freeslot("S_PAINT_SPLASH2")
+states[S_PAINT_SPLASH2] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 10|FF_ANIMATE|FF_SEMIBRIGHT,
+	var1 = 14 - 10,
+	var2 = 2,
+	tics = (14 - 10)*2,
+}
 
 freeslot("S_PAINT_FLAIR")
 states[S_PAINT_FLAIR] = {

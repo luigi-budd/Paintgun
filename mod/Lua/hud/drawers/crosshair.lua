@@ -475,7 +475,7 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 	if (workray and workray.valid)
 		local result = K_GetScreenCoords(v,p,cam, workray, {dontclip = true})
 		--if not result.onscreen then return end
-		SCALE = result.scale
+		SCALE = FixedDiv(result.scale, p.realmo.scale)
 		MID_X = result.x
 		y = result.y
 	end
