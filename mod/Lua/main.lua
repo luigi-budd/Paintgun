@@ -59,6 +59,7 @@ rawset(_G, "TR", TICRATE)
 
 rawset(_G,"Paint",{})
 
+Paint.wipeouttic = -1
 Paint.alphateam = {}
 Paint.bravoteam = {}
 addHook("ThinkFrame",do
@@ -365,4 +366,5 @@ addHook("NetVars",function(n)
 	Paint.modes = n($)
 	Paint.alphateam = n($)
 	Paint.bravoteam = n($)
+	Paint.wipeouttic = n($)
 end)

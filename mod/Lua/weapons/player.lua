@@ -16,6 +16,7 @@ Paint.isFriendlyFire = isFriendlyFire
 -- so dont show the disadvantage one when that happens
 function Paint:checkWipeout()
 	if not G_GametypeHasTeams() then return end
+	if leveltime == Paint.wipeouttic then return end
 	local alphacount = 0
 	local alphaplaying = 0
 	local bravocount = 0
@@ -58,14 +59,20 @@ function Paint:checkWipeout()
 		imwiped = bravowiped
 		theyrewiped = alphawiped
 	end
-
+	
 	/*
 	print(
-		alphaplaying,alphacount, "",
-		bravoplaying,bravocount, "",
-		alphawiped, bravowiped, myteam
+		alphaplaying .." ".. alphacount, "",
+		bravoplaying .." ".. bravocount, "",
+		tostring(alphawiped) .." ".. tostring(bravowiped) .." ".. myteam, "",
+		tostring(imwiped) .." ".. tostring(theyrewiped)
 	)
 	*/
+	
+	if not (alphawiped)
+	and not (bravowiped)
+		return
+	end
 
 	-- dont "wipeout" the enemy team if no ones ON that team
 	if not imwiped
@@ -95,6 +102,7 @@ function Paint:checkWipeout()
 		S_StartSound(nil, sfx_pwip_a)
 	end
 	Paint.HUD:wipeoutAnim(disadvantage and myteam or (3 - myteam))
+	Paint.wipeouttic = leveltime
 end
 
 -- shot and source_player can be nil, but inf should NEVER be nil
