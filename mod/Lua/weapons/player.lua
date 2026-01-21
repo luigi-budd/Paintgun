@@ -182,6 +182,8 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	else
 		deathcolor = (source_player and source_player.valid) and self:getPlayerColor(source_player) or ColorOpposite(self:getPlayerColor(p))
 	end
+	
+	--TODO: a generic function for spawning droplets and splats would be nice
 	for i = 0,30
 		local angle = FixedAngle(P_RandomFixedRange(0,360*FU))
 		local drop = P_SpawnMobjFromMobj(me,0,0,FU, MT_PAINT_SHOT)
@@ -200,6 +202,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 		S_StartSound(me, sfx_pt_ow1)
 	end
 
+	--TODO: itd probably be better to have a generic vfx function for handling explosions like these
 	local spr_scale = FU * 2
 	local tntstate = S_TNTBARREL_EXPL3
 	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
