@@ -26,12 +26,15 @@ Paint:registerSubWeapon({
 	guidedrot = true,
 	
 	blockedfunc = function(bomb, hitceiling, line)
+		if bomb.alreadyblocked then return true; end
+		bomb.alreadyblocked = true
 		bomb.nophysics = true
 		bomb.forcefuse = true
 		bomb.momx,bomb.momy,bomb.momz = 0,0,0
 		S_StartSound(bomb, sfx_pb_ht5)
 		S_StopSoundByID(bomb, sfx_pb_fly)
 		
+		bomb.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT
 		bomb.state = S_PAINT_SUCTIONBOMB_F
 		if (line and line.valid)
 			local line_ang = R_PointToAngle2(

@@ -19,8 +19,8 @@ sfxinfo[sfx_p_s2_2].flags = SF_X2AWAYSOUND|SF_X4AWAYSOUND
 
 sfxinfo[freeslot("sfx_pt_dge")].caption = "Dodge roll"
 
-rawset(_G, "SUBMOVE_LATERAL", 65*FU)
-rawset(_G, "SUBMOVE_VERTICAL", 45*FU)
+rawset(_G, "SUBMOVE_LATERAL", 50*FU)
+rawset(_G, "SUBMOVE_VERTICAL", SUBMOVE_LATERAL)
 rawset(_G, "SUBMOVE_OFFSET", 0)
 
 Paint.subs = {}
@@ -30,9 +30,8 @@ local sub_meta = {
 	spawnstate = nil,
 	spawnscale = FU/2,
 
-	airdrag = FU * 9/10,
+	airdrag = FU * 97/100,
 	gravmul = FU,
-	slowspeed = 15*FU,
 	
 	inkcost = 70*FU,
 	inkdelay = TR,
@@ -754,7 +753,6 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 	bomb.subtype = wep.subtype
 	bomb.airdrag = sub_t:get(pt,"airdrag")
 	bomb.gravmul = sub_t:get(pt,"gravmul")
-	bomb.slowspeed = FixedMul(sub_t:get(pt,"slowspeed"), bomb.scale)
 	bomb.fusetimer = sub_t:get(pt,"fuse")
 	bomb.explodeoncontact = sub_t:get(pt,"explodeoncontact")
 	bomb.allowhitmarkers = sub_t:get(pt,"allowhitmarkers")
@@ -787,7 +785,7 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 		
 		local backfact = FixedDiv(pt.fixed_fmove, 50*FU)
 		if backfact > 0 then backfact = 0; end
-		P_Thrust(bomb, angle, 15 * backfact)
+		P_Thrust(bomb, angle, 10 * backfact)
 	end
 
 	P_SetOrigin(bomb,

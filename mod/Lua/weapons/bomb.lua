@@ -229,12 +229,7 @@ function Paint:bombPhysics(mo, subtype, aimline)
 		mo.momx = FixedMul($, mo.airdrag)
 		mo.momy = FixedMul($, mo.airdrag)
 		mo.momz = $ - (FixedMul(mo.scale, mo.gravmul) * P_MobjFlip(mo))
-		
-		local speed = R_PointToDist2(0,0, mo.momx,mo.momy)
-		if (speed < mo.slowspeed or mo.momz >= mo.slowspeed)
-		and (mo.momz * P_MobjFlip(mo) > 0)
-			mo.momz = FixedMul($, mo.airdrag)
-		end
+		mo.momz = FixedMul($, mo.airdrag)
 	end
 end
 
