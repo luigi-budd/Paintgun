@@ -23,7 +23,7 @@ addHook("HUD",function(v,p,cam)
 		local fadeprogress = ease.linear(FixedDiv(hp, 100*FU), FU, 0)
 		local scale = FU
 		if fadeprogress <= FU/2
-			scale = $ + ease.outquad(fadeprogress*2, FU/2, 0)
+			scale = $ + ease.outquad(fadeprogress*2, FU/3, 0)
 		end
 		local patch_progress = (FixedMul(11*FU, fadeprogress)/FU)
 		patch_progress = clamp(0,$,11)
