@@ -1,7 +1,11 @@
-freeslot("S_PAINT_SUCTIONBOMB")
-states[S_PAINT_SUCTIONBOMB] = {
-	frame = 0|FF_SEMIBRIGHT,
-	sprite = SPR_BARR,
+states[freeslot("S_PAINT_SUCTIONBOMB_F")] = {
+	frame = 2|FF_SEMIBRIGHT,
+	sprite = SPR_PAINT_BOMB,
+	tics = -1,
+}
+states[freeslot("S_PAINT_SUCTIONBOMB_W")] = {
+	frame = 3|FF_SEMIBRIGHT,
+	sprite = SPR_PAINT_BOMB,
 	tics = -1,
 }
 
@@ -10,7 +14,7 @@ Paint:registerSubWeapon({
 	realname = "Suction Bomb",
 	name = "suctionbomb",
 	icon = "PTSUB_SUCTION",
-	spawnstate = S_PAINT_SUCTIONBOMB,
+	spawnstate = S_PAINT_SUCTIONBOMB_W,
 
 	fuse = 2*TR,
 	
@@ -28,10 +32,20 @@ Paint:registerSubWeapon({
 		S_StartSound(bomb, sfx_pb_ht5)
 		S_StopSoundByID(bomb, sfx_pb_fly)
 		
+		bomb.state = S_PAINT_SUCTIONBOMB_F
 		if (line and line.valid)
-			bomb.angle = R_PointToAngle2(
+			local line_ang = R_PointToAngle2(
 				line.v1.x, line.v1.y, line.v2.x, line.v2.y
 			) - ANGLE_90*(P_PointOnLineSide(bomb.x,bomb.y, line) and 1 or -1)
+			bomb.angle = line_ang
+			
+			local ox,oy = P_ClosestPointOnLine(bomb.x,bomb.y, line)
+			ox = $ + P_ReturnThrustX(nil, bomb.angle, -(bomb.radius + 2*bomb.scale))
+			oy = $ + P_ReturnThrustY(nil, bomb.angle, -(bomb.radius + 2*bomb.scale))
+			P_MoveOrigin(bomb, ox,oy, bomb.z)
+			bomb.state = S_PAINT_SUCTIONBOMB_W
+		else
+			bomb.angle = $ + ANGLE_90
 		end
 		if hitceiling
 			bomb.renderflags = $|RF_VERTICALFLIP
@@ -40,10 +54,7 @@ Paint:registerSubWeapon({
 		bomb.roll = 0
 		bomb.pitch = 0
 		
+		bomb.forceangle = bomb.angle
 		return true
-	end,
-	physicsthink = function(bomb, _, aim)
-		if aim then return end
-		bomb.colorized = true
 	end
 })

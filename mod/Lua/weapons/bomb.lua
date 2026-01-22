@@ -261,6 +261,11 @@ addHook("MobjThinker",function(sub)
 	
 	if not sub.guidedrot
 		sub.angle = $ + FixedAngle(R_PointToDist2(0,0, sub.momx,sub.momy))
+	else
+		sub.angle = R_PointToAngle2(0,0, sub.momx, sub.momy)
+	end
+	if sub.forceangle ~= nil
+		sub.angle = sub.forceangle
 	end
 	
 	local dofuse = sub.forcefuse
