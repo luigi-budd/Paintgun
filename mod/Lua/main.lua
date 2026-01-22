@@ -249,6 +249,10 @@ function Paint:initPlayer(p)
 		hurtat = {}, -- leveltime indices for capping damage for certain guntypes
 		hurttic = 0,
 		timetoheal = 0,
+		-- SP armor, set brokenarmor to false when armorregen == 0
+		brokenarmor = false,
+		armorregen = 0, 
+		--
 		inink = 0, -- 0 = not in ink, -1 = friendly ink, 1 = enemy ink
 		inktime = 0,
 		inkleveltime = 0, -- dont set inink multiple times a tic
@@ -286,6 +290,8 @@ function Paint:resetPlayer(p)
 	pt.timetoheal = 0
 	pt.hp = 100*FU
 	pt.hurtat = {}
+	pt.brokenarmor = false
+	pt.armorregen = 0
 	pt.oldinktank = 100*FU
 	pt.oldtankanim = 100*FU
 	pt.inktank = 100*FU

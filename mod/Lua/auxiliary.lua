@@ -132,3 +132,20 @@ states[S_PAINT_CHARGEDMAX] = {
 	var1 = 10,
 	var2 = 2,
 }
+
+freeslot("S_PAINT_BROKEARMOR")
+states[S_PAINT_BROKEARMOR] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 34|FF_FULLBRIGHT|FF_ADD|FF_PAPERSPRITE,
+	tics = 1,
+	action = function(s)
+		s.angle = $ + s.rang
+		s.rollangle = $ + s.rroll
+		
+		if P_IsObjectOnGround(s)
+			s.momz = -s.prevmomz / 2
+		end
+		s.prevmomz = s.momz
+	end,
+	nextstate = S_PAINT_BROKEARMOR
+}

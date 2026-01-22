@@ -111,14 +111,55 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	local me = p.mo
 
 	if (p.powers[pw_shield] ~= 0)
+	or (gametype == GT_COOP and (pt.brokenarmor == false))
+		local noshield = p.powers[pw_shield] == 0
 		pt.hp = 100*FU
 		S_StartSound(me, sfx_pt_al)
 		p.powers[pw_shield] = 0
 		p.powers[pw_flashing] = TR*3/2
 		
 		if (p == displayplayer or p == secondarydisplayplayer)
-			P_StartQuake(15*FU, TR)
+			P_StartQuake(15*FU, TR/2)
 		end
+		Paint.HUD:painSurge(p)
+
+		if gametype == GT_COOP
+		and noshield
+			pt.hp = 15*FU
+			pt.brokenarmor = true
+			pt.armorregen = 10 * TR
+			
+			local inkcolor = Paint:getPlayerColor(p)
+			for i = 0,30
+				local angle = FixedAngle(P_RandomFixedRange(0,360*FU))
+				local drop = P_SpawnMobjFromMobj(me,0,0,FU, MT_PAINT_SHOT)
+				if drop and drop.valid
+					drop.target = me
+					drop.angle = angle
+					drop.color = inkcolor
+					drop.trail = true
+					drop.lifespan = 0
+					drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
+					drop.tracer_player = p
+					P_SetObjectMomZ(drop, P_RandomFixedRange(1*FU,17*FU))
+					P_Thrust(drop, angle, P_RandomFixedRange(1*FU,17*FU))
+				end
+			end
+
+			for i = 0,3
+				local s = P_SpawnMobjFromMobj(me, 0,0,0, MT_MSSHIELD_FRONT)
+				P_Thrust(s, ANGLE_90 * i, 4*me.scale)
+				s.alpha = FU
+				s.blendmode = AST_ADD
+				s.scale = $ * 3/2
+				s.colorized = true
+				s.color = SKINCOLOR_RED
+				s.fuse = TR/2
+				s.destscale = 0
+				s.scalespeed = FixedDiv(s.scale, s.fuse*FU)
+			end
+		end
+
 		return
 	end
 	

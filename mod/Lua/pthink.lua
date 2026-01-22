@@ -1820,15 +1820,110 @@ addHook("PlayerThink",function(p)
 	do
 		if pt.hp ~= 100*FU
 		and (pt.timetoheal <= 0)
+			local hpinc = 0
 			if pt.inink == Paint.ININK_FRIENDLY
 			and (FixedHypot(me.momx,me.momy) < 5*me.scale)
 			and pt.hidden
-				pt.hp = $ + 8*FU
+				hpinc = 8*FU
 			elseif pt.inink ~= Paint.ININK_ENEMY
-				pt.hp = $ + FixedDiv(12*FU + FU/2, TR*FU)
+				hpinc = FixedDiv(12*FU + FU/2, TR*FU)
 			end
-			pt.hp = min($, 100*FU)
+			if pt.brokenarmor
+				if hpinc == 8*FU and (leveltime % 3 == 0)
+					pt.armorregen = max($ - 1, 0)
+				end
+				hpinc = 0
+			end
+			
+			pt.hp = min($ + hpinc, 100*FU)
 		end
+		
+		if pt.brokenarmor
+			pt.armorregen = $ - 1
+			-- insta-regen cases
+			if (p.powers[pw_shield])
+				p.powers[pw_shield] = 0
+				pt.armorregen = 0
+			end
+			if (p.last_starpostnum ~= nil)
+			and (p.starpostnum > p.last_starpostnum)
+				pt.armorregen = 0
+			end
+			
+			if (leveltime % 2)
+				local s = P_SpawnMobjFromMobj(me, 0,0,
+					P_RandomFixedRange(0, FixedDiv(me.height,me.scale)),
+					MT_PARTICLE
+				)
+				s.color = P_RandomRange(SKINCOLOR_SALMON, SKINCOLOR_KETCHUP)
+				s.blendmode = AST_ADD
+				s.spritexscale = $ / 8
+				s.spriteyscale = s.spritexscale
+				P_SetScale(s, s.scale * 4, true)
+				s.flags = $ &~(MF_NOCLIPTHING|MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT)
+				P_SetObjectMomZ(s, P_RandomFixedRange(1*FU, 5*FU))
+				s.angle = FixedAngle(P_RandomFixedRange(0,360*FU))
+				P_Thrust(s, s.angle, P_RandomFixedRange(1*FU, 10*FU))
+				s.angle = $ + ANGLE_90
+				
+				s.prevmomz = s.momz
+				s.fuse = TR / 2
+				s.rang = FixedAngle(P_RandomFixedRange(0,90*FU))
+				s.rroll = FixedAngle(P_RandomFixedRange(-30*FU,30*FU))
+				s.state = S_PAINT_BROKEARMOR
+			end
+			do
+				local rad = FixedDiv(me.radius, me.scale) * 3/4
+				local hei = FixedDiv(me.height,me.scale)
+				local s = P_SpawnMobjFromMobj(me,
+					P_RandomFixedRange(-rad, rad),
+					P_RandomFixedRange(-rad, rad),
+					hei/2 + P_RandomFixedRange(-hei/5, hei/5),
+					MT_PARTICLE
+				)
+				s.color = P_RandomRange(SKINCOLOR_SALMON, SKINCOLOR_KETCHUP)
+				s.blendmode = AST_ADD
+				s.spritexscale = $ / P_RandomRange(2,4)
+				s.spriteyscale = s.spritexscale
+				
+				s.fuse = 3
+				s.state = S_THOK
+			end
+			
+			if pt.armorregen <= 0
+				pt.brokenarmor = false
+				S_StartSound(me, sfx_pt_ag)
+				me.paint_barmor = 6
+				me.paint_barmor_hp = pt.hp
+				me.paint_overlayhp = pt.hp
+				pt.hp = 100*FU
+				
+				local ov = P_SpawnMobjFromMobj(me, 0,0,0, MT_PAINT_GUN)
+				ov.target = me
+				ov.state = mobjinfo[MT_MSSHIELD_FRONT].spawnstate
+				ov.colorized = true
+				ov.color = SKINCOLOR_GOLDENROD
+				ov.blendmode = AST_ADD
+				ov.scale = $ * 2
+				ov.fuse = TR / 2
+				ov.destscale = 0
+				ov.scalespeed = FixedDiv(ov.scale, ov.fuse*FU)
+			end
+			p.normalspeed = $ / 3
+		end
+		if me.paint_barmor ~= nil
+			me.paint_overlayhp = ease.outquad(
+				FU - ((FU/6) * me.paint_barmor),
+				me.paint_barmor_hp, pt.hp
+			)
+			me.paint_barmor = $ - 1
+			if me.paint_barmor <= 0
+				me.paint_barmor = nil
+				me.paint_overlayhp = nil
+			end
+		end
+		p.last_starpostnum = p.starpostnum
+		
 		pt.timetoheal = max($-1,0)
 		
 		if pt.inink ~= 0
@@ -2089,7 +2184,7 @@ addHook("PostThinkFrame", do
 			if overlay.color == SKINCOLOR_NONE
 				overlay.color = ColorOpposite(Paint:getPlayerColor(p))
 			end
-			if (pt.hidden)
+			if (pt.hidden or (p.powers[pw_flashing] and (me.flags2 & MF2_DONTDRAW)))
 				overlay.flags2 = $|MF2_DONTDRAW
 			else
 				overlay.flags2 = $ &~MF2_DONTDRAW
