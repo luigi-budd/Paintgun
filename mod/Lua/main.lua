@@ -21,11 +21,13 @@ sfxinfo[freeslot("sfx_pnt_h6")] = hitmarker_attribs
 -- Revive shot
 sfxinfo[freeslot("sfx_pnt_r0")] = hitmarker_attribs
 
-for i = 0,3
+for i = 0,2
 	sfxinfo[freeslot("sfx_pt_ow"..i)].caption = "/"
 end
 sfxinfo[sfx_pt_ow1].flags = SF_X2AWAYSOUND|SF_TOTALLYSINGLE
-sfxinfo[sfx_pt_ow3].caption = "Shield lost!"
+
+sfxinfo[freeslot("sfx_pt_al")].caption = "\x85".."Armor lost!\x80"
+sfxinfo[freeslot("sfx_pt_ag")].caption = "\x82".."Armor get!\x80"
 
 --sorry that these are all wavs
 for i = 0,12

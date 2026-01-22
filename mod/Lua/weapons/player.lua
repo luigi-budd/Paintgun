@@ -112,8 +112,9 @@ function Paint:killPlayer(p, shot, source_player, inf)
 
 	if (p.powers[pw_shield] ~= 0)
 		pt.hp = 100*FU
-		S_StartSound(me, sfx_pt_ow3)
+		S_StartSound(me, sfx_pt_al)
 		p.powers[pw_shield] = 0
+		p.powers[pw_flashing] = TR*3/2
 		
 		if (p == displayplayer or p == secondarydisplayplayer)
 			P_StartQuake(15*FU, TR)
