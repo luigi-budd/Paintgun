@@ -1,4 +1,5 @@
 local HUD = Paint.HUD
+local offset = 0
 
 freeslot("SPR_PAINT_HITMARKER")
 function HUD:hitMarker(p, pos, rotangle, sizemul, powerful, blocked)
@@ -16,8 +17,9 @@ function HUD:hitMarker(p, pos, rotangle, sizemul, powerful, blocked)
 		sizemul = sizemul or FU,
 		powerful = powerful,
 		blocked = blocked,
-		interptag = leveltime
+		interptag = leveltime + offset
 	})
+	offset = $ + 1
 end
 
 local function Icon(v,p,cam, info)
@@ -50,7 +52,6 @@ addHook("HUD",function(v,p,cam)
 	for k, info in ipairs(feed)
 		if info.tics <= 0
 			table.insert(toremove, k)
-			continue
 		end
 	end
 	for _, k in ipairs(toremove)
@@ -66,4 +67,5 @@ addHook("HUD",function(v,p,cam)
 			info.frame = $ + 1
 		end
 	end
+	offset = 0
 end,"game")
