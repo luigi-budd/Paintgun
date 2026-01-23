@@ -1,6 +1,9 @@
 -- Player interactions and handlers
 local CV = Paint.CV
 
+-- TODO: a weird and inconsistant mix of several of these types of functions
+--		 are used all throughout the codebase... a more unified way to check for
+--		 player-player, player-mobj, mobj-mobj "teamness" needs to be made
 local function isFriendlyFire(p1,p2)
 	if not (p1 and p1.valid and p2 and p2.valid) then return false; end
 	if G_GametypeHasTeams()
