@@ -46,6 +46,7 @@ Paint:registerWeapon({
 	inkdelay = TR,
 	dragmul = FU*58/100,
 	tapfire = false,
+	capdamage = true,
 	
 	startlag = 5,
 	endlag = 12,

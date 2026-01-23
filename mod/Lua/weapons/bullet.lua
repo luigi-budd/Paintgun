@@ -326,7 +326,7 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo, critical)
 		hitmarker = sfx_pnt_h6
 	end
 	
-	if hitmark_tic ~= leveltime
+	if (hitmark_tic ~= leveltime) or critical
 		S_StartSound(nil, hitmarker, shot.target.player)
 		if not (mo.paint_lifesaver or critical)
 			S_StartSoundAtVolume(nil, hitmarker, 255/2, shot.target.player) --Bruh

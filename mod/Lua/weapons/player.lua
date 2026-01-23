@@ -283,6 +283,37 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	
 end
 
+function Paint:checkBulletParams(me, pt, shot, damage)
+	if (shot and shot.valid)
+	and (shot.fired_at ~= nil)
+		if pt.hurtat[shot.fired_at] == nil
+			pt.hurtat[shot.fired_at] = {
+				damage = 0,
+				maxdamage = shot.totaldamage,
+				shotslanded = 0,
+				shotsforcrit = shot.shotsforcrit,
+				critsound = shot.critsound,
+			}
+		end
+		local ind = pt.hurtat[shot.fired_at]
+		ind.damage = $ + shot.damage
+		ind.shotslanded = $ + 1
+		
+		if ind.critsound
+			if ind.shotslanded >= ind.shotsforcrit
+				Paint:doProjHitmarker(shot, me, false, false, false, true)
+			end
+		end
+		
+		if ind.maxdamage ~= nil
+		and ind.damage > ind.maxdamage
+			damage = max($ - (ind.damage - ind.maxdamage), 0)
+		end
+	end
+	
+	return damage
+end
+
 function Paint:damagePlayer(p, shot, source_player, damage, inf) -- mobj if no player
 	if damage == nil
 		damage = self.weapons[shot.weapon_id].damage
@@ -317,32 +348,7 @@ function Paint:damagePlayer(p, shot, source_player, damage, inf) -- mobj if no p
 	local oldhp = pt.hp
 	
 	-- cap damage if necessary
-	if (shot and shot.valid)
-	and (shot.fired_at ~= nil)
-		if pt.hurtat[shot.fired_at] == nil
-			pt.hurtat[shot.fired_at] = {
-				damage = 0,
-				maxdamage = shot.totaldamage,
-				shotslanded = 0,
-				shotsforcrit = shot.shotsforcrit,
-				critsound = shot.critsound,
-			}
-		end
-		local ind = pt.hurtat[shot.fired_at]
-		ind.damage = $ + shot.damage
-		ind.shotslanded = $ + 1
-		
-		if ind.critsound
-			if ind.shotslanded >= ind.shotsforcrit
-				Paint:doProjHitmarker(shot, p.realmo, false, false, false, true)
-			end
-		end
-		
-		if ind.maxdamage ~= nil
-		and ind.damage > ind.maxdamage
-			damage = max($ - (ind.damage - ind.maxdamage), 0)
-		end
-	end
+	damage = Paint:checkBulletParams(p.realmo, pt, shot, damage)
 	
 	pt.hp = $ - damage
 	if oldhp > 85*FU

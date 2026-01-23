@@ -25,6 +25,13 @@ addHook("MobjDamage",function(mo, inf,sor, damage)
 		table.insert(Paint.enemyList, mo)
 		mo.paint_stackid = #Paint.enemyList
 	end
+	if mo.fake_paint == nil
+		mo.fake_paint = {
+			hurtat = {}
+		}
+	end
+	
+	damage = Paint:checkBulletParams(mo, mo.fake_paint, inf, damage)
 	
 	mo.paint_healdelay = TR*3/2
 	mo.paint_color = inf.color

@@ -118,9 +118,10 @@ local weapon_meta = {
 	inkdelay = 12,
 	firewithnoink = false, -- allow firing even if you have low ink
 	
-	--shooter-specific
 	critsound = false, -- nozzlenose stuff
 	shotsforcrit = 0,
+	
+	--shooter-specific
 	h_spread = {6*FU, 6*FU},
 	v_spread = {3*FU, 3*FU}, -- visual only for the crosshair if `verticalspread` is false
 	verticalspread = false,
@@ -226,6 +227,7 @@ local weapon_meta = {
 	-- damage is chosen from [wep.damage, wep.maxdamage],
 	-- then is capped to wep.totaldamage if necessary
 	totaldamage = 81*FU,
+	capdamage = false,
 	deploywait = (TR/2)*4/5,
 	deployend = Paint.CANOPY_ANIM, -- use endlag if nil
 	deploydelay = 11, -- hold fire for this long before deploying
@@ -563,6 +565,11 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		proj.fired_at = leveltime
 		proj.critsound = true
 		proj.shotsforcrit = cur_weapon:get(pt, "shotsforcrit")
+	end
+	if cur_weapon:get(pt,"totaldamage")
+	and cur_weapon:get(pt,"capdamage")
+		proj.fired_at = leveltime
+		proj.totaldamage = cur_weapon:get(pt,"totaldamage")
 	end
 	
 	local mom_vec = {x = me.momx,y = me.momy}
