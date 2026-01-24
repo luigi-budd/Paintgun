@@ -72,8 +72,7 @@ function Paint:checkWipeout()
 	)
 	*/
 	
-	if not (alphawiped)
-	and not (bravowiped)
+	if (not alphawiped) and (not bravowiped)
 		return
 	end
 

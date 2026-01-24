@@ -455,9 +455,16 @@ addHook("ThinkFrame",do
 		if TurfWar.time == 60*TR
 			S_StartSound(nil,sfx_1min)
 			TurfWar.minutewarning = true
+			
+			if (mapheaderinfo[gamemap].twf_1mpinchmus ~= nil)
+				local mus = mapheaderinfo[gamemap].twf_1mpinchmus
+				S_ChangeMusic(mus,false)
+				mapmusname = mus
+			end
 		-- TODO: maps should be able to define their own pinch song
 		elseif TurfWar.time == 30*TR
 		and (cv_allowmusic.value == 1 and TurfWar.gamemodes[gametype].allowpinchmusic)
+		and (mapheaderinfo[gamemap].twf_1mpinchmus == nil)
 			local mus = "_PINCH"
 			S_ChangeMusic(mus,false)
 			mapmusname = mus
@@ -465,7 +472,9 @@ addHook("ThinkFrame",do
 		and not TurfWar.overtime
 			S_StartSound(nil,sfx_lvpass)
 			S_StartSound(nil,sfx_nxbump)
-			S_StopMusic(consoleplayer)
+			if (mapheaderinfo[gamemap].twf_1mpinchmus == nil)
+				S_StopMusic(consoleplayer)
+			end
 			mapmusname = ""
 		elseif TurfWar.time == TurfWar.const.ENDTIME
 			G_ExitLevel()
