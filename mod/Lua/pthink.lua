@@ -1738,10 +1738,8 @@ addHook("PlayerThink",function(p)
 		if pt.substrafe
 			pt.substrafe = $ - 1
 		end
-		pt.fovadd = $ * 4/5
 		pt.aimingtime = 0
 	end
-	p.fovadd = $ + pt.fovadd
 	
 	if ((p.cmd.buttons & BT_ATTACK)
 	or pt.firewait)
@@ -2110,7 +2108,14 @@ addHook("PostThinkFrame", do
 			S_StartSoundAtVolume(nil, sfx_pt_sig, 255*3/5, p)
 		end
 		
-		if not (me and me.valid and me.health)
+		local dead = not (me and me.valid and me.health)
+		if dead
+			p.fovadd = 0
+		end
+		p.fovadd = $ + pt.fovadd
+		
+		if dead
+			pt.fovadd = $ * 9/10
 			local overlay = pt.paintoverlay
 			if (overlay and overlay.valid)
 				overlay.flags2 = $|MF2_DONTDRAW
@@ -2119,6 +2124,7 @@ addHook("PostThinkFrame", do
 			pt.wasdeployed = false
 			continue
 		end
+		pt.fovadd = $ * 4/5
 		
 		if R_PointToDist(me.x, me.y) <= 100*me.scale
 			addalpha(p)
@@ -2195,7 +2201,7 @@ addHook("PostThinkFrame", do
 			if not pt.disable.inktank
 				BP.doInkTank(p)
 			end
-
+			
 			local cur_weapon = Paint.weapons[pt.weapon_id]
 			if pt.weapon_id ~= nil
 				local reset_interp = pt.weapon_id ~= pt.old_weaponid

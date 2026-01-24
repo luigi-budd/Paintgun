@@ -119,3 +119,30 @@ function Paint.explosionVFX(mo, radius, angle, color)
 		end
 	end
 end
+
+function Paint.inkShockVFX(me, dist, color, scale, count)
+	scale = $ or FU
+	count = $ or 16
+	
+	local speed = FixedMul(6*FU, scale)
+	local angstep = FixedDiv(360*FU, count*FU)
+	for i = 0, count - 1
+		local fa = FixedAngle(angstep * i)
+		local s = P_SpawnMobjFromMobj(me,
+			P_ReturnThrustX(nil, fa, dist),
+			P_ReturnThrustY(nil, fa, dist),
+			0, MT_PARTICLE
+		)
+		s.spritexscale = FU / 4
+		s.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT
+		P_CreateFloorSpriteSlope(s)
+		s.angle = fa
+		s.aiming = 70*FU
+		s.fuse = states[S_PAINT_SHOCK].var1
+		s.state = S_PAINT_SHOCK
+		s.color = color
+		
+		P_SetScale(s, scale, true)
+		P_Thrust(s, fa, speed)
+	end
+end

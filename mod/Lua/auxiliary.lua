@@ -158,3 +158,33 @@ states[S_PAINT_BSPARK] = {
 	var1 = 4,
 	var2 = 2,
 }
+
+local AIMEASE_TICS = 22
+local AIMEASE_FRAC = (FU/AIMEASE_TICS)
+freeslot("S_PAINT_SHOCK")
+states[S_PAINT_SHOCK] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 40|FF_SEMIBRIGHT,
+	tics = 1,
+	var1 = AIMEASE_TICS,
+	action = function(s)
+		local slope = s.floorspriteslope
+		if not (slope and slope.valid)
+			P_CreateFloorSpriteSlope(s)
+			slope = s.floorspriteslope
+		end
+		slope.o = {
+			x = s.x, y = s.y, z = s.z
+		}
+		
+		local easefrac = FU - (AIMEASE_FRAC * s.fuse)
+		
+		s.aiming = ease.inexpo(easefrac, 70*FU, 0)
+		slope.zangle = FixedAngle(s.aiming)
+		slope.xydirection = s.angle
+		s.spritexscale = ease.linear(easefrac, FU/4, 2*FU)
+		s.spriteyscale = FixedMul(cos(slope.zangle), s.scale + (slope.zangle == ANGLE_90 - 1 and 1024 or 0))
+		s.spriteyscale = FixedDiv($, s.spritexscale)
+	end,
+	nextstate = S_PAINT_SHOCK
+}

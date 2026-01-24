@@ -125,7 +125,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 			P_StartQuake(15*FU, TR/2)
 		end
 		Paint.HUD:painSurge(p)
-
+		
 		if gametype == GT_COOP
 		and noshield
 			pt.hp = 15*FU
@@ -139,21 +139,20 @@ function Paint:killPlayer(p, shot, source_player, inf)
 					15*FU, nil,nil,nil,nil,nil, FixedDiv(me.height,me.scale)/2
 				).basescale = FU * 3/4
 			end
-
-			for i = 0,3
-				local s = P_SpawnMobjFromMobj(me, 0,0,0, MT_MSSHIELD_FRONT)
-				P_Thrust(s, ANGLE_90 * i, 4*me.scale)
-				s.alpha = FU
-				s.blendmode = AST_ADD
-				s.scale = $ * 3/2
-				s.colorized = true
-				s.color = SKINCOLOR_RED
-				s.fuse = TR/2
-				s.destscale = 0
-				s.scalespeed = FixedDiv(s.scale, s.fuse*FU)
-			end
 		end
-
+		
+		for i = 0,3
+			local s = P_SpawnMobjFromMobj(me, 0,0,0, MT_MSSHIELD_FRONT)
+			P_Thrust(s, ANGLE_90 * i, 4*me.scale)
+			s.alpha = FU
+			s.blendmode = AST_ADD
+			s.scale = $ * 3/2
+			s.colorized = true
+			s.color = SKINCOLOR_RED
+			s.fuse = TR/2
+			s.destscale = 0
+			s.scalespeed = FixedDiv(s.scale, s.fuse*FU)
+		end
 		return
 	end
 	
@@ -228,10 +227,29 @@ function Paint:killPlayer(p, shot, source_player, inf)
 		shot.target = shot_target
 		shot.momz = $ * 4/3
 	end
+	
+	local irad = 170*FU
+	for i = 1,16
+		local ha = FixedAngle(P_RandomFixedRange(0,360*FU))
+		local va = FixedAngle(P_RandomFixedRange(0,360*FU))
+		local v = SphereToCartesian(ha,va)
+		local s = P_SpawnMobjFromMobj(me,
+			FixedMul(irad, v.x),
+			FixedMul(irad, v.y),
+			FixedMul(irad, v.z),
+			MT_PARTICLE
+		)
+		s.state = S_PAINT_BSPARK
+		s.angle = ha
+		s.rollangle = va
+		s.translation = "AllWhite"
+	end
 	S_StartSound(me, sfx_pt_ow1)
 	S_StartSound(me, sfx_pt_ow1)
-
-	Paint.explosionVFX(me, 170*FU)
+	
+	Paint.inkShockVFX(me, 64*FU, deathcolor)
+	Paint.explosionVFX(me, irad)
+	pt.fovadd = 20*FU
 end
 
 function Paint:checkBulletParams(me, pt, shot, damage)
