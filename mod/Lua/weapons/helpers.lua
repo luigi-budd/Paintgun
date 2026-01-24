@@ -120,9 +120,10 @@ function Paint.explosionVFX(mo, radius, angle, color)
 	end
 end
 
-function Paint.inkShockVFX(me, dist, color, scale, count)
+function Paint.inkShockVFX(me, dist, color, scale, count, fuse)
 	scale = $ or FU
 	count = $ or 16
+	fuse = $ or states[S_PAINT_SHOCK].var1
 	
 	local speed = FixedMul(6*FU, scale)
 	local angstep = FixedDiv(360*FU, count*FU)
@@ -138,9 +139,10 @@ function Paint.inkShockVFX(me, dist, color, scale, count)
 		P_CreateFloorSpriteSlope(s)
 		s.angle = fa
 		s.aiming = 70*FU
-		s.fuse = states[S_PAINT_SHOCK].var1
+		s.fuse = fuse
 		s.state = S_PAINT_SHOCK
 		s.color = color
+		s.mirrored = P_RandomChance(FU/2)
 		
 		P_SetScale(s, scale, true)
 		P_Thrust(s, fa, speed)

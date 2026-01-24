@@ -164,7 +164,10 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 			s.fuse = 2
 			s.dispoffset = 20
 			local frac = min(FixedDiv(pt.charge, cur_weapon:get(pt,"chargetime")),FU)
-			s.alpha = clamp(0, frac-1, FU)
+			if frac ~= FU
+				frac = $ * 3/4
+			end
+			s.alpha = clamp(0, frac - 1, FU)
 			P_SetScale(s, s.scale/2, true)
 		end
 		if pt.justcharged

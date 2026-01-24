@@ -229,7 +229,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	end
 	
 	local irad = 170*FU
-	for i = 1,16
+	for i = 1,32
 		local ha = FixedAngle(P_RandomFixedRange(0,360*FU))
 		local va = FixedAngle(P_RandomFixedRange(0,360*FU))
 		local v = SphereToCartesian(ha,va)
@@ -247,8 +247,9 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	S_StartSound(me, sfx_pt_ow1)
 	S_StartSound(me, sfx_pt_ow1)
 	
-	Paint.inkShockVFX(me, 64*FU, deathcolor)
-	Paint.explosionVFX(me, irad)
+	Paint.inkShockVFX(me, 40*FU, deathcolor)
+	Paint.inkShockVFX(me, 72*FU, deathcolor, nil,nil, states[S_PAINT_SHOCK].var1 - 6)
+	Paint.explosionVFX(me, irad, nil, deathcolor)
 	pt.fovadd = 20*FU
 end
 
