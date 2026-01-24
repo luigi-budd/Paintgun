@@ -149,3 +149,12 @@ states[S_PAINT_BROKEARMOR] = {
 	end,
 	nextstate = S_PAINT_BROKEARMOR
 }
+
+freeslot("S_PAINT_BSPARK")
+states[S_PAINT_BSPARK] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 35|FF_FULLBRIGHT|FF_PAPERSPRITE|FF_ANIMATE,
+	tics = (4 * 2),
+	var1 = 4,
+	var2 = 2,
+}

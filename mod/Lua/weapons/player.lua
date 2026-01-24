@@ -133,20 +133,11 @@ function Paint:killPlayer(p, shot, source_player, inf)
 			pt.armorregen = 10 * TR
 			
 			local inkcolor = Paint:getPlayerColor(p)
-			for i = 0,30
-				local angle = FixedAngle(P_RandomFixedRange(0,360*FU))
-				local drop = P_SpawnMobjFromMobj(me,0,0,FU, MT_PAINT_SHOT)
-				if drop and drop.valid
-					drop.target = me
-					drop.angle = angle
-					drop.color = inkcolor
-					drop.trail = true
-					drop.lifespan = 0
-					drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
-					drop.tracer_player = p
-					P_SetObjectMomZ(drop, P_RandomFixedRange(1*FU,17*FU))
-					P_Thrust(drop, angle, P_RandomFixedRange(1*FU,17*FU))
-				end
+			for i = 0,32
+				Paint.spawnBulletDrop(me, p, nil,
+					FixedAngle(P_RandomFixedRange(0,360*FU)), FixedAngle(P_RandomFixedRange(0,180*FU)),
+					15*FU, nil,nil,nil,nil,nil, FixedDiv(me.height,me.scale)/2
+				).basescale = FU * 3/4
 			end
 
 			for i = 0,3
@@ -228,62 +219,19 @@ function Paint:killPlayer(p, shot, source_player, inf)
 		deathcolor = (source_player and source_player.valid) and self:getPlayerColor(source_player) or ColorOpposite(self:getPlayerColor(p))
 	end
 	
-	--TODO: a generic function for spawning droplets and splats would be nice
-	for i = 0,30
-		local angle = FixedAngle(P_RandomFixedRange(0,360*FU))
-		local drop = P_SpawnMobjFromMobj(me,0,0,FU, MT_PAINT_SHOT)
-		if drop and drop.valid
-			drop.target = (source_player and source_player.valid) and source_player.mo or inf
-			drop.angle = angle
-			drop.color = deathcolor
-			drop.trail = true
-			drop.lifespan = 0
-			drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
-			drop.tracer_player = source_player
-			P_SetObjectMomZ(drop, P_RandomFixedRange(1*FU,17*FU))
-			P_Thrust(drop, angle, P_RandomFixedRange(1*FU,17*FU))
-		end
-		S_StartSound(me, sfx_pt_ow1)
-		S_StartSound(me, sfx_pt_ow1)
+	local shot_target = (source_player and source_player.valid) and source_player.mo or inf
+	for i = 0,40
+		local shot = Paint.spawnBulletDrop(me, source_player, deathcolor,
+			FixedAngle(P_RandomFixedRange(0,360*FU)), FixedAngle(P_RandomFixedRange(0,180*FU)),
+			20*FU, nil,nil,nil,nil,nil, FixedDiv(me.height,me.scale)/2
+		)
+		shot.target = shot_target
+		shot.momz = $ * 4/3
 	end
+	S_StartSound(me, sfx_pt_ow1)
+	S_StartSound(me, sfx_pt_ow1)
 
-	--TODO: itd probably be better to have a generic vfx function for handling explosions like these
-	local spr_scale = FU * 2
-	local tntstate = S_TNTBARREL_EXPL3
-	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
-	local bam = P_SpawnMobjFromMobj(me, 0,0,0, MT_THOK)
-	P_SetMobjStateNF(bam, tntstate)
-	bam.spritexscale = FixedMul($, spr_scale)
-	bam.spriteyscale = bam.spritexscale
-	bam.renderflags = $|rflags
-	bam.blendmode = AST_ADD
-	bam.colorized = true
-	bam.color = deathcolor
-	local t = P_SpawnMobjFromMobj(me,0,0,0,MT_THOK)
-	t.color = deathcolor
-	t.spritexscale = FU * 3
-	t.spriteyscale = t.spritexscale
-	
-	for i = 0,2
-		local outline = P_SpawnMobjFromMobj(me, 0,0,0, MT_PAINT_SHOT)
-		outline.visualfadestupidshit = true
-		outline.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
-		outline.fuse = 9
-		outline.radius = 40*me.scale
-		outline.sprite = SPR_PAINT_MISC
-		outline.frame = ($ &~FF_FRAMEMASK)|18
-		outline.spritexscale = FU * 3
-		outline.spriteyscale = outline.spritexscale
-		outline.renderflags = $|rflags|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
-		outline.blendmode = AST_ADD
-		outline.colorized = true
-		outline.color = deathcolor
-		outline.angle = me.angle + (ANGLE_90 * i)
-		if i == 2
-			outline.renderflags = $|RF_FLOORSPRITE &~RF_PAPERSPRITE
-		end
-	end
-	
+	Paint.explosionVFX(me, 170*FU)
 end
 
 function Paint:checkBulletParams(me, pt, shot, damage)
@@ -519,23 +467,15 @@ function Paint:doDodgeRoll(p)
 	local hei = FixedDiv(me.height,me.scale)/FU
 	local angstep = FixedDiv(90*FU, 16*FU)
 	-- paint our feet
-	for i = -7,8
+	for i = -8,8
 		local angle = ang + FixedAngle(angstep * i)
-		local drop = P_SpawnMobjFromMobj(me,
-			P_ReturnThrustX(nil, angle, -16*FU),
-			P_ReturnThrustY(nil, angle, -16*FU),
-			0, MT_PAINT_SHOT
+		P_SetObjectMomZ(
+			Paint.spawnDroplet(me, p, nil, true, nil,nil,nil,
+				P_ReturnThrustX(nil, angle, -16*FU),
+				P_ReturnThrustX(nil, angle, -16*FU),
+				0
+			), -20*FU
 		)
-		drop.target = me
-		drop.angle = angle
-		drop.color = Paint:getPlayerColor(p)
-		drop.trail = true
-		drop.nosound = true
-		drop.lifespan = 0
-		drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
-		drop.tracer_player = p
-		drop.frame = ($ &~FF_FRAMEMASK)|2
-		P_SetObjectMomZ(drop, -20*FU)
 	end
 	for i = 0,15
 		local blob = makeBlob(p,me,pt, rad,hei)

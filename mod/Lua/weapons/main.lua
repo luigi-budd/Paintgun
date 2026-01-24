@@ -803,6 +803,7 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 	return bomb
 end
 
+dofile("weapons/helpers.lua")
 dofile("weapons/templates.lua")
 dofile("weapons/callback_templates.lua")
 dofile("weapons/def/_FREESLOT.lua")

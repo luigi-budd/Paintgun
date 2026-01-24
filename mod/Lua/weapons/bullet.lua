@@ -422,37 +422,7 @@ local function ExplodeShot(shot)
 	local br = splashrad * 7/5
 	searchBlockmap("objects",splash_blockmap, shot, px-br, px+br, py-br, py+br)
 	
-	local spr_scale = FU * 6/5
-	local tntstate = S_TNTBARREL_EXPL3
-	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
-	local bam = P_SpawnMobjFromMobj(shot, 0,0,0, MT_THOK)
-	P_SetMobjStateNF(bam, tntstate)
-	bam.spritexscale = FixedMul($, spr_scale)
-	bam.spriteyscale = bam.spritexscale
-	bam.renderflags = $|rflags
-	bam.blendmode = AST_ADD
-	bam.colorized = true
-	bam.color = shot.color
-	
-	for i = 0,2
-		local outline = P_SpawnMobjFromMobj(shot, 0,0,0, MT_PAINT_SHOT)
-		outline.visualfadestupidshit = true
-		outline.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
-		outline.fuse = 9
-		outline.radius = 40*shot.scale
-		outline.sprite = SPR_PAINT_MISC
-		outline.frame = ($ &~FF_FRAMEMASK)|18
-		outline.spritexscale = FixedDiv(splashrad, 80*FU) * 2
-		outline.spriteyscale = outline.spritexscale
-		outline.renderflags = $|rflags|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
-		outline.blendmode = AST_ADD
-		outline.colorized = true
-		outline.color = shot.color
-		outline.angle = shot.angle + (ANGLE_90 * i)
-		if i == 2
-			outline.renderflags = $|RF_FLOORSPRITE &~RF_PAPERSPRITE
-		end
-	end
+	Paint.explosionVFX(shot, splashrad)
 	
 	/*
 	for i = -1,1,2
@@ -579,9 +549,18 @@ addHook("MobjThinker",function(shot)
 	end
 	
 	if shot.trail
+		shot.angle = R_PointToAngle2(0,0, shot.momx,shot.momy)
+		
 		shot.flags = $ &~MF_NOGRAVITY
-		shot.momz = $ + P_GetMobjGravity(shot)
-		P_ZMovement(shot)
+		shot.momz = $ + P_GetMobjGravity(shot)*3
+		
+		if shot.airdrag ~= nil
+			shot.momx = FixedMul($, shot.airdrag)
+			shot.momy = FixedMul($, shot.airdrag)
+			--shot.momz = FixedMul($, shot.airdrag)
+		end
+		
+		--P_ZMovement(shot)
 		return
 	end
 	

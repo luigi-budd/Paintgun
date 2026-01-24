@@ -99,82 +99,45 @@ function Paint:bombExplosion(mo, subtype)
 	S_StartSound(sfx, sound)
 	
 	local splashrad = sub_t.outer_radius
+	local irad = sub_t.inner_radius
 	P_StartQuake(sub_t.quakeforce, 10, {mo.x,mo.y,mo.z}, splashrad * 6/5)
-	
-	local bam = P_SpawnMobjFromMobj(mo, 0,0,0, MT_THOK)
-	P_SetMobjStateNF(bam, S_TNTBARREL_EXPL3)
-	bam.spritexscale = FixedDiv(sub_t.inner_radius, 208*FU) * 2
-	bam.spriteyscale = bam.spritexscale
-	bam.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
-	bam.blendmode = AST_ADD
-	bam.colorized = true
-	bam.color = mo.color
-	
-	for i = 0,2
-		local outline = P_SpawnMobjFromMobj(mo, 0,0,0, MT_PAINT_SHOT)
-		outline.visualfadestupidshit = true
-		outline.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
-		outline.fuse = 9
-		outline.radius = 40*mo.scale
-		outline.sprite = SPR_PAINT_MISC
-		outline.frame = ($ &~FF_FRAMEMASK)|18
-		outline.spritexscale = FixedDiv(sub_t.inner_radius, 80*FU) * 2
-		outline.spriteyscale = outline.spritexscale
-		outline.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
-		outline.blendmode = AST_ADD
-		outline.colorized = true
-		outline.color = mo.color
-		outline.angle = mo.angle + (ANGLE_90 * i)
-		if i == 2
-			outline.renderflags = $|RF_FLOORSPRITE &~RF_PAPERSPRITE
-		end
+	Paint.explosionVFX(mo, irad)
+	for i = 1,32
+		local ha = FixedAngle(P_RandomFixedRange(0,360*FU))
+		local va = FixedAngle(P_RandomFixedRange(0,360*FU))
+		local v = SphereToCartesian(ha,va)
+		local s = P_SpawnMobjFromMobj(mo,
+			FixedMul(irad, v.x),
+			FixedMul(irad, v.y),
+			FixedMul(irad, v.z),
+			MT_PARTICLE
+		)
+		s.state = S_PAINT_BSPARK
+		s.angle = ha
+		s.rollangle = va
 	end
-
+	
 	local step = FixedDiv(360*FU, 9*FU)
 	local inner_step = FixedMul(sub_t.inner_radius - 64*FU, mo.scale)
 	for i = 0,8
-		local angle = FixedAngle(P_RandomFixedRange(0,360*FU))
-		local drop = P_SpawnMobjFromMobj(mo,0,0,FU, MT_PAINT_SHOT)
-		if drop and drop.valid
-			drop.target = mo.target
-			drop.angle = angle
-			drop.color = mo.color
-			drop.trail = true
-			drop.lifespan = 0
-			drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
-			drop.tracer_player = mo.target.player
-			P_SetObjectMomZ(drop, P_RandomFixedRange(4*FU,16*FU))
-			P_Thrust(drop, angle, P_RandomFixedRange(4*FU,16*FU))
-		end
-		-- cover the base of the bomb too
-		local ox = P_ReturnThrustX(nil, FixedAngle(step*i), inner_step)
-		local oy = P_ReturnThrustY(nil, FixedAngle(step*i), inner_step)
-		for j = 0,1
-			local drop = P_SpawnMobjFromMobj(mo,ox,oy,FU, MT_PAINT_SHOT)
-			if drop and drop.valid
-				drop.target = mo.target
-				drop.angle = mo.angle
-				drop.color = mo.color
-				drop.trail = true
-				drop.nosound = true
-				drop.lifespan = 0
-				drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
-				drop.tracer_player = mo.target.player
-			end
+		local shot = Paint.spawnBulletDrop(mo, mo.target.player, mo.color,
+			FixedAngle(P_RandomFixedRange(0,360*FU)), FixedAngle(P_RandomFixedRange(0,160*FU)),
+			32*FU, nil,nil,nil,nil,nil, FixedDiv(mo.height,mo.scale)/2
+		)
+		shot.target = mo.target
+		shot.airdrag = FU * 97/100
+		
+		-- paint the base of the bomb too
+		for j = 1, 2
+			local ox = P_ReturnThrustX(nil, FixedAngle(step*i), inner_step / j)
+			local oy = P_ReturnThrustY(nil, FixedAngle(step*i), inner_step / j)
+			
+			Paint.spawnDroplet(mo, mo.target.player, mo.color, true, nil,nil,nil, ox,oy).target = mo.target
+			Paint.spawnDroplet(mo, mo.target.player, mo.color, true, nil,nil,nil, ox,oy).target = mo.target
 		end
 	end
-	local drop = P_SpawnMobjFromMobj(mo,0,0,FU, MT_PAINT_SHOT)
-	if drop and drop.valid
-		drop.target = mo.target
-		drop.angle = mo.angle
-		drop.color = mo.color
-		drop.trail = true
-		drop.nosound = true
-		drop.lifespan = 0
-		drop.flags = $|MF_NOCLIPTHING &~MF_NOGRAVITY
-		drop.tracer_player = mo.target.player
-	end
-	
+	Paint.spawnDroplet(mo, mo.target.player, mo.color, true).target = mo.target
+
 	/*
 	for i = -1,1,2
 		local z = splashrad * i
