@@ -1,6 +1,6 @@
 local HUD = Paint.HUD
 local offset = 0
-local len = 7*TR
+local len = 7*TR -- this is for the tag that slides in, NOT the token/emblem
 local popup = 4
 local slidein = 4
 
@@ -16,7 +16,7 @@ function HUD:killConfirm(p, targ, wasassist)
 	table.insert(HUD.memory.killfeed, {
 		pos = {x=mo.x,y=mo.y,z=mo.z + mo.height/2},
 		name = targ.name,
-		tics = len,
+		tics = 3*TR,
 		assist = wasassist,
 		id = (#targ) + leveltime --always a player
 	})
