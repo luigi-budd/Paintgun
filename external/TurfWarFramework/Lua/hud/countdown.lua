@@ -5,7 +5,7 @@ local ANIM_START = TR - 2
 return function(v)
 	if TurfWar.time == TurfWar.const.NOTIMER then return end
 	if not (TurfWar.time > 0
-	and TurfWar.time <= 10*TR)
+	and TurfWar.time < 10*TR)
 		return
 	end
 	

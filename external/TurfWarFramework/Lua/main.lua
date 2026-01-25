@@ -454,6 +454,7 @@ addHook("ThinkFrame",do
 		
 		if TurfWar.time == 60*TR
 			S_StartSound(nil,sfx_1min)
+			S_StartSound(nil,sfx_1min)
 			TurfWar.minutewarning = true
 			
 			if (mapheaderinfo[gamemap].twf_1mpinchmus ~= nil)
