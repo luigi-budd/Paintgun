@@ -120,6 +120,7 @@ function Paint.explosionVFX(mo, radius, angle, color)
 	end
 end
 
+local SHOCK_RFLAGS = RF_FLOORSPRITE|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT
 function Paint.inkShockVFX(me, dist, color, scale, count, fuse)
 	scale = $ or FU
 	count = $ or 16
@@ -135,7 +136,7 @@ function Paint.inkShockVFX(me, dist, color, scale, count, fuse)
 			0, MT_PARTICLE
 		)
 		s.spritexscale = FU / 4
-		s.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT
+		s.renderflags = $|SHOCK_RFLAGS
 		P_CreateFloorSpriteSlope(s)
 		s.angle = fa
 		s.aiming = 70*FU
@@ -143,6 +144,7 @@ function Paint.inkShockVFX(me, dist, color, scale, count, fuse)
 		s.state = S_PAINT_SHOCK
 		s.color = color
 		s.mirrored = P_RandomChance(FU/2)
+		s.extravalue1 = 40 + P_RandomRange(0,2)
 		
 		P_SetScale(s, scale, true)
 		P_Thrust(s, fa, speed)

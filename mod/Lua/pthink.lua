@@ -255,6 +255,7 @@ BP.doInkTank = function(p)
 		line.height = 4*me.scale
 		line.dontdrawforviewmobj = me
 		line.target = me
+		line.renderflags = $|RF_NOCOLORMAPS
 		tn.linemobj = line
 		
 		teleport = P_SetOrigin
@@ -361,7 +362,6 @@ BP.doInkTank = function(p)
 	line.destscale = me.scale
 	line.scalespeed = line.destscale + 1
 	line.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
-	line.alpha = me.alpha
 	
 	tank.pitch,tank.roll = 0,0
 	back.pitch,back.roll = 0,0

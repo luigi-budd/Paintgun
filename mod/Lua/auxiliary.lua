@@ -168,6 +168,8 @@ states[S_PAINT_SHOCK] = {
 	tics = 1,
 	var1 = AIMEASE_TICS,
 	action = function(s)
+		s.frame = ($ &~FF_FRAMEMASK)|s.extravalue1
+		
 		local slope = s.floorspriteslope
 		if not (slope and slope.valid)
 			P_CreateFloorSpriteSlope(s)

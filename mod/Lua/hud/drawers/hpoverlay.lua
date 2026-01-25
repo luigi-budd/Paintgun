@@ -12,7 +12,7 @@ addHook("HUD",function(v,p,cam)
 	if (me.paint_nopainoverlay) then return end
 	
 	local hp = pt.hp
-	if (p.playerstate == PST_DEAD)
+	if (p.playerstate ~= PST_LIVE)
 		hp = 0
 	end
 	if (me.paint_overlayhp ~= nil)
