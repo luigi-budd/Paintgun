@@ -159,7 +159,7 @@ states[S_PAINT_BSPARK] = {
 	var2 = 2,
 }
 
-local AIMEASE_TICS = 22
+local AIMEASE_TICS = 14
 local AIMEASE_FRAC = (FU/AIMEASE_TICS)
 freeslot("S_PAINT_SHOCK")
 states[S_PAINT_SHOCK] = {

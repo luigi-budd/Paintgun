@@ -131,6 +131,7 @@ addHook("ThinkFrame",do
 			overlay.spriteyoffset = mo.spriteyoffset
 			overlay.pitch = mo.pitch
 			overlay.roll = mo.roll
+			overlay.rollangle = mo.rollangle
 			overlay.dispoffset = mo.dispoffset + 1
 			overlay.color = mo.paint_color
 		end

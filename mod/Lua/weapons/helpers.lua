@@ -135,7 +135,7 @@ function Paint.inkShockVFX(me, dist, color, scale, count, fuse)
 			P_ReturnThrustY(nil, fa, dist),
 			0, MT_PARTICLE
 		)
-		s.spritexscale = FU / 4
+		s.extravalue1 = 40 + P_RandomRange(0,2)
 		s.renderflags = $|SHOCK_RFLAGS
 		P_CreateFloorSpriteSlope(s)
 		s.angle = fa
@@ -144,7 +144,6 @@ function Paint.inkShockVFX(me, dist, color, scale, count, fuse)
 		s.state = S_PAINT_SHOCK
 		s.color = color
 		s.mirrored = P_RandomChance(FU/2)
-		s.extravalue1 = 40 + P_RandomRange(0,2)
 		
 		P_SetScale(s, scale, true)
 		P_Thrust(s, fa, speed)
