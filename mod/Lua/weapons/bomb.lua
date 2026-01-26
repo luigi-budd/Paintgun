@@ -102,7 +102,7 @@ function Paint:bombExplosion(mo, subtype)
 	local irad = sub_t.inner_radius
 	P_StartQuake(sub_t.quakeforce, 10, {mo.x,mo.y,mo.z}, splashrad * 6/5)
 	Paint.explosionVFX(mo, irad)
-	for i = 1,32
+	for i = 1,26
 		local ha = FixedAngle(P_RandomFixedRange(0,360*FU))
 		local va = FixedAngle(P_RandomFixedRange(0,360*FU))
 		local v = SphereToCartesian(ha,va)
@@ -115,22 +115,25 @@ function Paint:bombExplosion(mo, subtype)
 		s.state = S_PAINT_BSPARK
 		s.angle = ha
 		s.rollangle = va
+		s.renderflags = $|RF_ALWAYSONTOP
 	end
 	
 	local step = FixedDiv(360*FU, 9*FU)
 	local inner_step = FixedMul(sub_t.inner_radius - 64*FU, mo.scale)
+	local zoff = FixedDiv(mo.height,mo.scale)/2
 	for i = 0,8
 		local shot = Paint.spawnBulletDrop(mo, mo.target.player, mo.color,
 			FixedAngle(P_RandomFixedRange(0,360*FU)), FixedAngle(P_RandomFixedRange(0,160*FU)),
-			32*FU, nil,nil,nil,nil,nil, FixedDiv(mo.height,mo.scale)/2
+			32*FU, nil,nil,nil,nil,nil, zoff
 		)
 		shot.target = mo.target
 		shot.airdrag = FU * 97/100
 		
 		-- paint the base of the bomb too
+		local astep = FixedAngle(step*i)
 		for j = 1, 2
-			local ox = P_ReturnThrustX(nil, FixedAngle(step*i), inner_step / j)
-			local oy = P_ReturnThrustY(nil, FixedAngle(step*i), inner_step / j)
+			local ox = P_ReturnThrustX(nil, astep, inner_step / j)
+			local oy = P_ReturnThrustY(nil, astep, inner_step / j)
 			
 			Paint.spawnDroplet(mo, mo.target.player, mo.color, true, nil,nil,nil, ox,oy).target = mo.target
 			Paint.spawnDroplet(mo, mo.target.player, mo.color, true, nil,nil,nil, ox,oy).target = mo.target
