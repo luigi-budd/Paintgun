@@ -294,7 +294,7 @@ addHook("MobjThinker",function(sub)
 				sub.roll = FixedMul(mang, sin(angle))
 				sub.pitch = FixedMul(mang, cos(angle))
 			else
-				sub.rollangle = $ + FixedAngle(abs(sub.momz) + 10*FU)
+				sub.rollangle = $ + FixedAngle(FixedHypot(sub.momx, sub.momy) + 10*FU)
 			end
 		else
 			sub.roll = 0

@@ -242,6 +242,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 		s.angle = ha
 		s.rollangle = va
 		s.translation = "AllWhite"
+		s.renderflags = $|RF_ALWAYSONTOP
 	end
 	S_StartSound(me, sfx_pt_ow1)
 	S_StartSound(me, sfx_pt_ow1)
