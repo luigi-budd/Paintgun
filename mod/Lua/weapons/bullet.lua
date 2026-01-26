@@ -224,7 +224,7 @@ states[S_PAINT_SPLATTER] = {
 		splat.lastscale = splat.scale
 		
 		splat.momx,splat.momy = 0,0
-		splat.eflags = $|splat.revgrav
+		splat.eflags = $|(splat.revgrav or 0)
 		if splat.lifespan == 0
 			if splat.revgrav
 				splat.z = P_CeilingzAtPos(splat.x,splat.y,splat.z,splat.height)
@@ -518,6 +518,10 @@ addHook("MobjThinker",function(shot)
 	local me = shot.target
 	if not (me and me.valid)
 		P_RemoveMobj(shot); return
+	end
+	
+	if shot.lifespan == nil
+		shot.lifespan = 0
 	end
 	
 	shot.eflags = $|MFE_NOPITCHROLLEASING
@@ -1069,6 +1073,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 		me = sh.tracer_player.mo
 	end
 	local p = me.player
+	if not (p and p.valid) then return end
 	local pt = p.paint
 	
 	local damage = wep:get(pt, "contactdamage")
