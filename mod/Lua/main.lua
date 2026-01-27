@@ -215,6 +215,9 @@ function Paint:initPlayer(p)
 		lastslowdown = false,
 		holsteranim = 0,
 		weaponzoffset = 0,
+		prevangle = (p.realmo and p.realmo.valid) and (p.realmo.angle) or p.cmd.angleturn << 16, -- last angle for slow turning
+		doslowturn = false,
+		slowturning = false,
 		
 		-- brella stuff
 		shield = nil, -- shield mobj for brellas
@@ -309,6 +312,7 @@ function Paint:resetPlayer(p)
 	p.cmd.buttons = $ &~BT_ATTACK
 	pt.shotsfired = 0
 	pt.anglestand = (p.realmo and p.realmo.valid) and p.realmo.angle or p.cmd.angleturn << 16
+	pt.prevangle = (p.realmo and p.realmo.valid) and (p.realmo.angle) or p.cmd.angleturn << 16
 	pt.holsteranim = 0
 	pt.shieldlag = 0
 	pt.shieldwait = 0

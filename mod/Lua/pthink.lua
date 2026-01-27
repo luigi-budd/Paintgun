@@ -579,6 +579,7 @@ addHook("PlayerThink",function(p)
 	local shieldout = false
 	pt.deployshield = false
 	pt.shieldjustregened = false
+	pt.doslowturn = false
 	if (cur_weapon.guntype == WPT_BRELLA)
 		local sh = pt.shield
 		if not (sh and sh.valid)
@@ -619,7 +620,6 @@ addHook("PlayerThink",function(p)
 			sh.state = sh.info.spawnstate
 		end
 		
-		sh.angle = fireangle
 		sh.color = Paint:getPlayerColor(p)
 		
 		if (pt.shieldlag == Paint.CANOPY_ANIM)
@@ -635,6 +635,7 @@ addHook("PlayerThink",function(p)
 		and (sh.paint_hp > 0)
 		and not (cur_weapon:get(pt,"nocanopy") or pt.shieldlost)
 			pt.deployshield = true
+			pt.doslowturn = true
 			if not pt.wasdeployed
 				S_StartSound(me, cur_weapon:get(pt,"deploysound") or sfx_none)
 				sh.threshold = Paint.CANOPY_ANIM
@@ -694,6 +695,7 @@ addHook("PlayerThink",function(p)
 		and (sh.paint_hp > 0)
 		and not pt.shieldlost
 			-- visible
+			pt.doslowturn = true
 			sh.flags2 = $ &~MF2_DONTDRAW
 			sh.flags = $|MF_SHOOTABLE &~(MF_NOCLIP|MF_NOCLIPTHING)
 			if (pt.shotsfired >= 1)
@@ -786,20 +788,7 @@ addHook("PlayerThink",function(p)
 			end
 		end
 		
-		--print(pt.shieldtime)
-		
-		local move = me.radius + 16*me.scale
-		P_MoveOrigin(sh,
-			me.x + P_ReturnThrustX(nil,fireangle,move) + me.momx,
-			me.y + P_ReturnThrustY(nil,fireangle,move) + me.momy,
-			me.z + me.momz
-		)
-		if (P_MobjFlip(me) == -1)
-			sh.z = $ - sh.height
-			sh.eflags = $|MFE_VERTICALFLIP
-		else
-			sh.eflags = $ &~MFE_VERTICALFLIP
-		end
+		-- brellas are moved after the fire-handling block
 		sh.health = sh.info.spawnhealth
 		sh.lasthit = nil
 		sh.cooldown = max($ - 1, 0)
@@ -829,6 +818,8 @@ addHook("PlayerThink",function(p)
 		pt.spreadjump = $ - 1
 	end
 	
+	local wasslowturning = pt.slowturning
+	pt.slowturning = false
 	local waspressingattack = (p.cmd.buttons & BT_ATTACK)
 	local justpressedfire = false
 	if p.exiting
@@ -914,6 +905,16 @@ addHook("PlayerThink",function(p)
 				justpressedfire = true
 			end
 		end
+		if (pt.fireheld or pt.cooldown or pt.endlag or pt.shieldlag or waspressingattack or pt.anglefix)
+		and pt.doslowturn
+			local slowmul = cur_weapon:get(pt,"slowturnmul")
+			if justpressedfire
+				pt.prevangle = fireangle
+			end
+			p.drawangle = P_Lerp(slowmul, pt.prevangle, fireangle)
+			fireangle = p.drawangle
+			pt.slowturning = true
+		end
 		
 		if (pt.buttons & BT_JUMP)
 			pt.jumpheld = $ + 1
@@ -923,6 +924,24 @@ addHook("PlayerThink",function(p)
 	else
 		pt.fireheld = 0
 	end
+	if (cur_weapon.guntype == WPT_BRELLA)
+	and (pt.shield and pt.shield.valid)
+		local sh = pt.shield
+		local move = me.radius + 16*me.scale
+		P_MoveOrigin(sh,
+			me.x + P_ReturnThrustX(nil,fireangle,move) + me.momx,
+			me.y + P_ReturnThrustY(nil,fireangle,move) + me.momy,
+			me.z + me.momz
+		)
+		if (P_MobjFlip(me) == -1)
+			sh.z = $ - sh.height
+			sh.eflags = $|MFE_VERTICALFLIP
+		else
+			sh.eflags = $ &~MFE_VERTICALFLIP
+		end
+		sh.angle = fireangle
+	end
+	
 	if not (p.cmd.buttons & BT_ATTACK or pt.fireheld)
 	and not (pt.cooldown or pt.firewait or pt.endlag or pt.shieldlag)
 		pt.shotsfired = 0
@@ -943,7 +962,7 @@ addHook("PlayerThink",function(p)
 	
 	p.shieldscale = skin.shieldscale
 	pt.squidtoggle = false
-	do
+	do -- swim stuff
 		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
 		local easing = ease.inquad
 		local oldclimbing = (pt.hidden and pt.wallink)
@@ -1770,6 +1789,9 @@ addHook("PlayerThink",function(p)
 		end
 		if pt.anglefix == 0
 			pt.anglestand = p.drawangle
+			if wasslowturning
+				pt.anglestand = pt.prevangle
+			end
 		end
 	elseif p.panim == PA_IDLE
 	and not pt.aimingsub
@@ -1785,6 +1807,7 @@ addHook("PlayerThink",function(p)
 	if (pt.hidden)
 		doslowdown = false
 	end
+	pt.prevangle = fireangle
 	
 	if (pt.firewait or pt.fireheld or pt.endlag or pt.cooldown)
 	or (dd.tics or dd.getup or pt.turretmode)

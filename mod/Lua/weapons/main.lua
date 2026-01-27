@@ -227,7 +227,8 @@ local weapon_meta = {
 	-- damage is chosen from [wep.damage, wep.maxdamage],
 	-- then is capped to wep.totaldamage if necessary
 	totaldamage = 81*FU,
-	capdamage = false,
+	capdamage = false, -- brellas DO cap damage, but this needs to be false so other weapons dont get capped
+	slowturnmul = FU/12,
 	deploywait = (TR/2)*4/5,
 	deployend = Paint.CANOPY_ANIM, -- use endlag if nil
 	deploydelay = 11, -- hold fire for this long before deploying
