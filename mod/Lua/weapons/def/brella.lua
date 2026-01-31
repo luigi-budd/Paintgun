@@ -42,7 +42,7 @@ Paint:registerWeapon({
 	guntype = WPT_BRELLA,
 	firerate = TR/2,
 	shootspeed = tofixed("0.45"),
-	inkcost = tofixed("6.325"),
+	inkcost = tofixed("5.00"),
 	inkdelay = TR,
 	dragmul = FU*58/100,
 	tapfire = false,
