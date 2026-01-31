@@ -75,6 +75,11 @@ G_AddGametype({
 
 
 local gamemode_t = {
+	--mapvote stuff
+	name = "Paintgun Gametype",
+	tol = TOL_PAINTGUN|TOL_MATCH,
+	minplayers = 0, maxplayers = 0,
+	
 	starttime = TurfWar.const.NOTIMER,
 	pointlimit = 0,
 	
@@ -93,19 +98,27 @@ TurfWar.registerGamemode = function(gt, props)
 		__index = gamemode_t
 	})
 	TurfWar.gamemodes[gt] = props
+	if MapVote and MapVote.RegisterGametype
+		MapVote.RegisterGametype(gt, props.name, props.minplayers,props.maxplayers, props.tol)
+	end
 end
 
 TurfWar.registerGamemode(GT_TURFWAR, {
+	name = "Team Paintgun",
 	starttime = TurfWar.const.ROUNDTIME
 })
 TurfWar.registerGamemode(GT_FFATURFWAR, {
+	name = "FFA Paintgun",
 	starttime = TurfWar.const.ROUNDTIME
 })
 TurfWar.registerGamemode(GT_CTFTURFWAR, {
+	name = "CTF Paintgun",
 	starttime = 5*60*TR,
 	pointlimit = 3,
 	allowovertime = true,
 	allowpinchmusic = false,
+	tol = TOL_CTFPAINTGUN|TOL_CTF,
+	minplayers = 4,
 })
 
 TurfWar.HUDS = {
