@@ -86,15 +86,19 @@ function Paint.spawnBulletDrop(mobj, source_player, color, h_angle,v_angle,thrus
 	return drop
 end
 
+local EXPLOSION_OUTER_RAD = 208*FU
+local EXPLOSION_INNER_RAD = 80*FU
+local EXPLOSION_OUTER_RFLAGS = RF_FULLBRIGHT|RF_NOCOLORMAPS
+local EXPLOSION_INNER_RFLAGS = EXPLOSION_OUTER_RFLAGS|RF_FULLBRIGHT|RF_NOCOLORMAPS|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
 function Paint.explosionVFX(mo, radius, angle, color)
 	angle = $ or mo.angle
 	color = $ or mo.color
 	
 	local bam = P_SpawnMobjFromMobj(mo, 0,0,0, MT_THOK)
 	P_SetMobjStateNF(bam, S_TNTBARREL_EXPL3)
-	bam.spritexscale = FixedDiv(radius, 208*FU) * 2
+	bam.spritexscale = FixedDiv(radius, EXPLOSION_OUTER_RAD) * 2
 	bam.spriteyscale = bam.spritexscale
-	bam.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
+	bam.renderflags = $|EXPLOSION_OUTER_RFLAGS
 	bam.blendmode = AST_ADD
 	bam.colorized = true
 	bam.color = color
@@ -104,12 +108,11 @@ function Paint.explosionVFX(mo, radius, angle, color)
 		outline.visualfadestupidshit = true
 		outline.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
 		outline.fuse = 9
-		outline.radius = 40*mo.scale
 		outline.sprite = SPR_PAINT_MISC
 		outline.frame = ($ &~FF_FRAMEMASK)|18
-		outline.spritexscale = FixedDiv(radius, 80*FU) * 2
+		outline.spritexscale = FixedDiv(radius, EXPLOSION_INNER_RAD) * 2
 		outline.spriteyscale = outline.spritexscale
-		outline.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
+		outline.renderflags = $|EXPLOSION_INNER_RFLAGS
 		outline.blendmode = AST_ADD
 		outline.colorized = true
 		outline.color = color

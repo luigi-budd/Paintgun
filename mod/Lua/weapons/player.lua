@@ -229,8 +229,8 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	
 	local irad = 170*FU
 	for i = 1,32
-		local ha = FixedAngle(P_RandomFixedRange(0,360*FU))
-		local va = FixedAngle(P_RandomFixedRange(0,360*FU))
+		local ha = FixedAngle(P_RandomRange(0,36) * 10*FU)
+		local va = FixedAngle(P_RandomRange(0,36) * 10*FU)
 		local v = SphereToCartesian(ha,va)
 		local s = P_SpawnMobjFromMobj(me,
 			FixedMul(irad, v.x),

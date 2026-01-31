@@ -38,14 +38,14 @@ end
 local function splash_blockmap(ray, mo)
 	if not (ray and ray.valid) then return end
 	if not (mo and mo.valid) then return end
+	if not mo.health then return end
+	if not P_CheckSight(ray,mo) then return end
 	if (mo == ray.donthit and ray.forcehit ~= mo) then return end
 	if (ray.donthit and ray.donthit.paint_shield and (mo == ray.donthit.tracer))
 		return
 	end
-	if not mo.health then return end
-	if not P_CheckSight(ray,mo) then return end
-	local sub_t = Paint.subs[ray.subtype]
-	local splashrad = FixedMul(sub_t.outer_radius, ray.scale)
+	local sub_t = ray.sub_t
+	local splashrad = ray.outer_radius
 	if abs(ray.x - mo.x) > splashrad + mo.radius
 	or abs(ray.y - mo.y) > splashrad + mo.radius
 		return
@@ -54,7 +54,7 @@ local function splash_blockmap(ray, mo)
 	if dist > splashrad then return end
 	
 	local damage = sub_t.outer_damage
-	if dist <= FixedMul(sub_t.inner_radius, ray.scale)
+	if dist <= ray.inner_radius
 		damage = sub_t.inner_damage
 	end
 	
@@ -103,8 +103,8 @@ function Paint:bombExplosion(mo, subtype)
 	P_StartQuake(sub_t.quakeforce, 10, {mo.x,mo.y,mo.z}, splashrad * 6/5)
 	Paint.explosionVFX(mo, irad)
 	for i = 1,26
-		local ha = FixedAngle(P_RandomFixedRange(0,360*FU))
-		local va = FixedAngle(P_RandomFixedRange(0,360*FU))
+		local ha = FixedAngle(P_RandomRange(0,36) * 10*FU)
+		local va = FixedAngle(P_RandomRange(0,36) * 10*FU)
 		local v = SphereToCartesian(ha,va)
 		local s = P_SpawnMobjFromMobj(mo,
 			FixedMul(irad, v.x),
@@ -121,26 +121,26 @@ function Paint:bombExplosion(mo, subtype)
 	local step = FixedDiv(360*FU, 9*FU)
 	local inner_step = FixedMul(sub_t.inner_radius - 64*FU, mo.scale)
 	local zoff = FixedDiv(mo.height,mo.scale)/2
+	local ha, va = 360*FU, 160*FU -- intentional, never aim parallel to the floor
+	local dragmul = FU * 97/100
+	local spawnspeed = 32*FU
 	for i = 0,8
 		local shot = Paint.spawnBulletDrop(mo, mo.target.player, mo.color,
-			FixedAngle(P_RandomFixedRange(0,360*FU)), FixedAngle(P_RandomFixedRange(0,160*FU)),
-			32*FU, nil,nil,nil,nil,nil, zoff
+			FixedAngle(P_RandomFixedRange(0,ha)), FixedAngle(P_RandomFixedRange(0,va)),
+			spawnspeed, nil,nil,nil,nil,nil, zoff
 		)
 		shot.target = mo.target
-		shot.airdrag = FU * 97/100
+		shot.airdrag = dragmul
 		
 		-- paint the base of the bomb too
 		local astep = FixedAngle(step*i)
-		for j = 1, 2
-			local ox = P_ReturnThrustX(nil, astep, inner_step / j)
-			local oy = P_ReturnThrustY(nil, astep, inner_step / j)
-			
-			Paint.spawnDroplet(mo, mo.target.player, mo.color, true, nil,nil,nil, ox,oy).target = mo.target
-			Paint.spawnDroplet(mo, mo.target.player, mo.color, true, nil,nil,nil, ox,oy).target = mo.target
-		end
+		local ox = P_ReturnThrustX(nil, astep, inner_step)
+		local oy = P_ReturnThrustY(nil, astep, inner_step)
+		
+		Paint.spawnDroplet(mo, mo.target.player, mo.color, true, nil,nil,nil, ox,oy).target = mo.target
+		Paint.spawnDroplet(mo, mo.target.player, mo.color, true, nil,nil,nil, ox,oy).target = mo.target
 	end
 	Paint.spawnDroplet(mo, mo.target.player, mo.color, true).target = mo.target
-
 	/*
 	for i = -1,1,2
 		local z = splashrad * i
@@ -176,7 +176,10 @@ function Paint:bombExplosion(mo, subtype)
 	*/
 	local px = mo.x
 	local py = mo.y
-	local br = splashrad * 7/5
+	local br = splashrad * 6/5
+	mo.outer_radius = FixedMul(splashrad, mo.scale)
+	mo.inner_radius = FixedMul(irad, mo.scale)
+	mo.sub_t = sub_t
 	searchBlockmap("objects",splash_blockmap, mo, px-br, px+br, py-br, py+br)
 end
 
