@@ -541,7 +541,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	end
 	local doinertia = cur_weapon.inertia
 	local proj = P_SpawnMobjFromMobj(me,
-		2*cos(angle), 2*sin(angle),
+		0,0,
 		41*FixedDiv(p.mo.height,p.mo.scale)/48 - 8*FU,
 		cur_weapon.shottype
 	)
@@ -608,6 +608,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.init = true
 	-- charger progress
 	proj.progress = 0
+	proj.hitlist = {}
 	
 	proj.spritexscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
 	proj.spriteyscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
@@ -666,6 +667,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 			proj.damage = cur_weapon:get(pt,"maxdamage")
 		else
 			proj.damage = wep_damage + FixedMul(cur_weapon:get(pt,"partialdamage") - wep_damage, ease.linear(chargeprogress,0,FU))
+			proj.pierces = 0
 		end
 	elseif not pt.calledbacks.onfire
 		S_StartSoundAtVolume(me, cur_weapon.sounds[P_RandomRange(1, #cur_weapon.sounds)], cur_weapon.soundvolume)

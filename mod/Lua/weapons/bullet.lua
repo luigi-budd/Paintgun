@@ -139,6 +139,7 @@ local function CheckPaperMerging(splat, mo)
 	if (mo.splatid == nil) then return end
 	
 	if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) <= splat.radius * 3/5
+		splat.collided[mo.splatid] = true
 		local friendly = Paint:mobjsOnTeam(
 			(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
 			(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
@@ -157,7 +158,6 @@ local function CheckPaperMerging(splat, mo)
 			P_RemoveMobj(mo)
 		end
 	end
-	splat.collided[mo.splatid] = true
 end
 
 local function splattersound(shot, collided)
@@ -770,8 +770,8 @@ addHook("MobjMoveCollide",function(shot,mo)
 	if not (mo and mo.valid) then return end
 	if not mo.health then return end
 	if not L_ZCollide(shot,mo) then return end
-	if (shot.lasthit == mo) then return end
-	shot.lasthit = mo
+	if (shot.hitlist[mo] ~= nil) then return end
+	shot.hitlist[mo] = true
 	
 	if not (shot.target and shot.target.valid) then return end
 	local me = shot.target
@@ -823,6 +823,9 @@ addHook("MobjMoveCollide",function(shot,mo)
 			if (wep.guntype == WPT_CHARGER
 			and shot.charge >= wep:get(pt,"chargetime"))
 			or (wep.guntype == WPT_BLASTER)
+				-- TODO: this should be handled in Paint:doProjHitmarker so
+				--		 that multikills dont play this sound multiple times
+				--		 in a tic
 				S_StartSound(nil, sfx_p_s2_4, p)
 				if wep.guntype == WPT_BLASTER
 					shot.donthit = mo
@@ -834,6 +837,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 			and shot.pierces)
 			or (wep.pierces == -1) -- infinite pierces
 				shot.pierces = $ - 1
+				return
 			else
 				P_RemoveMobj(shot)
 				return
@@ -845,7 +849,6 @@ addHook("MobjMoveCollide",function(shot,mo)
 			P_RemoveMobj(shot)
 			return
 		end
-		P_RemoveMobj(shot)
 	end
 end,MT_PAINT_SHOT)
 

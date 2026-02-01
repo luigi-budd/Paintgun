@@ -78,6 +78,20 @@ addHook("ThinkFrame",do
 end)
 
 function Paint:setTeammates()
+	if (gametype == GT_COOP)
+		local player_list = {}
+		for play in players.iterate
+			if play.spectator then continue end
+			if not play.paint then continue end
+			if not (play.mo and play.mo.valid and play.mo.health) then continue end
+			table.insert(player_list, play)
+		end
+		for k,play in ipairs(player_list)
+			play.paint.teammates = player_list
+		end
+		
+		return
+	end
 	if not G_GametypeHasTeams() then return end
 	
 	--We iterate everyone in this func so
