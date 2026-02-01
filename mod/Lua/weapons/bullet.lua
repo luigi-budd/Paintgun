@@ -1,11 +1,16 @@
 local CV = Paint.CV
 
+local justspawned_splats = {}
+local justspawned_papers = {}
 Paint.splatterid = 0
+
 addHook("MapLoad",function()
 	Paint.splatterid = 0
 end)
 addHook("NetVars",function(n)
 	Paint.splatterid = n($)
+	justspawned_splats = n($)
+	justspawned_papers = n($)
 end)
 
 freeslot(
@@ -83,6 +88,78 @@ mobjinfo[MT_PAINT_GUN] = {
 local REAL_SPLATRAD = 32*FU
 local SPLAT_SIZEMUL = FU * 3/2
 local SPLAT_MAXSIZE = (SPLAT_SIZEMUL)*2
+
+local function CheckSplatMerging(splat, mo)
+	if not (splat and splat.valid) then return true; end
+	local rad = splat.radius + mo.radius
+	if abs(splat.x - mo.x) > rad
+	or abs(splat.y - mo.y) > rad
+		return
+	end
+	
+	if mo.type ~= splat.type then return end
+	if (mo.revgrav ~= splat.revgrav) then return end
+	if (splat.collided == nil) then return end
+	if (mo.splatid == nil) then return end
+	
+	do --if R_PointToDist2(mo.x,mo.y, splat.x,splat.y) <= splat.radius * 4/5
+		splat.collided[mo.splatid] = true
+		local friendly = Paint:mobjsOnTeam(
+			(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
+			(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
+		)
+		--table.insert(mo.checkedme, splat)
+		--print(("splat: %d, %d\tmo: %d, %d"):format(splat.lifespan, splat.splatid, mo.lifespan, mo.splatid))
+		
+		if friendly
+			if mo.scale < SPLAT_MAXSIZE
+				mo.scale = $ + FU/4
+			else
+				mo.scale = max($, SPLAT_MAXSIZE)
+			end
+			P_RemoveMobj(splat)
+			return true
+		elseif (mo.lifespan > splat.lifespan or mo.splatid > splat.splatid)
+			P_RemoveMobj(mo)
+		end
+	end
+end
+
+local function CheckPaperMerging(splat, mo)
+	if not (splat and splat.valid) then return true; end
+	local rad = splat.radius + mo.radius
+	if abs(splat.x - mo.x) > rad
+	or abs(splat.y - mo.y) > rad
+		return
+	end
+	if not L_ZCollide(splat,mo, splat.height * 3/5, mo.height * 3/5) then return end
+	
+	if mo.type ~= splat.type then return end
+	if (splat.collided == nil) then return end
+	if (mo.splatid == nil) then return end
+	
+	if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) <= splat.radius * 3/5
+		local friendly = Paint:mobjsOnTeam(
+			(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
+			(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
+		)
+		
+		if friendly
+			if mo.scale < SPLAT_MAXSIZE
+				mo.scale = $ + FU/4
+				mo.z = $ - 4*FU
+			else
+				mo.scale = max($, SPLAT_MAXSIZE)
+			end
+			P_RemoveMobj(splat)
+			return true
+		elseif (mo.lifespan > splat.lifespan or mo.splatid > splat.splatid)
+			P_RemoveMobj(mo)
+		end
+	end
+	splat.collided[mo.splatid] = true
+end
+
 local function splattersound(shot, collided)
 	if shot.nosound
 		return
@@ -189,10 +266,6 @@ states[S_PAINT_SPLATTER] = {
 			return
 		end
 		
-		if splat.lifespan == nil
-			splat.lifespan = -1
-			splat.collided = {}
-		end
 		splat.lifespan = $ + 1
 		
 		if (splat.lifespan % (3*TR)) == 0
@@ -271,10 +344,6 @@ states[S_PAINT_WALLSPLAT] = {
 			return
 		end
 		
-		if splat.lifespan == nil
-			splat.lifespan = -1
-			splat.collided = {}
-		end
 		splat.lifespan = $ + 1
 		
 		if (splat.lifespan % (3*TR)) == 0
@@ -853,11 +922,43 @@ end,MT_PAINT_GUN)
 addHook("MobjSpawn",function(splat)
 	splat.splatid = Paint.splatterid
 	Paint.splatterid = $ + 1
+	splat.lifespan = -1
+	splat.collided = {}
+	
+	table.insert(justspawned_splats, splat)
 end,MT_PAINT_SPLATTER)
 addHook("MobjSpawn",function(splat)
 	splat.splatid = Paint.splatterid
 	Paint.splatterid = $ + 1
+	splat.lifespan = -1
+	splat.collided = {}
+	
+	table.insert(justspawned_papers, splat)
 end,MT_PAINT_WALLSPLAT)
+
+addHook("PostThinkFrame",do
+	if gamestate ~= GS_LEVEL then return end
+	
+	for k,splat in ipairs(justspawned_splats)
+		if not (splat and splat.valid) then continue end
+		local search_rad = splat.radius * 2
+		searchBlockmap("objects", CheckSplatMerging, splat,
+			splat.x - search_rad, splat.x + search_rad,
+			splat.y - search_rad, splat.y + search_rad
+		)
+	end
+	for k,splat in ipairs(justspawned_papers)
+		if not (splat and splat.valid) then continue end
+		local search_rad = splat.radius * 2
+		searchBlockmap("objects", CheckPaperMerging, splat,
+			splat.x - search_rad, splat.x + search_rad,
+			splat.y - search_rad, splat.y + search_rad
+		)
+	end
+	
+	justspawned_splats = {}
+	justspawned_papers = {}
+end)
 
 addHook("MobjLineCollide",function(mo)
 	return false
@@ -909,70 +1010,6 @@ addHook("TouchSpecial",function(splat,mo)
 	end
 	return nope(splat,mo);
 end,MT_PAINT_SPLATTER)
-
-addHook("MobjCollide",function(splat,mo)
-	if mo.type ~= splat.type then return end
-	if (mo.revgrav ~= splat.revgrav) then return end
-	if (splat.collided == nil) then return end
-	if (mo.splatid == nil) then return end
-	--if (splat.collided[mo.splatid] ~= nil) then return end
-	
-	do --if R_PointToDist2(mo.x,mo.y, splat.x,splat.y) <= splat.radius * 4/5
-		local friendly = Paint:mobjsOnTeam(
-			(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
-			(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
-		)
-		--table.insert(mo.checkedme, splat)
-		
-		if friendly
-			if splat.scale < SPLAT_MAXSIZE
-				splat.scale = $ + FU/4
-			else
-				splat.scale = max($, SPLAT_MAXSIZE)
-			end
-			P_RemoveMobj(mo)
-			return false
-		elseif (mo.lifespan ~= nil and splat.lifespan ~= nil)
-		and (mo.lifespan < splat.lifespan or mo.splatid > splat.splatid)
-			P_RemoveMobj(splat)
-			return false
-		end
-	end
-	splat.collided[mo.splatid] = true
-end,MT_PAINT_SPLATTER)
-
-addHook("MobjCollide",function(splat,mo)
-	if mo.type ~= splat.type then return end
-	if not L_ZCollide(splat,mo, splat.height * 3/5, mo.height * 3/5) then return end
-	if (splat.collided == nil) then return end
-	if (mo.splatid == nil) then return end
-	--if (splat.collided[mo.splatid] ~= nil) then return end
-	
-	if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) <= splat.radius * 3/5
-		local friendly = Paint:mobjsOnTeam(
-			(splat.tracer_player and splat.tracer_player.valid) and splat.tracer_player.mo or splat,
-			(mo.tracer_player and mo.tracer_player.valid) and mo.tracer_player.mo or mo
-		)
-		
-		if friendly
-			if splat.scale < SPLAT_MAXSIZE
-				splat.scale = $ + FU/4
-				splat.z = $ - 4*FU
-			else
-				splat.scale = max($, SPLAT_MAXSIZE)
-			end
-			if mo and mo.valid
-				P_RemoveMobj(mo)
-			end
-			return false
-		elseif (mo.lifespan ~= nil and splat.lifespan ~= nil)
-		and (mo.lifespan < splat.lifespan or mo.splatid > splat.splatid)
-			P_RemoveMobj(splat)
-			return false
-		end
-	end
-	splat.collided[mo.splatid] = true
-end,MT_PAINT_WALLSPLAT)
 
 /*
 local function splat_destruct(mo)
