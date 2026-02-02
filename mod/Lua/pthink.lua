@@ -731,7 +731,7 @@ addHook("PlayerThink",function(p)
 				dupe.target = me
 				dupe.tracer_player = p
 				dupe.paint_maxhp = cur_weapon:get(pt,"shieldhp")
-				dupe.paint_hp = sh.paint_maxhp
+				dupe.paint_hp = sh.paint_hp
 				dupe.paint_delay = 0
 				dupe.paint_shield = true
 				dupe.paint_destroyed = false
