@@ -178,7 +178,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	if not Paint.isFriendlyFire(p,source_player)
 		--CONS_Printf(sorp, "\x82Killed "..p.name.."!")
 		if source_player and source_player.valid
-			P_AddPlayerScore(source_player, 100)
+			P_AddPlayerScore(source_player, 500)
 			Paint.HUD:killConfirm(source_player, p)
 		end
 		if pt.hittime
@@ -199,7 +199,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 			and (candidates[1] ~= nil)
 			and candidates[1].player ~= source_player
 				Paint.HUD:killConfirm(candidates[1].player, p, true)
-				P_AddPlayerScore(candidates[1].player, 50)
+				P_AddPlayerScore(candidates[1].player, 60)
 			end
 		end
 	end

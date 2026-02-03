@@ -278,6 +278,7 @@ function Paint:initPlayer(p)
 		inkdelay = 0, -- delay before restoring ink
 		tankmobj = nil,
 		fastrefill = false,
+		turfpoints = 0, -- this is reset on MapLoad, and not PlayerSpawn
 		
 		inventory = {
 			items = {},

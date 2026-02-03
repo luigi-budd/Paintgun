@@ -2,6 +2,10 @@ local cv_respawndelay
 local SLIDEIN = TR/2
 local ANIM = 5
 
+local workscore = 0
+local workmap = -1
+local workplyr = nil
+
 local function drawTeam(v,p, y)
 	if not G_GametypeHasTeams() then return end
 	y = $ or 10
@@ -26,7 +30,17 @@ return function(v,p)
 		cv_respawndelay = CV_FindVar("respawndelay")
 	end
 	
-	v.drawString(320 - 6, 6, (p.score).."p", V_SNAPTOTOP|V_SNAPTORIGHT|V_ALLOWLOWERCASE, "thin-right")
+	if workplyr ~= p
+	or workmap ~= gamemap
+		workplyr = p
+		workscore = p.score
+	end
+	if workscore < p.score
+		workscore = $ + 1
+	elseif workscore > p.score
+		workscore = $ - 1
+	end
+	v.drawString(320 - 6, 6, (workscore).."p", V_SNAPTOTOP|V_SNAPTORIGHT|V_ALLOWLOWERCASE, "thin-right")
 	
 	/*
 		in splatoon 3...

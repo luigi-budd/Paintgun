@@ -17,9 +17,9 @@ end
 
 CV.splatter_lifetime = CV_RegisterVar({
 	name = "paint_splatlifetime",
-	defaultvalue = "20",
+	defaultvalue = "60",
 	flags = CV_SHOWMODIF|CV_NETVAR,
-	PossibleValue = {MIN = -1, MAX = 120} 
+	PossibleValue = {MIN = -1, MAX = 180} 
 })
 CV.paintguns = CV_RegisterVar({
 	name = "paint_active",

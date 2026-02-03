@@ -2022,6 +2022,15 @@ addHook("PlayerSpawn",function(p)
 	Paint:resetPlayer(p)
 end)
 
+addHook("MapLoad",function()
+	for p in players.iterate
+		if not (p and p.valid) then continue end
+		if not (p.paint) then continue end
+
+		p.paint.turfpoints = 0
+	end
+end)
+
 local move_lerp = FU / 3
 addHook("PreThinkFrame",do setalpha = false; for p in players.iterate
 	local me = p.mo

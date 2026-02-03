@@ -89,6 +89,11 @@ local REAL_SPLATRAD = 32*FU
 local SPLAT_SIZEMUL = FU * 3/2
 local SPLAT_MAXSIZE = (SPLAT_SIZEMUL)*2
 
+local function AddTurfPoints(p, points)
+	P_AddPlayerScore(p, points)
+	p.paint.turfpoints = $ + points
+end
+
 local function CheckSplatMerging(splat, mo)
 	if not (splat and splat.valid) then return true; end
 	local rad = splat.radius + mo.radius
@@ -114,6 +119,9 @@ local function CheckSplatMerging(splat, mo)
 		if friendly
 			if mo.scale < SPLAT_MAXSIZE
 				mo.scale = $ + FU/4
+				if (splat.tracer_player and splat.tracer_player.valid)
+					AddTurfPoints(splat.tracer_player, 1)
+				end
 			else
 				mo.scale = max($, SPLAT_MAXSIZE)
 			end
@@ -711,8 +719,8 @@ addHook("MobjThinker",function(shot)
 			if shot.centerpellet
 				CreateTrail(shot)
 			elseif not shot.pellet
-				if ((leveltime + shot.lifespan) % 3 == 0)
-				and P_RandomChance(FU/2)
+				if ((leveltime + shot.lifespan + P_RandomRange(-2,2)) % 3 == 0)
+				and P_RandomChance(FU / 2)
 					CreateTrail(shot)
 				end
 			end
@@ -941,11 +949,16 @@ addHook("PostThinkFrame",do
 	
 	for k,splat in ipairs(justspawned_splats)
 		if not (splat and splat.valid) then continue end
+		local src_player = splat.tracer_player
 		local search_rad = splat.radius * 2
 		searchBlockmap("objects", CheckSplatMerging, splat,
 			splat.x - search_rad, splat.x + search_rad,
 			splat.y - search_rad, splat.y + search_rad
 		)
+		-- splat did not merge into another one
+		if (splat and splat.valid) and (src_player and src_player.valid)
+			AddTurfPoints(src_player, 1)
+		end
 	end
 	for k,splat in ipairs(justspawned_papers)
 		if not (splat and splat.valid) then continue end
