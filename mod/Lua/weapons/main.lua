@@ -261,6 +261,7 @@ local weapon_meta = {
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
+	dualie_weaponmirror = false,
 	weaponstate_frame = nil, -- frame constants, leave nil for state-defined frame
 	weaponstate_scale = FU,
 	
@@ -642,7 +643,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		end
 	end
 
-	if cur_weapon.guntype == WPT_CHARGER
+	if (cur_weapon.guntype == WPT_CHARGER)
 		local sound
 		local chargetime = cur_weapon:get(pt,"chargetime")
 		local chargeprogress = min(FixedDiv(pt.charge, chargetime), FU)
@@ -672,10 +673,14 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	elseif not pt.calledbacks.onfire
 		S_StartSoundAtVolume(me, cur_weapon.sounds[P_RandomRange(1, #cur_weapon.sounds)], cur_weapon.soundvolume)
 	end
-	if cur_weapon.guntype == WPT_BRELLA
+	if (cur_weapon.guntype == WPT_BRELLA)
 		proj.damage = wep_damage + FixedMul(cur_weapon:get(pt,"maxdamage") - wep_damage, P_RandomFixed())
 		proj.pellet = true
 	end
+	if (cur_weapon.guntype == WPT_BLASTER)
+		proj.powerful = true
+	end
+	
 	proj.basedamage = proj.damage
 	proj.falloffdamage = cur_weapon:get(pt, "falloffdamage")
 	
@@ -777,7 +782,8 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 		bomb.radius = FixedMul(mobjinfo[MT_PAINT_BOMB].radius, me.scale)
 		bomb.height = FixedMul(mobjinfo[MT_PAINT_BOMB].height, me.scale)
 	else
-		S_StartSoundAtVolume(bomb, sfx_pb_fly, 255 * 3/4)
+		Paint:teamSound(p, bomb, sfx_pb_fly, nil, sfx_pb_fly, 255 * 3/4)
+		--S_StartSoundAtVolume(bomb, sfx_pb_fly, 255 * 3/4)
 		if sub_t.spawnstate ~= nil
 			bomb.state = sub_t.spawnstate
 		end

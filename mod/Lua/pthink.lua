@@ -97,6 +97,11 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 	end
 	wepmo.flags2 = ($ &~MF2_DONTDRAW)|((pt.hidden) and MF2_DONTDRAW or 0)
 	wepmo.fireanim = max($-1, 0)
+	if dualieflip
+		wepmo.mirrored = cur_weapon:get(pt,"dualie_weaponmirror")
+	else
+		wepmo.mirrored = false
+	end
 	
 	local offx,offy = 0,0
 	local firing = false
@@ -135,6 +140,7 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 		me.z + zoffset
 	)
 	wepmo.angle = $ - FixedAngle(18 * FixedDiv(pt.weaponzoffset, Paint.IDLE_OFFSET) * (dualieflip and -1 or 1))
+	wepmo.alpha = me.alpha
 	if (P_MobjFlip(me) == -1)
 		wepmo.z = $ - wepmo.height
 		wepmo.eflags = $|MFE_VERTICALFLIP
@@ -1120,7 +1126,7 @@ addHook("PlayerThink",function(p)
 				if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 12*me.scale)
 				and cando
 					if not S_SoundPlaying(me, sfx_pt_swm)
-						S_StartSoundAtVolume(me,sfx_pt_swm,255/2, p)
+						S_StartSoundAtVolume(me,sfx_pt_swm,255/2)
 					end
 					local off = 8*FU
 					local blob = makeBlob(p,me,pt, 0,0)

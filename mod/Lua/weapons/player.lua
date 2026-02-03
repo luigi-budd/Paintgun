@@ -567,6 +567,10 @@ function Paint:mobjsOnTeam(mo1, mo2)
 		end
 		return true
 	end
+	if (gametyperules & GTR_TAG)
+		return (mo1.player.pflags & PF_TAGIT) == (mo2.player.pflags & PF_TAGIT)
+	end
+	
 	if not G_GametypeHasTeams() then return false; end
 	return mo1.player.ctfteam == mo2.player.ctfteam
 end

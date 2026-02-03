@@ -27,12 +27,13 @@ sfxinfo[freeslot("sfx_pb_alm")].caption = "/"
 sfxinfo[freeslot("sfx_pb_exp")].caption = "Explosion"
 
 local function clattersound(mo)
+	local sfx = sfx_pb_ht0
 	if not mo.extravalue2
-		S_StartSound(mo, sfx_pb_ht0)
 		mo.extravalue2 = 1
 	else
-		S_StartSound(mo, P_RandomRange(sfx_pb_ht1,sfx_pb_ht4))
+		sfx = P_RandomRange(sfx_pb_ht1,sfx_pb_ht4)
 	end
+	Paint:teamSound(mo.tracer_player, mo, sfx, nil, sfx)
 end
 
 local function splash_blockmap(ray, mo)
@@ -308,7 +309,7 @@ addHook("MobjThinker",function(sub)
 	if dofuse
 		if sub.fusetimer <= TR
 		and not sub.playedalarm
-			S_StartSound(sub, sfx_pb_alm)
+			Paint:teamSound(sub.tracer_player, sub, sfx_pb_alm, nil, sfx_pb_alm)
 			sub.playedalarm = true
 		elseif sub.fusetimer == 0
 			Paint:bombExplosion(sub, sub.subtype)

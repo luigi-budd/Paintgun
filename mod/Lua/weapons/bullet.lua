@@ -394,10 +394,13 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo, critical)
 	if critical
 		hitmarker = sfx_pnt_h6
 	end
+	if shot.powerful
+		hitmarker = sfx_pnt_h7
+	end
 	
 	if (hitmark_tic ~= leveltime) or critical
 		S_StartSound(nil, hitmarker, shot.target.player)
-		if not (mo.paint_lifesaver or critical)
+		if not (mo.paint_lifesaver or (critical or shot.powerful))
 			S_StartSoundAtVolume(nil, hitmarker, 255/2, shot.target.player) --Bruh
 		end
 	end
@@ -475,6 +478,7 @@ local function splash_blockmap(ray, mo)
 	end
 end
 local function ExplodeShot(shot)
+	shot.powerful = false
 	P_SetOrigin(shot,shot.x,shot.y,shot.z)
 	if not (shot and shot.valid) then return end
 	local wep = Paint.weapons[shot.weapon_id]
@@ -788,7 +792,6 @@ addHook("MobjMoveCollide",function(shot,mo)
 		if (wep.guntype == WPT_CHARGER
 		and shot.charge >= wep:get(pt,"chargetime"))
 		or (wep.guntype == WPT_BLASTER)
-			S_StartSound(nil, sfx_p_s2_4, p)
 			if wep.guntype == WPT_BLASTER
 				shot.donthit = mo
 				ExplodeShot(shot)
@@ -823,10 +826,6 @@ addHook("MobjMoveCollide",function(shot,mo)
 			if (wep.guntype == WPT_CHARGER
 			and shot.charge >= wep:get(pt,"chargetime"))
 			or (wep.guntype == WPT_BLASTER)
-				-- TODO: this should be handled in Paint:doProjHitmarker so
-				--		 that multikills dont play this sound multiple times
-				--		 in a tic
-				S_StartSound(nil, sfx_p_s2_4, p)
 				if wep.guntype == WPT_BLASTER
 					shot.donthit = mo
 					ExplodeShot(shot)

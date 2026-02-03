@@ -15,8 +15,10 @@ for j = 1, 3
 	end
 end
 
--- Nozzlenose/reeflux crit sound
+-- Nozzlenose/Stringer crit sound
 sfxinfo[freeslot("sfx_pnt_h6")] = hitmarker_attribs
+-- Splatana/Charger/Blaster crit sound
+sfxinfo[freeslot("sfx_pnt_h7")] = hitmarker_attribs
 
 -- Revive shot
 sfxinfo[freeslot("sfx_pnt_r0")] = hitmarker_attribs
@@ -143,9 +145,30 @@ function Paint:countTeams()
 	return count
 end
 
--- TODO:
-function Paint:teamSound(p, mysfx, teamsfx, othersfx)
+function Paint:teamSound(p, src, mysfx, teamsfx, othersfx, vol)
+	if not (p.realmo and p.realmo.valid) then return end
+	local soundfunc = (vol ~= nil) and S_StartSoundAtVolume or S_StartSound
+	mysfx		= $ or sfx_none
+	teamsfx		= $ or sfx_none
+	othersfx	= $ or sfx_none
 	
+	for play in players.iterate
+		if not (play and play.valid) then continue end
+		if not (play.realmo and play.realmo.valid) then continue end
+		
+		-- if vol is defined, use S_StartSoundAtVolume and replace
+		-- the third argument with the volume
+		-- otherwise, use the play variable for S_StartSound, the second
+		-- play variable will get thrown away
+		local temp = (vol ~= nil) and vol or play
+		if play == p
+			soundfunc(src, mysfx, temp, play)
+		elseif (Paint:mobjsOnTeam(p.realmo, play.realmo))
+			soundfunc(src, teamsfx, temp, play)
+		else
+			soundfunc(src, othersfx, temp, play)
+		end
+	end
 end
 
 function Paint:initPlayer(p)
