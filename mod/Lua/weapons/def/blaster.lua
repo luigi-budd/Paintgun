@@ -41,6 +41,14 @@ Paint:registerWeapon({
 	spread_jump = 56, -- how many tics until jump spread decays?
 	spread_jumpchance = (FU * 50), -- set spread chance to this when jumping
 
+	spawnspeed = FixedMul(FixedMul(tofixed("0.945"), Paint.DU2FU), Paint.SIXTY2THIRTYFIVE),
+	str_tics = 4, -- straight state lasts this many tics
+	str2brk_maxspeed = FixedMul(FixedMul(tofixed("0.9131"), Paint.DU2FU), Paint.SIXTY2THIRTYFIVE), -- when ending straight state, cap xyspeed to this
+	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
+	brk_gravity = 0, --FixedMul(tofixed("0.07"), Paint.DU2FU),
+	brk2fre_tics = 3, -- or when brake state lasts this many tics
+	crs_guideframe = 7, -- crosshair is placed at this frame in the shot's lifetime
+	
 	guntype = WPT_BLASTER,
 	
 	weaponstate = S_PAINT_GUN_BLASTER,

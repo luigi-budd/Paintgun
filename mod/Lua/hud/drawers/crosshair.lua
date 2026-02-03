@@ -50,7 +50,8 @@ local function is_shooter(type)
 	return (
 		type == WPT_SHOOTER or
 		type == WPT_BRELLA or
-		type == WPT_DUALIES
+		type == WPT_DUALIES or
+		type == WPT_BLASTER
 	)
 end
 
