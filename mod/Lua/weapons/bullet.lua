@@ -90,8 +90,10 @@ local SPLAT_SIZEMUL = FU * 3/2
 local SPLAT_MAXSIZE = (SPLAT_SIZEMUL)*2
 
 local function AddTurfPoints(p, points)
-	P_AddPlayerScore(p, points)
 	p.paint.turfpoints = $ + points
+	if (p.paint.turfpoints % 2 == 1)
+		P_AddPlayerScore(p, points)
+	end
 end
 
 local function CheckSplatMerging(splat, mo)
