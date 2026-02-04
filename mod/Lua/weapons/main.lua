@@ -212,6 +212,7 @@ local weapon_meta = {
 	dodgegetup = TR/2, -- you can get up after this many tics
 	dodgeinkcost = 8*FU, -- use this much ink for dodge rolls
 	dodgeshotcost = nil,
+	dodgesound = nil,
 	turret_range = nil,
 	turret_firerate = nil,
 	turret_startsound = nil,

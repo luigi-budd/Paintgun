@@ -283,7 +283,7 @@ function Paint:initPlayer(p)
 		inventory = {
 			items = {},
 			curslot = 1,
-			slots = 6,
+			slots = 7,
 		},
 		
 		hp = 100*FU,
