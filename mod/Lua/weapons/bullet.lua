@@ -1102,7 +1102,9 @@ local function brella_pain(mo, inf,sor, damage)
 		local soundid = wep:get(pt, "breaksound") or sfx_none
 		S_StartSound(mo.tracer, soundid)
 		brella_destroyfx(mo, p)
-		pt.shieldjustbroke = true
+		if not mo.paint_released
+			pt.shieldjustbroke = true
+		end
 	end
 	--print(("DAMAGE: %f"):format(damage))
 	return false
@@ -1206,6 +1208,11 @@ addHook("MobjThinker",function(b)
 	local pt = p.paint
 	
 	if b.paint_released
+		if b.paint_hp <= 0
+			P_RemoveMobj(b)
+			return
+		end
+		
 		P_InstaThrust(b, b.angle, b.shieldspeed)
 		if b.cooldown
 			b.cooldown = $ - 1
@@ -1213,7 +1220,7 @@ addHook("MobjThinker",function(b)
 		if not S_SoundPlaying(b, b.shieldsound)
 			S_StartSound(b, b.shieldsound)
 		end
-
+		
 		if (P_IsObjectOnGround(b))
 		and (leveltime % 3 == 0)
 			local trail = P_SpawnMobjFromMobj(b, 0,0,FU, MT_PAINT_SHOT)
@@ -1237,7 +1244,7 @@ addHook("MobjThinker",function(b)
 		blob.fuse = 10
 		blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
 		blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
-
+		
 		if b.fuse == 1
 			local soundid = Paint.weapons[b.weapon_id]:get(pt, "breaksound") or sfx_none
 			S_StartSound(b, soundid)
