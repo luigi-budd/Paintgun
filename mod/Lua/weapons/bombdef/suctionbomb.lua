@@ -31,7 +31,7 @@ Paint:registerSubWeapon({
 		bomb.nophysics = true
 		bomb.forcefuse = true
 		bomb.momx,bomb.momy,bomb.momz = 0,0,0
-		S_StartSound(bomb, sfx_pb_ht5)
+		Paint:teamSound(bomb.tracer_player, bomb, sfx_pb_ht5, nil, sfx_pb_ht5)
 		S_StopSoundByID(bomb, sfx_pb_fly)
 		
 		bomb.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT
