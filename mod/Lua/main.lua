@@ -1,6 +1,6 @@
 -- locale stuff
 -- https://wiki.srb2.org/wiki/User:Clairebun/Sandbox/Common_Lua_Functions#L_DecimalFixed
-rawset(_G,"tofixed",function(dec)
+rawset(_G,"tofixed",function(str)
 	if str == nil return nil end
 	local dec_offset = string.find(str,'%.')
 	if dec_offset == nil
