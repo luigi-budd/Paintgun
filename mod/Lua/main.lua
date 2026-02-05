@@ -1,3 +1,25 @@
+-- locale stuff
+-- https://wiki.srb2.org/wiki/User:Clairebun/Sandbox/Common_Lua_Functions#L_DecimalFixed
+rawset(_G,"tofixed",function(dec)
+	if str == nil return nil end
+	local dec_offset = string.find(str,'%.')
+	if dec_offset == nil
+		return (tonumber(str) or 0)*FRACUNIT
+	end
+	local whole = tonumber(string.sub(str,0,dec_offset-1)) or 0
+	local decstr = string.sub(str,dec_offset+1)
+	local decimal = tonumber(decstr) or 0
+
+	if(decimal==0)
+		decstr = "0"
+	end
+
+	whole = $ * FRACUNIT
+	local dec_len = string.len(decstr)
+	decimal = $ * FRACUNIT / (10^dec_len)
+	return whole + decimal
+end)
+
 --hitmarker
 local hitmarker_attribs = {
 	caption = "/",

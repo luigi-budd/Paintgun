@@ -187,6 +187,7 @@ end
 function Paint:bombPhysics(mo, subtype, aimline)
 	if not (mo and mo.valid) then return end
 	local sub_t = Paint.subs[subtype]
+	if not (sub_t) then return end
 	
 	if sub_t.physicsthink ~= nil
 		if sub_t.physicsthink(mo, subtype, aimline)
