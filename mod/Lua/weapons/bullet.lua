@@ -276,11 +276,10 @@ states[S_PAINT_SPLATTER] = {
 			return
 		end
 		
-		splat.lifespan = $ + 1
-		
-		if (splat.lifespan % (3*TR)) == 0
-			splat.collided = {}
+		if (splat.lifespan == nil)
+			splat.lifespan = -1
 		end
+		splat.lifespan = $ + 1
 		
 		local slope = splat.standingslope
 		local skew = splat.floorspriteslope
