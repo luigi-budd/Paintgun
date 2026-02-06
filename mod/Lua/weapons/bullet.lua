@@ -443,11 +443,12 @@ end
 local function splash_blockmap(ray, mo)
 	if not (ray and ray.valid) then return end
 	if not (mo and mo.valid) then return end
+	if not mo.health then return end
 	if (mo == ray.donthit) then return end
 	if (ray.donthit and ray.donthit.paint_shield and (mo == ray.donthit.tracer))
 		return
 	end
-	if not mo.health then return end
+	if not P_CheckSight(ray, mo) then return end
 	local wep = Paint.weapons[ray.weapon_id]
 	local splashrad = FixedMul(wep:get(ray.target.player.paint,"splashradius"), ray.scale)
 	if abs(ray.x - mo.x) > splashrad + mo.radius
