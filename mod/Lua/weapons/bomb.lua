@@ -63,7 +63,7 @@ local function splash_blockmap(ray, mo)
 	
 	if (mo.paint_shieldmobj and mo.paint_shieldmobj.valid)
 	and Paint.checkShieldBlocking(mo, ray)
-		P_DamageMobj(b, ray, ray.target, damage)
+		P_DamageMobj(mo.paint_shield, ray, ray.target, damage)
 		return
 	end
 	
@@ -81,7 +81,7 @@ local function splash_blockmap(ray, mo)
 	local p = me.player
 	
 	if mo.type == MT_PLAYER
-	--and mo ~= me
+	and mo ~= me
 		if Paint_canHurtPlayer(p, mo.player)
 			Paint:damagePlayer(mo.player, ray, p, damage)
 			Paint:playHurtSound(mo.player)
