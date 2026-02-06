@@ -587,6 +587,7 @@ addHook("PlayerThink",function(p)
 	pt.deployshield = false
 	pt.shieldjustregened = false
 	pt.doslowturn = false
+	me.paint_shieldmobj = nil
 	if (cur_weapon.guntype == WPT_BRELLA)
 		local sh = pt.shield
 		if not (sh and sh.valid)
@@ -600,6 +601,7 @@ addHook("PlayerThink",function(p)
 			s.paint_shield = true
 			s.paint_destroyed = false
 			s.paint_explodebombs = true
+			s.paint_shieldangle = cur_weapon:get(pt,"shieldspan")
 			s.cooldown = 0
 			s.weapon_id = pt.weapon_id
 			s.dontdrawforviewmobj = me
@@ -703,6 +705,7 @@ addHook("PlayerThink",function(p)
 		and not pt.shieldlost
 			-- visible
 			pt.doslowturn = true
+			me.paint_shieldmobj = sh
 			sh.flags2 = $ &~MF2_DONTDRAW
 			sh.flags = $|MF_SHOOTABLE &~(MF_NOCLIP|MF_NOCLIPTHING)
 			if (pt.shotsfired >= 1)
@@ -744,6 +747,7 @@ addHook("PlayerThink",function(p)
 				dupe.paint_destroyed = false
 				dupe.paint_explodebombs = true
 				dupe.paint_released = true
+				dupe.paint_shieldangle = sh.paint_shieldangle
 				dupe.shieldspeed = FixedMul(cur_weapon:get(pt,"shieldspeed"), me.scale)
 				dupe.cooldown = 0
 				dupe.weapon_id = pt.weapon_id

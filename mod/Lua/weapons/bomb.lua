@@ -40,23 +40,31 @@ local function splash_blockmap(ray, mo)
 	if not (ray and ray.valid) then return end
 	if not (mo and mo.valid) then return end
 	if not mo.health then return end
-	if not P_CheckSight(ray,mo) then return end
 	if (mo == ray.donthit and ray.forcehit ~= mo) then return end
 	if (ray.donthit and ray.donthit.paint_shield and (mo == ray.donthit.tracer))
 		return
 	end
+	if not P_CheckSight(ray,mo) then return end
 	local sub_t = ray.sub_t
+	
 	local splashrad = ray.outer_radius
 	if abs(ray.x - mo.x) > splashrad + mo.radius
 	or abs(ray.y - mo.y) > splashrad + mo.radius
 		return
 	end
-	local dist = R_PointTo3DDist(ray.x, ray.y, ray.z, mo.x,mo.y,mo.z)
+	
+	local dist = R_PointTo3DDist(ray.x, ray.y,ray.z, mo.x,mo.y,mo.z)
 	if dist > splashrad then return end
 	
 	local damage = sub_t.outer_damage
 	if dist <= ray.inner_radius
 		damage = sub_t.inner_damage
+	end
+	
+	if (mo.paint_shieldmobj and mo.paint_shieldmobj.valid)
+	and Paint.checkShieldBlocking(mo, ray)
+		P_DamageMobj(b, ray, ray.target, damage)
+		return
 	end
 	
 	if Paint_canHurtEnemy(ray.target.player, mo)
@@ -73,7 +81,7 @@ local function splash_blockmap(ray, mo)
 	local p = me.player
 	
 	if mo.type == MT_PLAYER
-	and mo ~= me
+	--and mo ~= me
 		if Paint_canHurtPlayer(p, mo.player)
 			Paint:damagePlayer(mo.player, ray, p, damage)
 			Paint:playHurtSound(mo.player)

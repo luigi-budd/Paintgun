@@ -152,3 +152,21 @@ function Paint.inkShockVFX(me, dist, color, scale, count, fuse)
 		P_Thrust(s, fa, speed)
 	end
 end
+
+-- checks to see if mo's paint_shieldmobj would "block"
+-- inf's line of sight to mo
+function Paint.checkShieldBlocking(mo, inf)
+	local b = mo.paint_shieldmobj
+	if not (b and b.valid) then return false; end
+	
+	local protect = b.paint_shieldangle
+	if not (protect) then return false; end
+	
+	local angdiff = AngleFixed(R_PointToAngle2(b.x,b.y, inf.x,inf.y) - b.angle)
+	
+	if angdiff <= protect
+	or angdiff >= 360*FU - protect
+		return true -- blocking
+	end
+	return false
+end

@@ -255,6 +255,7 @@ local weapon_meta = {
 	shieldsound = nil, -- released canopies repeat this sound
 	shieldrelease = 64, -- release canopies this many tics after opening
 	shieldinkuse = FixedDiv(20*FU, 64*FU),
+	shieldspan = 60*FU, -- how wide half the canopy is, for protecting against bombs
 	inkdelay_held = 12, -- set inkdelay to this when HOLDING a canopy, but not releasing it
 	inkdelay_release = 2*TR, -- set inkdelay to this when RELEASING a canopy
 	shootwhiledeployed = false, -- undercover brella

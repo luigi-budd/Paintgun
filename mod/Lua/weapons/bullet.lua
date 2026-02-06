@@ -457,11 +457,15 @@ local function splash_blockmap(ray, mo)
 	local dist = R_PointTo3DDist(ray.x, ray.y, ray.z, mo.x,mo.y,mo.z)
 	if dist > splashrad then return end
 	
+	local damage = wep.splashdamage[1] + FixedMul(wep.splashdamage[2] - wep.splashdamage[1], FixedDiv(dist, splashrad))
+	if (mo.paint_shieldmobj and mo.paint_shieldmobj.valid)
+	and Paint.checkShieldBlocking(mo, ray)
+		P_DamageMobj(b, ray, ray.target, damage)
+		return
+	end
+	
 	if Paint_canHurtEnemy(ray.target.player, mo)
 	or mo.type == MT_TNTBARREL
-		local progress = FixedDiv(dist, splashrad)
-		local damage = wep.splashdamage[1] + FixedMul(wep.splashdamage[2] - wep.splashdamage[1], progress)
-		
 		P_DamageMobj(mo, ray, ray.target, damage)
 		Paint:doProjHitmarker(ray, mo, false, false, true)
 		Paint.HUD:damageNumber(ray.target.player, mo, damage)
@@ -474,8 +478,6 @@ local function splash_blockmap(ray, mo)
 	if mo.type == MT_PLAYER
 	and mo ~= me
 		if Paint_canHurtPlayer(p, mo.player)
-			local progress = FixedDiv(dist, splashrad)
-			local damage = wep.splashdamage[1] + FixedMul(wep.splashdamage[2] - wep.splashdamage[1], progress)
 			local newdamage = Paint:damagePlayer(mo.player, ray, p, damage)
 			Paint:playHurtSound(mo.player)
 			Paint:doProjHitmarker(ray, mo, false)
