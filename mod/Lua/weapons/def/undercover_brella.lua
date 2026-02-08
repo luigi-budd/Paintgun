@@ -4,23 +4,29 @@ end
 sfxinfo[sfx_p_s7_2].caption = "/"
 sfxinfo[sfx_p_s7_3].caption = "Brella deployed"
 
-/*
-freeslot("S_PAINT_GUN_BRELLA_CLS")
-states[S_PAINT_GUN_BRELLA_CLS] = {
+freeslot("S_PAINT_GUN_UCBRELLA_CLS")
+states[S_PAINT_GUN_UCBRELLA_CLS] = {
 	sprite = SPR_PAINT_GUN,
-	frame = 7,
+	frame = 11,
 	tics = -1,
-	nextstate = S_PAINT_GUN_BRELLA_CLS
+	nextstate = S_PAINT_GUN_UCBRELLA_CLS
 }
 
-freeslot("S_PAINT_GUN_BRELLA_OPN")
-states[S_PAINT_GUN_BRELLA_OPN] = {
+freeslot("S_PAINT_GUN_UCBRELLA_OPN")
+states[S_PAINT_GUN_UCBRELLA_OPN] = {
 	sprite = SPR_PAINT_GUN,
-	frame = 8,
+	frame = 12,
 	tics = -1,
-	nextstate = S_PAINT_GUN_BRELLA_OPN
+	nextstate = S_PAINT_GUN_UCBRELLA_OPN
 }
-*/
+
+freeslot("S_PAINT_GUN_UCBRELLA_CAN")
+states[S_PAINT_GUN_UCBRELLA_CAN] = {
+	sprite = SPR_PAINT_GUN,
+	frame = 13,
+	tics = -1,
+	nextstate = S_PAINT_GUN_UCBRELLA_CAN
+}
 
 local MIN_DAMAGE = 9*FU
 Paint:registerWeapon({
@@ -51,9 +57,11 @@ Paint:registerWeapon({
 	startlag = 5,
 	endlag = 12,
 	
-	weaponstate = S_PAINT_GUN_BRELLA_CLS,
-	open_weaponstate = S_PAINT_GUN_BRELLA_OPN,
-	weaponstate_scale = FU/2,
+	weaponstate = S_PAINT_GUN_UCBRELLA_CLS,
+	open_weaponstate = S_PAINT_GUN_UCBRELLA_OPN,
+	shieldstate = S_PAINT_GUN_UCBRELLA_CAN,
+	weaponstate_scale = FU/3,
+	shieldscale = FU/3,
 	shotstate = S_PAINT_SHOT_PELLET,
 	
 	deploywait = 6,
