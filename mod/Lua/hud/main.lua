@@ -21,7 +21,6 @@ dofiles("drawers/",{
 	"lowink.lua",
 	"killconf.lua",
 	"inv.lua",
-	"tooltips.lua",
 	"damagenumbers.lua",
 	"wipeout.lua",
 	
