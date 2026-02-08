@@ -1,14 +1,10 @@
-for i = 0,9
-	sfxinfo[freeslot("sfx_p_s5_"..i)].caption = "Paint fired"
+for i = 0,3
+	sfxinfo[freeslot("sfx_p_s7_"..i)].caption = "Paint fired"
 end
-sfxinfo[sfx_p_s5_4].caption = "/"
-sfxinfo[sfx_p_s5_5].caption = "Brella deployed"
-sfxinfo[sfx_p_s5_6].caption = "/"
-sfxinfo[sfx_p_s5_7].caption = "Brella breaks"
-sfxinfo[sfx_p_s5_8].caption = "Brella recovered!"
-sfxinfo[sfx_p_s5_9].caption = "Brella released"
-sfxinfo[freeslot("sfx_p_s5_a")].caption = "/" -- canopy flying
+sfxinfo[sfx_p_s7_2].caption = "/"
+sfxinfo[sfx_p_s7_3].caption = "Brella deployed"
 
+/*
 freeslot("S_PAINT_GUN_BRELLA_CLS")
 states[S_PAINT_GUN_BRELLA_CLS] = {
 	sprite = SPR_PAINT_GUN,
@@ -24,30 +20,34 @@ states[S_PAINT_GUN_BRELLA_OPN] = {
 	tics = -1,
 	nextstate = S_PAINT_GUN_BRELLA_OPN
 }
+*/
 
-local MIN_DAMAGE = 10*FU + (FU*8/10)
+local MIN_DAMAGE = 9*FU
 Paint:registerWeapon({
-	realname = "Splat Brella",
+	realname = "Undercover Brella",
 	
-	name = "brella",
-	--subtype = "sprinkler",
+	name = "undercover_brella",
+	--subtype = "inkmine",
 	handoffset = 8*FU,
 	range = 355 * FU,
 	dropoff = 310*FU,
-	h_spread = {8*FU, 8*FU},
+	h_spread = {6*FU, 6*FU},
 	v_spread = {6*FU, 6*FU},
 	verticalspread = true,
-	maxdamage = 16*FU + (FU/5),
+	maxdamage = 12*FU,
 	damage = MIN_DAMAGE,
+	totaldamage = 40*FU,
 	guntype = WPT_BRELLA,
 	firerate = TR/2,
-	shootspeed = tofixed("0.45"),
-	inkcost = tofixed("5.00"),
-	inkdelay = TR,
+	shootspeed = tofixed("0.72"),
+	shieldingspeed = tofixed("0.72"),
+	inkcost = tofixed("4.00"),
+	inkdelay = TR * 2/3,
 	dragmul = FU*58/100,
 	tapfire = false,
 	capdamage = true,
 	
+	firerate = 14,
 	startlag = 5,
 	endlag = 12,
 	
@@ -55,6 +55,17 @@ Paint:registerWeapon({
 	open_weaponstate = S_PAINT_GUN_BRELLA_OPN,
 	weaponstate_scale = FU/2,
 	shotstate = S_PAINT_SHOT_PELLET,
+	
+	deploywait = 6,
+	shieldhp = 200*FU,
+	shieldregen = 30*FU, -- heal this much hp per second
+	shootwhiledeployed = true,
+	shieldrelease = -1,
+	shieldrecover = 3*TR + (TR*7/10),
+	shieldinkuse = 0,
+	slowturnmul = FU/4,
+	regenonkill = true,
+	localalpha = FU/2,
 	
 	-- brellas dont have jump spread
 	spread_jumpspread = 0,
@@ -72,26 +83,26 @@ Paint:registerWeapon({
 	groupnum = 2,
 	groups = {
 		{
-			h_degree = 7*FU + (FU/5),
+			h_degree = 4*FU * 2,
 			h_noise = FU*12/100,
-			v_degree = (4*FU + (FU*4/5))/2,
+			v_degree = (2*FU + (FU*7/10))/2,
 			v_noise = FU/10,
-			numprojs = 6
+			numprojs = 2
 		},
 		{
-			h_degree = 2*FU + (FU*4/10),
+			h_degree = 2*FU * 2,
 			h_noise = FU*5/100,
-			v_degree = (3*FU + (FU*3/5))/2,
+			v_degree = (2*FU + (FU*3/5))/2,
 			v_noise = FU*5/100,
 			numprojs = 4
 		}
 	},
 	
-	-- brellas... DONT... use bulletsimple..... :scream:
-	-- this is close enough to how the brella was before
-	spawnspeed = FixedMul(tofixed("2.6"), Paint.DU2FU), -- 2.266 splat3 distance units
-	str_tics = 3, -- straight state lasts this many tics
-	str2brk_maxspeed = FixedMul(tofixed("1.652"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
+	-- brellas actually do use bulletsimple params...
+	-- just labelled as "MoveParam: Object" 
+	spawnspeed = FixedMul(tofixed("2.0"), Paint.DU2FU), -- 2.266 splat3 distance units
+	str_tics = 4, -- straight state lasts this many tics
+	str2brk_maxspeed = FixedMul(tofixed("1.9085"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
 	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
 	brk_gravity = FixedMul(tofixed("0.06"), Paint.DU2FU),
 	brk2fre_minz = FixedMul(tofixed("-0.15"), Paint.DU2FU), -- go to free when momz is below this
@@ -99,16 +110,16 @@ Paint:registerWeapon({
 	brk2fre_tics = 4, -- or when brake state lasts this many tics
 	fre_airresist = FU * 98/100,
 	fre_gravity = FixedMul(tofixed("0.016"), Paint.DU2FU),
-	crs_guideframe = 4, -- crosshair is placed at this frame in the shot's lifetime
+	crs_guideframe = 8, -- crosshair is placed at this frame in the shot's lifetime
 
 	falloffdamage = MIN_DAMAGE, --damage falloff when the bullet does
 	fallofftime = 14, --how many tics to reach falloffdamage?
 	
 	sounds = {
-		sfx_p_s5_0, sfx_p_s5_1, sfx_p_s5_2, sfx_p_s5_3
+		sfx_p_s7_0, sfx_p_s7_1
 	},
-	readysound = sfx_p_s5_4,
-	deploysound = sfx_p_s5_5,
+	readysound = sfx_p_s7_2,
+	deploysound = sfx_p_s7_3,
 	stowsound = sfx_p_s5_6,
 	breaksound = sfx_p_s5_7,
 	recoversound = sfx_p_s5_8,

@@ -18,7 +18,7 @@ Paint:registerWeapon({
 	
 	name = "blaster",
 	--subtype = "autobomb",
-	handoffset = 10*FU,
+	handoffset = 5*FU,
 	range = 400*FU,
 	damage = 125*FU,
 	firerate = 28,

@@ -103,6 +103,7 @@ local function CheckSplatMerging(splat, mo)
 	or abs(splat.y - mo.y) > rad
 		return
 	end
+	if not L_ZCollide(splat,mo, splat.height * 3/5, mo.height * 3/5) then return end
 	
 	if mo.type ~= splat.type then return end
 	if (mo.revgrav ~= splat.revgrav) then return end
@@ -403,13 +404,13 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo, critical)
 	if critical
 		hitmarker = sfx_pnt_h6
 	end
-	if shot.powerful
+	if shot.powerful and not nullify
 		hitmarker = sfx_pnt_h7
 	end
 	
 	if (hitmark_tic ~= leveltime) or critical
 		S_StartSound(nil, hitmarker, shot.target.player)
-		if not (mo.paint_lifesaver or (critical or shot.powerful))
+		if not (mo.paint_lifesaver or (critical or (shot.powerful and not nullify)))
 			S_StartSoundAtVolume(nil, hitmarker, 255/2, shot.target.player) --Bruh
 		end
 	end
@@ -461,7 +462,7 @@ local function splash_blockmap(ray, mo)
 	local damage = wep.splashdamage[1] + FixedMul(wep.splashdamage[2] - wep.splashdamage[1], FixedDiv(dist, splashrad))
 	if (mo.paint_shieldmobj and mo.paint_shieldmobj.valid)
 	and Paint.checkShieldBlocking(mo, ray)
-		P_DamageMobj(mo.paint_shield, ray, ray.target, damage)
+		P_DamageMobj(mo.paint_shieldmobj, ray, ray.target, damage)
 		return
 	end
 	
@@ -842,9 +843,12 @@ addHook("MobjMoveCollide",function(shot,mo)
 					return
 				end
 			end
-			if (wep.guntype == WPT_CHARGER
+			
+			if ((wep.guntype == WPT_CHARGER
 			and shot.pierces)
-			or (wep.pierces == -1) -- infinite pierces
+			or (wep.pierces == -1))
+			and shot.powerful
+			and (not mo.paint_shield)
 				shot.pierces = $ - 1
 				return
 			else

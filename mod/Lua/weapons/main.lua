@@ -121,6 +121,20 @@ local weapon_meta = {
 	critsound = false, -- nozzlenose stuff
 	shotsforcrit = 0,
 	
+	-- generic "groups" field for weapons that fire volleys of projectiles
+	-- the individual fields in a group depends on the weapon using it
+	groupnum = 0,
+	groups = {
+		/*
+		-- [1, groupnum]
+		[1] = {
+			info
+		},
+		[2] = {},
+		...
+		*/
+	},
+	
 	--shooter-specific
 	h_spread = {6*FU, 6*FU},
 	v_spread = {3*FU, 3*FU}, -- visual only for the crosshair if `verticalspread` is false
@@ -219,8 +233,33 @@ local weapon_meta = {
 	turret_endsound = nil,
 	
 	--brella specific
-	pelletspread = 8*FU,
-	pelletnoise = FU*3/2,
+	/*
+		[GROUP INFO]
+		h_degree = fixed_t,
+		h_noise = fixed_t,
+		v_degree = fixed_t,
+		v_noise = fixed_t,
+		numprojs = int,
+		
+		-- Horizontal/VerticalDegree and Horizontal/VerticalOffset
+		-- seem to be h/v_degree and h/v_noise respectively...
+		-- its hard to tell because there isnt much documentation i can find
+		-- about how this class works...
+		--
+		-- H/VDegree also seem to be spread evenly between the TotalNum in a group,
+		-- so if HDegree is 45, and TotalNum is 2, there should be 2 projectiles
+		-- fired at -45d and 45d
+		-- It also seems that half the projectiles are fired at +VDegree,
+		-- then -VDegree?
+		-- So therefore, if HDegree is 60, VDegree is 20, and TotalNum is 6,
+		-- the spread pattern for this group should look like:
+		--		-60 d         60 d
+		--		x      x      x		+20 d
+		--		       -			 0  d
+		--		x      x      x		-20 d
+	*/
+	/*[DEPRECATED]*/ pelletspread = 8*FU,
+	/*[DEPRECATED]*/ pelletnoise = FU*3/2,
 	-- these 2 do not apply to the center most pellet
 	pelletradius = 6*FU,
 	pelletheight = 12*FU,
@@ -259,7 +298,9 @@ local weapon_meta = {
 	inkdelay_held = 12, -- set inkdelay to this when HOLDING a canopy, but not releasing it
 	inkdelay_release = 2*TR, -- set inkdelay to this when RELEASING a canopy
 	shootwhiledeployed = false, -- undercover brella
+	regenonkill = false, -- also undercover brella
 	nocanopy = false, -- brella has no canopy (grizzco brella)
+	localalpha = FU, -- also undercover brella
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies

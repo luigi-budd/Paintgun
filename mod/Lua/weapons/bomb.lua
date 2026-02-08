@@ -63,7 +63,7 @@ local function splash_blockmap(ray, mo)
 	
 	if (mo.paint_shieldmobj and mo.paint_shieldmobj.valid)
 	and Paint.checkShieldBlocking(mo, ray)
-		P_DamageMobj(mo.paint_shield, ray, ray.target, damage)
+		P_DamageMobj(mo.paint_shieldmobj, ray, ray.target, damage)
 		return
 	end
 	

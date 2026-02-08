@@ -6,6 +6,7 @@ local clrstr_lut = {}
 
 local setalpha = false
 local alphatrans = 0
+local weaponalpha = FU
 local function addalpha(p)
 	if p ~= displayplayer then return end
 	if not setalpha
@@ -197,6 +198,10 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 	end
 	if reset_interp
 		wepmo.resetinterp = true
+	end
+	if (wepmo.mirrored)
+		wepmo.pitch = InvAngle($)
+		wepmo.roll = InvAngle($)
 	end
 end
 
@@ -430,7 +435,7 @@ addHook("PlayerThink",function(p)
 		Paint:giveWeapon(p, "dualie_squelchers")
 		Paint:giveWeapon(p, "splat_dualies")
 		Paint:giveWeapon(p, "brella")
-		--Paint:giveWeapon(p, "SIGMA")
+		Paint:giveWeapon(p, "undercover_brella")
 	end
 	local pt = p.paint
 	local skin = skins[p.skin]
@@ -589,6 +594,10 @@ addHook("PlayerThink",function(p)
 	pt.doslowturn = false
 	me.paint_shieldmobj = nil
 	if (cur_weapon.guntype == WPT_BRELLA)
+		if (p == consoleplayer)
+			weaponalpha = cur_weapon:get(pt,"localalpha")
+		end
+		
 		local sh = pt.shield
 		if not (sh and sh.valid)
 			local s = P_SpawnMobjFromMobj(me,0,0,0,MT_BRELLA_SHIELD)
@@ -725,7 +734,9 @@ addHook("PlayerThink",function(p)
 			
 			-- release the shield / canopy
 			-- this should also release BT_ATTACK once the canopy releases
-			if pt.shieldtime >= cur_weapon:get(pt,"shieldrelease")
+			local shieldrelease = cur_weapon:get(pt,"shieldrelease")
+			if pt.shieldtime >= shieldrelease
+			and (shieldrelease ~= -1)
 			and (p.cmd.buttons & BT_ATTACK)
 				pt.shieldlost = true
 				pt.shieldjustbroke = true
@@ -740,7 +751,7 @@ addHook("PlayerThink",function(p)
 				dupe.tracer = me
 				dupe.target = me
 				dupe.tracer_player = p
-				dupe.paint_maxhp = cur_weapon:get(pt,"shieldhp")
+				dupe.paint_maxhp = sh.paint_maxhp
 				dupe.paint_hp = sh.paint_hp
 				dupe.paint_delay = 0
 				dupe.paint_shield = true
@@ -796,6 +807,10 @@ addHook("PlayerThink",function(p)
 				else
 					sh.paint_color = nil
 				end
+			end
+			sh.paint_maxhp = cur_weapon:get(pt,"shieldhp")
+			if sh.paint_hp > sh.paint_maxhp
+				sh.paint_hp = sh.paint_maxhp
 			end
 		end
 		
@@ -2194,9 +2209,9 @@ addHook("PostThinkFrame", do
 			me.alpha = P_Lerp(FixedDiv(alphatrans*FU, MAX_TRANSTIME*FU), $, FU * 2/10)
 		end
 		if (pt.shield and pt.shield.valid)
-			pt.shield.alpha = me.alpha
+			pt.shield.alpha = FixedMul(me.alpha, weaponalpha)
 			if (pt.shield.paint_overlay and pt.shield.paint_overlay.valid)
-				pt.shield.paint_overlay.alpha = FixedMul($, me.alpha)
+				pt.shield.paint_overlay.alpha = FixedMul(FixedMul($, me.alpha), weaponalpha)
 			end
 		end
 		
@@ -2295,6 +2310,7 @@ addHook("PostThinkFrame", do
 	if not setalpha
 		alphatrans = max($ - 1, 0)
 	end
+	weaponalpha = FU
 end)
 
 addHook("SeenPlayer",function(p, p2)
