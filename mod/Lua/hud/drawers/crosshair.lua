@@ -4,9 +4,16 @@ local SCALE = FU
 
 local CMD_ANGLE = 0
 local CMD_AIMING = 0
+local ANGLE_CAP = FixedAngle(70*FU) >> 16
 addHook("PlayerCmd",function(p,cmd)
 	CMD_ANGLE = cmd.angleturn << 16
-	CMD_AIMING = cmd.aiming << 16
+	local aiming = cmd.aiming
+	if aiming > ANGLE_CAP
+		aiming = ANGLE_CAP
+	elseif aiming < -ANGLE_CAP
+		aiming = -ANGLE_CAP
+	end
+	CMD_AIMING = aiming << 16
 end)
 
 local brella_vfx = 0
@@ -381,6 +388,11 @@ addHook("PostThinkFrame",do
 	if not (me and me.valid and me.health) then return end
 	local cur_weapon = Paint.weapons[pt.weapon_id]
 	if cur_weapon == nil then return end
+	
+	if (p ~= consoleplayer)
+		CMD_ANGLE = p.cmd.angleturn << 16
+		CMD_AIMING = p.aiming
+	end
 	
 	rangecaster(p,me,pt,cur_weapon, false)
 	if (cur_weapon.guntype == WPT_DUALIES)
