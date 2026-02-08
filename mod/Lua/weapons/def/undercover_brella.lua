@@ -71,6 +71,7 @@ Paint:registerWeapon({
 	shieldrelease = -1,
 	shieldrecover = 3*TR + (TR*7/10),
 	shieldinkuse = 0,
+	shieldspan = 45*FU,
 	slowturnmul = FU/4,
 	regenonkill = true,
 	localalpha = FU/2,

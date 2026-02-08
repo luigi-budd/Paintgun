@@ -33,6 +33,7 @@ return function(v,p)
 	if workplyr ~= p
 	or workmap ~= gamemap
 		workplyr = p
+		workmap = gamemap
 		workscore = p.score
 	end
 	if workscore < p.score
