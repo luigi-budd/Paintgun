@@ -2,6 +2,13 @@ local MID_X = BASEVIDWIDTH*FU / 2
 local MID_Y = BASEVIDHEIGHT*FU / 2
 local SCALE = FU
 
+local CMD_ANGLE = 0
+local CMD_AIMING = 0
+addHook("PlayerCmd",function(p,cmd)
+	CMD_ANGLE = cmd.angleturn << 16
+	CMD_AIMING = cmd.aiming << 16
+end)
+
 local brella_vfx = 0
 
 local CRBASE_TRANS = V_10TRANS
@@ -74,7 +81,7 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 		workray = d_raycast
 	end
 	if not (workray and workray.valid)
-		local angle = p.cmd.angleturn << 16
+		local angle = CMD_ANGLE
 		local ray = P_SpawnMobjFromMobj(me,
 			2*cos(angle), 2*sin(angle),
 			41*FixedDiv(p.mo.height,p.mo.scale)/48 - 8*FU,
@@ -90,16 +97,16 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 		or */(cur_weapon.guntype == WPT_BRELLA)
 			weaponoffset[1],weaponoffset[2] = 0,0
 		end
-		local aimoffset_vec = SphereToCartesian(angle,p.aiming)
+		local aimoffset_vec = SphereToCartesian(angle,CMD_AIMING)
 		local aimoffset_dist = 5 * me.scale
 		P_SetOrigin(ray,
 			me.x + weaponoffset[1] + FixedMul(aimoffset_dist, aimoffset_vec.x),
 			me.y + weaponoffset[2] + FixedMul(aimoffset_dist, aimoffset_vec.y),
 			ray.z + FixedMul(aimoffset_dist, aimoffset_vec.z)
 		)
-		ray.finalpos = Paint:aimProjectile(p,ray, angle, p.aiming, false,nil, dualieflip, true, nil,nil, chargerdupe)
+		ray.finalpos = Paint:aimProjectile(p,ray, angle, CMD_AIMING, false,nil, dualieflip, true, nil,nil, chargerdupe)
 		ray.origin = {x = me.x, y = me.y, z = ray.z}
-		local aimvec = SphereToCartesian(ray.angle, p.aiming)
+		local aimvec = SphereToCartesian(ray.angle, CMD_AIMING)
 		ray.finalpos.x = ray.x + FixedMul(range, aimvec.x)
 		ray.finalpos.y = ray.y + FixedMul(range, aimvec.y)
 		ray.finalpos.z = ray.z + FixedMul(range, aimvec.z)
@@ -230,7 +237,7 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 	end
 	
 	if not (workray and workray.valid)
-		local angle = p.cmd.angleturn << 16
+		local angle = CMD_ANGLE
 		local ray = P_SpawnMobjFromMobj(me,
 			2*cos(angle), 2*sin(angle),
 			41*FixedDiv(p.mo.height,p.mo.scale)/48 - 8*FU,
@@ -251,9 +258,9 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 			me.y + weaponoffset[2],
 			ray.z
 		)
-		ray.finalpos = Paint:aimProjectile(p,ray, angle, p.aiming, false,nil,dualieflip, true)
+		ray.finalpos = Paint:aimProjectile(p,ray, angle, CMD_AIMING, false,nil,dualieflip, true)
 		ray.origin = {x = me.x, y = me.y, z = ray.z}
-		local aimvec = SphereToCartesian(angle, p.aiming)
+		local aimvec = SphereToCartesian(angle, CMD_AIMING)
 		ray.finalpos.x = ray.x + FixedMul(range, aimvec.x)
 		ray.finalpos.y = ray.y + FixedMul(range, aimvec.y)
 		ray.finalpos.z = ray.z + FixedMul(range, aimvec.z)
