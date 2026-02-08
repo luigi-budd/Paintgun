@@ -683,6 +683,9 @@ addHook("PlayerThink",function(p)
 				p.cmd.buttons = $ &~BT_ATTACK
 			end
 		end
+		if (cur_weapon:get(pt,"shootwhiledeployed"))
+			pt.shieldjustbroke = false
+		end
 		
 		if (pt.shieldlost)
 		or sh.paint_destroyed
@@ -692,6 +695,7 @@ addHook("PlayerThink",function(p)
 				S_StartSound(nil, cur_weapon:get(pt,"recoversound") or sfx_p_s5_8, p)
 				pt.shieldlost = false
 				sh.paint_hp = sh.paint_maxhp
+				sh.paint_destroyed = false
 				pt.shieldlosttime = 0
 				pt.shieldjustregened = true
 				
@@ -2209,9 +2213,14 @@ addHook("PostThinkFrame", do
 			me.alpha = P_Lerp(FixedDiv(alphatrans*FU, MAX_TRANSTIME*FU), $, FU * 2/10)
 		end
 		if (pt.shield and pt.shield.valid)
-			pt.shield.alpha = FixedMul(me.alpha, weaponalpha)
+			local local_alpha = FU
+			if (p == displayplayer)
+				local_alpha = weaponalpha
+			end
+			
+			pt.shield.alpha = FixedMul(me.alpha, local_alpha)
 			if (pt.shield.paint_overlay and pt.shield.paint_overlay.valid)
-				pt.shield.paint_overlay.alpha = FixedMul(FixedMul($, me.alpha), weaponalpha)
+				pt.shield.paint_overlay.alpha = FixedMul(FixedMul($, me.alpha), local_alpha)
 			end
 		end
 		
