@@ -14,6 +14,11 @@ function HUD:killConfirm(p, targ, wasassist)
 	
 	local mo = targ.realmo
 	if not (mo and mo.valid) then return end
+	
+	if (#HUD.memory.killfeed > 6)
+		table.remove(HUD.memory.killfeed, 1)
+	end
+	
 	table.insert(HUD.memory.killfeed, {
 		pos = {x=mo.x,y=mo.y,z=mo.z + mo.height/2},
 		name = targ.name,
