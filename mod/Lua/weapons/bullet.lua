@@ -240,7 +240,7 @@ local function HandleFloorSplat(shot)
 			end
 			hole.target = shot.target
 			hole.tracer_player = shot.target.player
-			hole.weapon_id = shot.weapon_id
+			--hole.weapon_id = shot.weapon_id
 			hole.eflags = $|(ceil and MFE_VERTICALFLIP or 0)
 			hole.revgrav = hole.eflags & MFE_VERTICALFLIP
 			hole.dispoffset = -100
@@ -389,6 +389,8 @@ end
 
 local hitmark_tic = 0
 function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo, critical)
+	if shot.nohitmarker then return end
+	
 	local hitmarker
 	local startrange, endrange = sfx_pnt_h0, sfx_pnt_h5
 	if (mo.paint_shield)
@@ -721,6 +723,7 @@ addHook("MobjThinker",function(shot)
 		end
 	else
 		if shot.s_state ~= SS_FREE
+		and (wep.guntype ~= WPT_KATANA)
 			if shot.centerpellet
 				CreateTrail(shot)
 			elseif not shot.pellet
@@ -728,6 +731,43 @@ addHook("MobjThinker",function(shot)
 				and P_RandomChance(FU / 2)
 					CreateTrail(shot)
 				end
+			end
+		elseif (wep.guntype == WPT_KATANA)
+			if shot.centerpellet
+				local d = CreateTrail(shot)
+				if (d and d.valid)
+					P_SetObjectMomZ(d,-30*FU)
+				end
+				
+				d = CreateTrail(shot)
+				if (d and d.valid)
+					local momx,momy,momz = shot.momx,shot.momy,shot.momz
+					if (shot.quartersteps)
+						momx,momy,momz = $1*4, $2*4, $3*4
+					end
+					d.nosound = true
+					P_SetOrigin(d,
+						d.x + momx / 2,
+						d.y + momy / 2,
+						d.z + momz / 2
+					)
+					P_SetObjectMomZ(d,-30*FU)
+				end
+			end
+			if (shot.fuse == 1)
+				local momx,momy,momz = shot.momx,shot.momy,shot.momz
+				if (shot.quartersteps)
+					momx,momy,momz = $1*4, $2*4, $3*4
+				end
+				local sp = P_SpawnMobjFromMobj(shot,
+					-momx,-momy,-momz, MT_PARTICLE
+				)
+				sp.colorized = true
+				sp.color = shot.color
+				sp.state = S_SPRK3
+				local oldtics = sp.tics
+				sp.tics = $ / 3
+				sp.frame = ($|FF_SEMIBRIGHT &~FF_TRANSMASK)|(oldtics - sp.tics)
 			end
 		end
 		

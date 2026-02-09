@@ -33,43 +33,124 @@ function Paint.wcallback_brella_onfire(p,pt,wep, proj, mom_vec, angle, aiming, d
 			proj.totaldamage = maxdamage
 		end
 	end
+end
+
+function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aiming, dospread, doaiming, newpos)
+	local me = p.realmo
 	
-	--[[
-	/*
-		  - - -
-		x x - x x
-		  - - -
-	*/
-	for i = -2,2
-		if i == 0 then continue end
-		local frac = FixedDiv((i*FU), 2*FU)
-		local ang = FixedMul(spread,frac) - FixedMul(noise, P_RandomFixed())
-		local aim = FixedMul(noise, P_RandomFixed())
+	-- melee hitbox
+	local mradius = FixedMul(wep:get(pt,"melee_radius"), me.scale)
+	local mheight = FixedMul(wep:get(pt,"melee_height"), me.scale)
+	local mdamage = wep:get(pt,"melee_damage")
+	
+	local mdist = FixedDiv(me.radius, me.scale) + mradius
+	local mzoff = FixedDiv(me.height,me.scale)/2 - (mheight/2)
+	
+	local melee = P_SpawnMobjFromMobj(me,
+		P_ReturnThrustX(nil,angle,mdist) + FixedDiv(me.momx, me.scale),
+		P_ReturnThrustY(nil,angle,mdist) + FixedDiv(me.momy, me.scale),
+		mzoff,
+		MT_RAY
+	)
+	melee.radius = mradius
+	melee.height = mheight
+	melee.target = me
+	melee.color = baseproj.color
+	local fakerange = mradius * 4
+	local range = melee.radius
+	local gravflip = P_MobjFlip(me)
+	searchBlockmap("objects", function(ref, found)
+		if found == me then return end
+		if R_PointToDist2(found.x, found.y, melee.x, melee.y) > range + found.radius
+			return
+		end
+		if not L_ZCollide(found,melee) then return end
+		if not (found.health) then return end
+		if not P_CheckSight(me,found) then return end
 		
+		if (found.type == MT_TNTBARREL)
+		or Paint_canHurtEnemy(p, found)
+			P_DamageMobj(found, melee, me, mdamage)
+			Paint:doProjHitmarker(melee, found, false, false, true)
+			Paint.HUD:damageNumber(p, found, mdamage)
+		elseif (found.type == MT_PLAYER)
+			if Paint_canHurtPlayer(p, found.player)
+				local newdamage = Paint:damagePlayer(found.player, melee, p, mdamage)
+				Paint:playHurtSound(found.player)
+				Paint:doProjHitmarker(melee, found, false)
+				Paint.HUD:damageNumber(p, found, newdamage)
+			elseif Paint_canHurtPlayer(p, found.player, true, true)
+			and not Paint:isFriendlyFire(p,found.player)
+				Paint:doProjHitmarker(melee, found, false, true, true)
+			end
+		end
+	end, 
+		melee,
+		melee.x-fakerange, melee.x+fakerange,
+		melee.y-fakerange, melee.y+fakerange
+	)
+	
+	local maxdamage = wep:get(pt,"totaldamage")
+	baseproj.fired_at = leveltime
+	baseproj.totaldamage = maxdamage
+	baseproj.centerpellet = true
+	baseproj.groupmembers = {}
+	
+	baseproj.flags = $|MF_NOBLOCKMAP
+	baseproj.radius = FixedMul(wep:get(pt,"c_radius"), baseproj.scale)
+	if not (baseproj and baseproj.valid) then return end
+	baseproj.height = FixedMul(wep:get(pt,"c_height"), baseproj.scale)
+	if not (baseproj and baseproj.valid) then return end
+	
+	local spawned = {}
+	
+	local side = angle + ANGLE_90
+	local groups = wep:get(pt,"groups")
+	for i = 1, wep:get(pt,"groupnum")
+		local info = groups[i]
 		
-		--Paint:aimProjectile(p,proj, ang, aim, nil,mom_vec,false,false)
-	end
-	/*
-		  x x x
-		- - - - -
-		  x x x
-	*/
-	for i = -1,1
-		for j = -1,1,2
-			local h_frac = FixedDiv((i*FU), 2*FU)
-			local v_frac = FixedDiv((j*FU), 2*FU)
-			local ang = FixedMul(spread,h_frac) - FixedMul(noise, P_RandomFixed())
-			local aim = FixedMul(spread,v_frac) + FixedMul(noise, P_RandomFixed())
-			
-			local proj = Paint:fireWeapon(p,wep, angle, aiming, false, true, ang,aim)
+		local p_rad = FixedMul(info.radius, baseproj.scale)
+		local p_hei = FixedMul(info.height, baseproj.scale)
+		local offset = FixedMul(info.offset, baseproj.scale) + p_rad
+		
+		for j = -1,1, 2
+			local proj = Paint:fireWeapon(p,wep, angle, aiming, false, true)
 			if not (proj and proj.valid) then continue end
 			proj.fired_at = leveltime
 			proj.radius = p_rad
 			proj.height = p_hei
 			proj.totaldamage = maxdamage
 			
-			--Paint:aimProjectile(p,proj, ang, aim, nil,mom_vec,false,false)
+			proj.momx = baseproj.momx
+			proj.momy = baseproj.momy
+			proj.momz = baseproj.momz
+			proj.groupmembers = {baseproj}
+			
+			P_SetOrigin(proj,
+				newpos.x + P_ReturnThrustX(nil,side, offset * j),
+				newpos.y + P_ReturnThrustY(nil,side, offset * j),
+				newpos.z + (baseproj.height - proj.height)/2
+			)
+			table.insert(baseproj.groupmembers, proj)
+			table.insert(spawned, proj)
 		end
 	end
-	]]
+	
+	for k, proj in ipairs(spawned)
+		if not (proj and proj.valid) then continue end
+		for _, p in ipairs(spawned)
+			if p == proj then continue end
+			table.insert(proj.groupmembers, p)
+		end
+	end
+	baseproj.flags = $ &~MF_NOBLOCKMAP
+end
+
+function Paint.wcallback_splatana_onhit(p,pt,wep, proj, inf, target, damage)
+	if not (proj and proj.valid) then return end
+	
+	for k, gproj in ipairs(proj.groupmembers)
+		if not (gproj and gproj.valid) then continue end
+		gproj.nohitmarker = true
+	end
 end

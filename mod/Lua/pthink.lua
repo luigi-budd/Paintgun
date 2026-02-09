@@ -436,6 +436,7 @@ addHook("PlayerThink",function(p)
 		Paint:giveWeapon(p, "splat_dualies")
 		Paint:giveWeapon(p, "brella")
 		Paint:giveWeapon(p, "undercover_brella")
+		Paint:giveWeapon(p, "wiper")
 	end
 	local pt = p.paint
 	local skin = skins[p.skin]
@@ -1427,7 +1428,8 @@ addHook("PlayerThink",function(p)
 		if (cur_weapon.guntype == WPT_SHOOTER
 		or cur_weapon.guntype == WPT_BLASTER
 		or cur_weapon.guntype == WPT_DUALIES
-		or cur_weapon.guntype == WPT_BRELLA)
+		or cur_weapon.guntype == WPT_BRELLA
+		or cur_weapon.guntype == WPT_KATANA)
 			if ( ( (justpressedfire or (pt.fireheld and not cur_weapon:get(pt,"tapfire"))) and pt.cooldown <= 0) )
 			and (p.cmd.buttons & BT_ATTACK)
 			and (pt.firewait <= 1)

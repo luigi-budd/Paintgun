@@ -29,6 +29,7 @@ local function drawReticle(v,x,y, p, type)
 	local prefix = "PAINT_CR_"
 	local wep = Paint.weapons[p.paint.weapon_id]
 	local pt = p.paint
+	local crossscale = wep:get(pt,"crs_scale")
 	
 	-- when brella-class loses its shield
 	if (wep.guntype == WPT_BRELLA)
@@ -37,19 +38,19 @@ local function drawReticle(v,x,y, p, type)
 	end
 	
 	if type == CRTYPE_BASEONLY
-		v.drawScaled(x,y, FU/4, v.cachePatch(prefix.."BASE"), CRBASE_TRANS)
+		v.drawScaled(x,y, crossscale/4, v.cachePatch(prefix.."BASE"), CRBASE_TRANS)
 	elseif type == CRTYPE_BLOCKED
-		v.drawScaled(x,y, FU/4, v.cachePatch("PAINT_CR_RET"), 0)
-		v.drawScaled(x,y, FU/4, v.cachePatch(prefix.."BLOCKED"), 0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)))
+		v.drawScaled(x,y, crossscale/4, v.cachePatch("PAINT_CR_RET"), 0)
+		v.drawScaled(x,y, crossscale/4, v.cachePatch(prefix.."BLOCKED"), 0, v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)))
 	elseif type == CRTYPE_DIRECT
-		v.drawScaled(x,y, FU/4, v.cachePatch(wep.guntype == WPT_CHARGER and "PAINT_CR_CHIT" or "PAINT_CR_HIT"), 0, v.getColormap(nil,Paint:getPlayerColor(p)))		
+		v.drawScaled(x,y, crossscale/4, v.cachePatch(wep.guntype == WPT_CHARGER and "PAINT_CR_CHIT" or "PAINT_CR_HIT"), 0, v.getColormap(nil,Paint:getPlayerColor(p)))		
 	elseif type == CRTYPE_STANDBY
-		v.drawScaled(x,y, FU/4, v.cachePatch("PAINT_CR_RET"))
-		v.drawScaled(x,y, FU/4, v.cachePatch(prefix.."BASE"), CRBASE_TRANS)
+		v.drawScaled(x,y, crossscale/4, v.cachePatch("PAINT_CR_RET"))
+		v.drawScaled(x,y, crossscale/4, v.cachePatch(prefix.."BASE"), CRBASE_TRANS)
 	elseif type == CRTYPE_CHARGERBASE
-		v.drawScaled(x,y, FU/4, v.cachePatch(prefix.."CBASE"), V_50TRANS)
+		v.drawScaled(x,y, crossscale/4, v.cachePatch(prefix.."CBASE"), V_50TRANS)
 	elseif type == CRTYPE_BRELLAVFX
-		v.drawScaled(x,y, FU/4, v.cachePatch("PAINT_CR_BRES"), V_ADD|((10 - brella_vfx)<<V_ALPHASHIFT), v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)))
+		v.drawScaled(x,y, crossscale/4, v.cachePatch("PAINT_CR_BRES"), V_ADD|((10 - brella_vfx)<<V_ALPHASHIFT), v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)))
 	end
 end
 
@@ -417,9 +418,11 @@ local charger_vfx = 0
 local function drawWeaponEVFX(v,p,cam)
 	local pt = p.paint
 	local wep = Paint.weapons[pt.weapon_id]
+	local crossscale = wep:get(pt,"crs_scale")
+	
 	if charger_vfx
 		v.drawScaled(cross_x,cross_y,
-			FU,
+			crossscale,
 			v.cachePatch("PAINT_BALL"), (10 - charger_vfx)<<V_ALPHASHIFT, v.getColormap(nil,Paint:getPlayerColor(p))
 		)
 		charger_vfx = $ - 1
@@ -441,7 +444,7 @@ local function drawWeaponEVFX(v,p,cam)
 			local y = cross_y + (rad * sin(fakeangle))
 			v.dointerp(5 + interptag + (i + 1))
 			v.drawScaled(x,y,
-				FU/5,
+				crossscale/5,
 				v.cachePatch("PAINT_BALL"), V_20TRANS, v.getColormap(nil,SKINCOLOR_GREY)
 			)
 		end
@@ -499,6 +502,8 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 		MID_X = result.x
 		y = result.y
 	end
+	local crossscale = wep:get(pt,"crs_scale")
+	SCALE = FixedMul($, crossscale)
 	
 	--120 fov == 4 mult
 	if (old_fov ~= cv_fov.value + p.fovadd)
@@ -512,6 +517,7 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 	or (wep.guntype == WPT_BLASTER)
 	or (wep.guntype == WPT_DUALIES)
 	or (wep.guntype == WPT_BRELLA)
+	or (wep.guntype == WPT_KATANA)
 		local range = getrange(p.realmo, pt, wep, false)
 		if (is_shooter(wep.guntype))
 		and (workray and workray.valid)
@@ -607,20 +613,20 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 		local dual = wep.guntype == WPT_DUALIES
 		v.dointerp(5 + interptag)
 		local clr = v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p))
-		do
+		if (wep.guntype ~= WPT_KATANA)
 			local suffix = (dh_workray.direct and "H" or (dh_workray.hit and "B" or "N"))
 			local prefix = (wep.guntype == WPT_BRELLA) and "PAINT_CR_B_" or "PAINT_CR_S_"
 			if (not dual) or (dual and dflip)
 				v.drawScaled(
 					MID_X + L_hspread,
 					y - T_vspread,
-					FU/4, v.cachePatch(prefix.."TOP_"..suffix), 0,
+					crossscale/4, v.cachePatch(prefix.."TOP_"..suffix), 0,
 					clr
 				)
 				v.drawScaled(
 					MID_X + L_hspread,
 					y - B_vspread,
-					FU/4, v.cachePatch(prefix.."BOT_"..suffix), 0,
+					crossscale/4, v.cachePatch(prefix.."BOT_"..suffix), 0,
 					clr
 				)
 			end
@@ -628,20 +634,17 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 				v.drawScaled(
 					MID_X + R_hspread,
 					y - T_vspread,
-					FU/4, v.cachePatch(prefix.."TOP_"..suffix), V_FLIP,
+					crossscale/4, v.cachePatch(prefix.."TOP_"..suffix), V_FLIP,
 					clr
 				)
 				v.drawScaled(
 					MID_X + R_hspread,
 					y - B_vspread,
-					FU/4, v.cachePatch(prefix.."BOT_"..suffix), V_FLIP,
+					crossscale/4, v.cachePatch(prefix.."BOT_"..suffix), V_FLIP,
 					clr
 				)
 			end
-		end
-		/*
-		-- this is for eventual splatana stuff
-		do
+		else
 			local prefix = "PAINT_CR_K_"
 			local suffix = (dh_workray.direct and "B" or "N")
 			local sections = 3
@@ -652,18 +655,17 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 				v.drawScaled(
 					MID_X - pad + (l_sprd * i),
 					y,
-					FU/4, v.cachePatch(prefix.."UNC_"..suffix), V_FLIP,
+					crossscale/4, v.cachePatch(prefix.."UNC_"..suffix), V_FLIP,
 					clr
 				)
 				v.drawScaled(
 					MID_X + pad + (r_sprd * i),
 					y,
-					FU/4, v.cachePatch(prefix.."UNC_"..suffix), V_FLIP,
+					crossscale/4, v.cachePatch(prefix.."UNC_"..suffix), V_FLIP,
 					clr
 				)
 			end
 		end
-		*/
 	end
 	
 	--if cv_crosshair.value == 0 then return end

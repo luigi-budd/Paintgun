@@ -77,6 +77,7 @@ end
 -- weapon classes
 rawset(_G, "WPT_SHOOTER", 1)
 rawset(_G, "WPT_CHARGER", 2)
+-- splatanas use bulletsimple
 rawset(_G, "WPT_KATANA", 3)
 rawset(_G, "WPT_BRUSH", 4)
 rawset(_G, "WPT_BLASTER", 5)
@@ -117,6 +118,7 @@ local weapon_meta = {
 	inkcost = FU,
 	inkdelay = 12,
 	firewithnoink = false, -- allow firing even if you have low ink
+	nodryfirelag = false, -- disables the added firerate when you dryfire
 	
 	critsound = false, -- nozzlenose stuff
 	shotsforcrit = 0,
@@ -167,6 +169,7 @@ local weapon_meta = {
 	fre_airresist = FU * 98/100,
 	fre_gravity = FixedMul(tofixed("0.016"), Paint.DU2FU),
 	crs_guideframe = 8, -- crosshair is placed at this frame in the shot's lifetime
+	crs_scale = FU, -- crosshair scale
 	-- start falling off when past crs_guideframe 
 	falloffdamage = 18*FU, --damage to fall off to when the bullet drops off
 	fallofftime = 23, --how many tics to reach falloffdamage?
@@ -302,6 +305,25 @@ local weapon_meta = {
 	nocanopy = false, -- brella has no canopy (grizzco brella)
 	localalpha = FU, -- also undercover brella
 	
+	--splatana-specific
+	/*
+		[GROUP INFO]
+		offset = fixed_t,
+		radius = fixed_t,
+		height = fixed_t,
+		
+		a group is spawned on both sides of the center projectile
+		offset `offset` fracs + `radius`
+		the projectile will also be centered depending on its `height` and the center's height
+		
+	*/
+	melee_damage = 15*FU,
+	melee_radius = 40*FU,
+	melee_height = 10*FU,
+	h_fuse = 4, -- horizontal slashes disappear after this many tics
+	c_radius = 16*FU, -- radius and height for the center projectile
+	c_height = 32*FU,
+	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
 	dualie_weaponmirror = false,
@@ -311,6 +333,7 @@ local weapon_meta = {
 	sounds = {
 		sfx_p_s0_0, sfx_p_s0_1, sfx_p_s0_2, sfx_p_s0_3, sfx_p_s0_4, sfx_p_s0_5, sfx_p_s0_6
 	},
+	-- drysounds = {}, -- if defined, these are used for dryfire sounds
 	soundvolume = 255 * 3/4,
 	splatvolume = 255, -- for ink splats
 	
@@ -321,6 +344,7 @@ local weapon_meta = {
 	-- always get passed (player_t, paint_t, weapon_t) plus any misc values
 	callbacks = {
 		onfire = nil,
+		onhit = nil,
 	}
 }
 registerMetatable(weapon_meta)
@@ -541,7 +565,8 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	and not pt.calledbacks.onfire
 		local canfire = cur_weapon:get(pt,"firewithnoink")
 		local firerate = cur_weapon:get(pt,"firerate")
-		if not canfire then firerate = $*2; end
+		if not (canfire or cur_weapon:get(pt,"nodryfirelag")) then firerate = $*2; end
+		
 		pt.cooldown = firerate + 1
 		pt.endlag = max($, cur_weapon.endlag)
 		pt.shotsfired = $ + 1
@@ -561,7 +586,12 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 				pt.weaponmobjdupe.fireanim = 4
 			end
 			
-			S_StartSound(me, P_RandomRange(sfx_pt_dr0, sfx_pt_dr3), p)
+			local drysound = P_RandomRange(sfx_pt_dr0, sfx_pt_dr3)
+			local ds_table = cur_weapon:get(pt,"drysounds")
+			if ds_table
+				drysound = ds_table[P_RandomRange(1, #ds_table)]
+			end
+			S_StartSound(me, drysound, p)
 			pt.oldinktank = min(max(pt.oldinkanim, pt.inktank), 100*FU)
 			
 			if cur_weapon.guntype == WPT_BRELLA
@@ -723,6 +753,9 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	if (cur_weapon.guntype == WPT_BLASTER)
 		proj.powerful = true
 	end
+	if (cur_weapon.guntype == WPT_KATANA)
+		proj.fuse = cur_weapon:get(pt,"h_fuse")
+	end
 	
 	proj.basedamage = proj.damage
 	proj.falloffdamage = cur_weapon:get(pt, "falloffdamage")
@@ -738,17 +771,19 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	end
 	
 	-- No recursion
+	local newpos = {
+		x = me.x + handoffset[1] + mom_vec.x + FixedMul(aimoffset_dist, aimoffset_vec.x),
+		y = me.y + handoffset[2] + mom_vec.y + FixedMul(aimoffset_dist, aimoffset_vec.y),
+		z = proj.z + me.momz + FixedMul(aimoffset_dist, aimoffset_vec.z) + me.pmomz
+	}
 	if not pt.calledbacks.onfire
 	and (cur_weapon.callbacks and cur_weapon.callbacks.onfire ~= nil)
 		pt.calledbacks.onfire = true
-		cur_weapon.callbacks.onfire(p,pt,cur_weapon, proj, mom_vec, angle, aiming, dospread, doaiming)
+		cur_weapon.callbacks.onfire(p,pt,cur_weapon, proj, mom_vec, angle, aiming, dospread, doaiming, newpos)
 	end
-	
-	P_SetOrigin(proj,
-		me.x + handoffset[1] + mom_vec.x + FixedMul(aimoffset_dist, aimoffset_vec.x),
-		me.y + handoffset[2] + mom_vec.y + FixedMul(aimoffset_dist, aimoffset_vec.y),
-		proj.z + me.momz + FixedMul(aimoffset_dist, aimoffset_vec.z) + me.pmomz
-	)
+	if proj and proj.valid
+		P_SetOrigin(proj, newpos.x, newpos.y, newpos.z)
+	end
 	return proj -- may be invalid
 end
 

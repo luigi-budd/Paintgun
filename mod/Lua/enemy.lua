@@ -32,6 +32,10 @@ addHook("MobjDamage",function(mo, inf,sor, damage)
 	end
 	
 	damage = Paint:checkBulletParams(mo, mo.fake_paint, inf, damage)
+	local weptype = Paint.weapons[inf.weapon_id]
+	if (weptype and weptype.callbacks and weptype.callbacks.onhit ~= nil)
+		weptype.callbacks.onhit(inf.target.player,inf.target.player.paint, Paint.weapons[inf.target.player.paint.weapon_id], inf, inf, mo, damage)
+	end
 	
 	mo.paint_healdelay = TR*3/2
 	mo.paint_color = inf.color

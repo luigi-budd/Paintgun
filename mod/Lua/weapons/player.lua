@@ -285,13 +285,14 @@ function Paint:checkBulletParams(me, pt, shot, damage)
 end
 
 function Paint:damagePlayer(p, shot, source_player, damage, inf) -- mobj if no player
+	local weptype = Paint.weapons[shot.weapon_id]
 	if damage == nil
-		damage = self.weapons[shot.weapon_id].damage
+		damage = weptype.damage
 	end
 	local pt = p.paint
 	
 	if (pt.paintoverlay and pt.paintoverlay.valid)
-		pt.paintoverlay.color = ColorOpposite(self:getPlayerColor(p))
+		pt.paintoverlay.color = ColorOpposite(Paint:getPlayerColor(p))
 		local mo = shot or inf
 		
 		if (mo and mo.valid)
@@ -319,6 +320,9 @@ function Paint:damagePlayer(p, shot, source_player, damage, inf) -- mobj if no p
 	
 	-- cap damage if necessary
 	damage = Paint:checkBulletParams(p.realmo, pt, shot, damage)
+	if (weptype and weptype.callbacks and weptype.callbacks.onhit ~= nil)
+		weptype.callbacks.onhit(source_player,pt,Paint.weapons[source_player.paint.weapon_id], shot, inf, p.realmo, damage)
+	end
 	
 	pt.hp = $ - damage
 	if oldhp > 85*FU
