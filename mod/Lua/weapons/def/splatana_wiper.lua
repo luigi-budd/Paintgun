@@ -33,6 +33,7 @@ Paint:registerWeapon({
 	spread_jumpchance = 0,
 	neverspreadatall = true,
 	nodryfirelag = true,
+	dofireanim = false,
 	
 	inkcost = FU * 3,
 	inkdelay = TR/2,
@@ -71,6 +72,7 @@ Paint:registerWeapon({
 	
 	callbacks = {
 		onfire = Paint.wcallback_splatana_onfire,
+		ondryfire = Paint.wcallback_splatana_ondryfire,
 		onhit = Paint.wcallback_splatana_onhit,
 	},
 })

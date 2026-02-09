@@ -35,6 +35,7 @@ function Paint.wcallback_brella_onfire(p,pt,wep, proj, mom_vec, angle, aiming, d
 	end
 end
 
+local whiff_scale = tofixed("1.8")
 function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aiming, dospread, doaiming, newpos)
 	local me = p.realmo
 	
@@ -89,6 +90,17 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 		melee.x-fakerange, melee.x+fakerange,
 		melee.y-fakerange, melee.y+fakerange
 	)
+	local fx = P_SpawnMobjFromMobj(me,0,0,0, MT_PAINT_GUN)
+	P_SetOrigin(fx, melee.x,melee.y,melee.z)
+	fx.zoff = melee.z - me.z
+	fx.target = me
+	fx.state = S_PAINT_WHIFF
+	fx.color = baseproj.color
+	fx.angle = angle
+	fx.aiming = aiming
+	fx.scale = FixedMul(FixedDiv(mradius, 64*me.scale), whiff_scale)
+	fx.renderflags = $|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT|(pt.shotsfired % 2 and RF_HORIZONTALFLIP or 0)
+	P_CreateFloorSpriteSlope(fx)
 	
 	local maxdamage = wep:get(pt,"totaldamage")
 	baseproj.fired_at = leveltime
@@ -146,9 +158,44 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 	baseproj.flags = $ &~MF_NOBLOCKMAP
 end
 
+function Paint.wcallback_splatana_ondryfire(p,pt,wep, angle, aiming, dospread, doaiming)
+	local me = p.realmo
+	
+	local mradius = FixedMul(wep:get(pt,"melee_radius"), me.scale)
+	local mheight = FixedMul(wep:get(pt,"melee_height"), me.scale)
+	
+	local mdist = FixedDiv(me.radius, me.scale) + mradius
+	local mzoff = FixedDiv(me.height,me.scale)/2 - (mheight/2)
+	
+	local melee = P_SpawnMobjFromMobj(me,
+		P_ReturnThrustX(nil,angle,mdist) + FixedDiv(me.momx, me.scale),
+		P_ReturnThrustY(nil,angle,mdist) + FixedDiv(me.momy, me.scale),
+		mzoff,
+		MT_RAY
+	)
+	melee.radius = mradius
+	melee.height = mheight
+	melee.target = me
+	melee.color = me.color
+	
+	local fx = P_SpawnMobjFromMobj(me,0,0,0, MT_PAINT_GUN)
+	P_SetOrigin(fx, melee.x,melee.y,melee.z)
+	fx.zoff = melee.z - me.z
+	fx.target = me
+	fx.state = S_PAINT_WHIFF
+	fx.color = me.color
+	fx.angle = angle
+	fx.aiming = aiming
+	fx.scale = FixedMul(FixedDiv(mradius, 64*me.scale), whiff_scale)
+	fx.renderflags = $|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT|(pt.shotsfired % 2 and RF_HORIZONTALFLIP or 0)
+	fx.translation = "Grayscale"
+	fx.alpha = FU/2
+	P_CreateFloorSpriteSlope(fx)
+end
+
 function Paint.wcallback_splatana_onhit(p,pt,wep, proj, inf, target, damage)
 	if not (proj and proj.valid) then return end
-	
+	if proj.groupmembers == nil then return end
 	for k, gproj in ipairs(proj.groupmembers)
 		if not (gproj and gproj.valid) then continue end
 		gproj.nohitmarker = true

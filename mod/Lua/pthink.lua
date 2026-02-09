@@ -874,6 +874,7 @@ addHook("PlayerThink",function(p)
 				justpressedfire = true
 				pt.firewait = cur_weapon.startlag
 				if (cur_weapon.guntype == WPT_BRELLA)
+				or (cur_weapon.guntype == WPT_KATANA)
 					if not (pt.cooldown or pt.endlag or pt.shieldlag)
 						S_StartSound(me, cur_weapon:get(pt,"readysound") or sfx_none)
 					elseif (pt.cooldown < cur_weapon:get(pt,"firerate") * 3/4)

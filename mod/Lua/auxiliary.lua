@@ -190,3 +190,12 @@ states[S_PAINT_SHOCK] = {
 	end,
 	nextstate = S_PAINT_SHOCK
 }
+
+freeslot("S_PAINT_WHIFF")
+states[S_PAINT_WHIFF] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 43|FF_FULLBRIGHT|FF_FLOORSPRITE|FF_ANIMATE|FF_ADD,
+	var1 = G,
+	var2 = 1,
+	tics = G + 1
+}

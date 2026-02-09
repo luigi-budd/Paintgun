@@ -972,6 +972,19 @@ addHook("MobjThinker",function(shot)
 		shot.spriteyscale = FU + scaleadd
 	elseif shot.state == mobjinfo[MT_MSSHIELD_FRONT].spawnstate
 		P_MoveOrigin(shot, me.x,me.y,me.z)
+	elseif shot.state == S_PAINT_WHIFF
+		P_MoveOrigin(shot, me.x,me.y,me.z + shot.zoff)
+
+		local slope = shot.floorspriteslope
+		slope.o = {
+			x = shot.x, y = shot.y, z = shot.z
+		}
+		slope.zangle = shot.aiming
+		slope.xydirection = shot.angle
+		
+		--wumbo steve
+		shot.spritexscale = FU
+		shot.spriteyscale = FixedMul(cos(slope.zangle), FU + (slope.zangle == ANGLE_90 - 1 and 1024 or 0))
 	end
 end,MT_PAINT_GUN)
 

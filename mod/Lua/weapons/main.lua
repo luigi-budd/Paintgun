@@ -119,6 +119,7 @@ local weapon_meta = {
 	inkdelay = 12,
 	firewithnoink = false, -- allow firing even if you have low ink
 	nodryfirelag = false, -- disables the added firerate when you dryfire
+	dofireanim = true,
 	
 	critsound = false, -- nozzlenose stuff
 	shotsforcrit = 0,
@@ -318,8 +319,8 @@ local weapon_meta = {
 		
 	*/
 	melee_damage = 15*FU,
-	melee_radius = 40*FU,
-	melee_height = 10*FU,
+	melee_radius = 64*FU,
+	melee_height = 12*FU,
 	h_fuse = 4, -- horizontal slashes disappear after this many tics
 	c_radius = 16*FU, -- radius and height for the center projectile
 	c_height = 32*FU,
@@ -344,6 +345,7 @@ local weapon_meta = {
 	-- always get passed (player_t, paint_t, weapon_t) plus any misc values
 	callbacks = {
 		onfire = nil,
+		ondryfire = nil,
 		onhit = nil,
 	}
 }
@@ -560,6 +562,8 @@ end
 function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hsprd, vsprd)
 	local me = p.mo
 	local pt = p.paint
+	local dofireanim = cur_weapon:get(pt,"allowfireanim")
+	
 	pt.inkdelay = max($, cur_weapon:get(pt,"inkdelay"))
 	if (pt.inktank < cur_weapon:get(pt,"inkcost") - 1)
 	and not pt.calledbacks.onfire
@@ -577,13 +581,15 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 		if not canfire
 			local handoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, nil, false)}
 			pt.anglefix = pt.cooldown
-			if (pt.weaponmobj and pt.weaponmobj.valid)
-			and not handoffset[3] -- flipped
-				pt.weaponmobj.fireanim = 4
-			end
-			if (pt.weaponmobjdupe and pt.weaponmobjdupe.valid)
-			and handoffset[3] -- flipped
-				pt.weaponmobjdupe.fireanim = 4
+			if dofireanim
+				if (pt.weaponmobj and pt.weaponmobj.valid)
+				and not handoffset[3] -- flipped
+					pt.weaponmobj.fireanim = 4
+				end
+				if (pt.weaponmobjdupe and pt.weaponmobjdupe.valid)
+				and handoffset[3] -- flipped
+					pt.weaponmobjdupe.fireanim = 4
+				end
 			end
 			
 			local drysound = P_RandomRange(sfx_pt_dr0, sfx_pt_dr3)
@@ -596,6 +602,11 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 			
 			if cur_weapon.guntype == WPT_BRELLA
 				pt.nofiring = true
+			end
+			if not pt.calledbacks.onfire
+			and (cur_weapon.callbacks and cur_weapon.callbacks.ondryfire ~= nil)
+				pt.calledbacks.onfire = true
+				cur_weapon.callbacks.ondryfire(p,pt,cur_weapon, angle, aiming, dospread, doaiming)
 			end
 			return
 		end
@@ -761,13 +772,15 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.falloffdamage = cur_weapon:get(pt, "falloffdamage")
 	
 	pt.anglefix = pt.cooldown
-	if (pt.weaponmobj and pt.weaponmobj.valid)
-	and not handoffset[3] -- flipped
-		pt.weaponmobj.fireanim = 4
-	end
-	if (pt.weaponmobjdupe and pt.weaponmobjdupe.valid)
-	and handoffset[3] -- flipped
-		pt.weaponmobjdupe.fireanim = 4
+	if dofireanim
+		if (pt.weaponmobj and pt.weaponmobj.valid)
+		and not handoffset[3] -- flipped
+			pt.weaponmobj.fireanim = 4
+		end
+		if (pt.weaponmobjdupe and pt.weaponmobjdupe.valid)
+		and handoffset[3] -- flipped
+			pt.weaponmobjdupe.fireanim = 4
+		end
 	end
 	
 	-- No recursion

@@ -61,12 +61,14 @@ rawset(_G, "local_raycasts", {
 	hitcast = nil,
 	dhitcast = nil
 })
+-- weapontypes that use bulletsimple
 local function is_shooter(type)
 	return (
 		type == WPT_SHOOTER or
 		type == WPT_BRELLA or
 		type == WPT_DUALIES or
-		type == WPT_BLASTER
+		type == WPT_BLASTER or
+		type == WPT_KATANA
 	)
 end
 
