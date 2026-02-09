@@ -324,12 +324,14 @@ local weapon_meta = {
 	h_fuse = 4, -- horizontal slashes disappear after this many tics
 	c_radius = 16*FU, -- radius and height for the center projectile
 	c_height = 32*FU,
+	weaponstate_swipe = nil,
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
 	dualie_weaponmirror = false,
 	weaponstate_frame = nil, -- frame constants, leave nil for state-defined frame
 	weaponstate_scale = FU,
+	allowdrycolor = false, -- just recolors the weapon to white if theres no ink lol
 	
 	sounds = {
 		sfx_p_s0_0, sfx_p_s0_1, sfx_p_s0_2, sfx_p_s0_3, sfx_p_s0_4, sfx_p_s0_5, sfx_p_s0_6
@@ -662,6 +664,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	local handoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, nil, false)}
 	-- fire from the center
 	if (cur_weapon.guntype == WPT_BRELLA)
+	or (cur_weapon.guntype == WPT_KATANA)
 		handoffset[1] = 0
 		handoffset[2] = 0
 	end

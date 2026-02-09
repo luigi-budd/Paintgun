@@ -273,6 +273,8 @@ function Paint:initPlayer(p)
 		angdiff = 0,
 		lastslowdown = false,
 		holsteranim = 0,
+		swinganim = 0,
+		swingoffset = 0,
 		weaponzoffset = 0,
 		prevangle = (p.realmo and p.realmo.valid) and (p.realmo.angle) or p.cmd.angleturn << 16, -- last angle for slow turning
 		doslowturn = false,
@@ -413,6 +415,7 @@ Paint.MAX_HOLSTER = 5
 Paint.SQUID_HEIGHT = 25*FU
 Paint.CANOPY_ANIM = 6
 Paint.IDLE_OFFSET = -13*FU
+Paint.SWING_ANIM = 6
 
 Paint.SIGNAL_TIME = 3*TR
 Paint.SIGNAL_BOOYAH		= 1

@@ -44,6 +44,9 @@ end)
 Paint.basePlayer = {}
 local BP = Paint.basePlayer
 
+local SWING_HALF = 105*FU
+local SWING_RANGE = SWING_HALF*2
+
 BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_interp)
 	local teleport = reset_interp and P_SetOrigin or P_MoveOrigin
 	local dd = pt.dodgeroll
@@ -81,6 +84,10 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 	wepmo.destscale = me.scale
 	wepmo.scalespeed = wepmo.destscale + 1
 	wepmo.color = Paint:getPlayerColor(p)
+	if (cur_weapon:get(pt,"allowdrycolor"))
+	and (pt.inktank <= cur_weapon:get(pt,"inkcost"))
+		wepmo.color = SKINCOLOR_WHITE
+	end
 	
 	local finalstate = cur_weapon.weaponstate
 	if dualieflip
@@ -133,6 +140,23 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 	elseif not dualieflip
 		pt.holsteranim = max($-1, 0)
 	end
+	if pt.swinganim
+		local progress = max(FixedDiv((pt.swinganim - pt.swingoffset)*FU, Paint.SWING_ANIM*FU), 0)
+		if (pt.shotsfired % 2)
+			progress = FU - $
+			wepmo.mirrored = not $
+		end
+		fireangle = $ + FixedAngle(180*progress)
+		wepmo.angle = $ - FixedAngle(90*FU - 180*progress)
+		
+		local swipestate = cur_weapon:get(pt,"weaponstate_swipe")
+		if swipestate
+			wepmo.state = swipestate
+		end
+		
+		pt.swinganim = $ - 1
+	end
+	
 	local handoffset = {Paint:getWeaponOffset(me,pt,fireangle - ANGLE_90, cur_weapon, dualieflip, false)}
 	local zoffset = (41*me.height)/48 - (12 * me.scale) + FixedMul(pt.weaponzoffset, me.scale)*P_MobjFlip(me)
 	teleport(wepmo,
@@ -1842,11 +1866,19 @@ addHook("PlayerThink",function(p)
 	end
 	pt.prevangle = fireangle
 	
-	if (pt.firewait or pt.fireheld or pt.endlag or pt.cooldown)
-	or (dd.tics or dd.getup or pt.turretmode)
-		pt.weaponzoffset = P_Lerp(FU * 3/4, $, 0)
+	if (cur_weapon.guntype == WPT_KATANA)
+		local basez = (41*me.height)/48 - (12 * me.scale)
+		local meleeheight = me.height/2 - FixedMul(cur_weapon:get(pt,"melee_height"),me.scale)/2
+		pt.weaponzoffset = P_Lerp(FU / 3, $,
+			-FixedDiv(basez - meleeheight, me.scale)
+		)
 	else
-		pt.weaponzoffset = P_Lerp(FU / 3, $, Paint.IDLE_OFFSET)
+		if (pt.firewait or pt.fireheld or pt.endlag or pt.cooldown)
+		or (dd.tics or dd.getup or pt.turretmode)
+			pt.weaponzoffset = P_Lerp(FU * 3/4, $, 0)
+		else
+			pt.weaponzoffset = P_Lerp(FU / 3, $, Paint.IDLE_OFFSET)
+		end
 	end
 	
 	if doslowdown

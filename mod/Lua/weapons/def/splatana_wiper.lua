@@ -5,6 +5,13 @@ states[S_PAINT_GUN_WIPER] = {
 	tics = -1,
 	nextstate = S_PAINT_GUN_WIPER
 }
+freeslot("S_PAINT_GUN_WIPER_S")
+states[S_PAINT_GUN_WIPER_S] = {
+	sprite = SPR_PAINT_GUN,
+	frame = 14,
+	tics = -1,
+	nextstate = S_PAINT_GUN_WIPER_S
+}
 
 for i = 0,9
 	sfxinfo[freeslot("sfx_p_s8_"..i)].caption = "Paint slash"
@@ -34,11 +41,13 @@ Paint:registerWeapon({
 	neverspreadatall = true,
 	nodryfirelag = true,
 	dofireanim = false,
+	allowdrycolor = true,
 	
 	inkcost = FU * 3,
 	inkdelay = TR/2,
 	
 	weaponstate = S_PAINT_GUN_WIPER,
+	weaponstate_swipe = S_PAINT_GUN_WIPER_S,
 	weaponstate_scale = FU,
 	
 	spawnspeed = FixedMul(tofixed("3.3"), Paint.DU2FU), -- 2.266 splat3 distance units

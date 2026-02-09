@@ -103,8 +103,8 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 		ray.lifespan = 0
 		ray.s_state = SS_STRAIGHT
 		local weaponoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, dualieflip, false)}
-		if /*( and (cur_weapon.guntype == WPT_DUALIES))
-		or */(cur_weapon.guntype == WPT_BRELLA)
+		if (cur_weapon.guntype == WPT_BRELLA)
+		or (cur_weapon.guntype == WPT_KATANA)
 			weaponoffset[1],weaponoffset[2] = 0,0
 		end
 		local aimoffset_vec = SphereToCartesian(angle,CMD_AIMING)
@@ -261,6 +261,7 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		ray.s_state = SS_STRAIGHT
 		local weaponoffset = {Paint:getWeaponOffset(me,pt, angle - ANGLE_90, cur_weapon, dualieflip, false)}
 		if (cur_weapon.guntype == WPT_BRELLA)
+		or (cur_weapon.guntype == WPT_KATANA)
 			weaponoffset[1],weaponoffset[2] = 0,0
 		end
 		P_SetOrigin(ray,

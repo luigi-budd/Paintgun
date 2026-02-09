@@ -38,6 +38,8 @@ end
 local whiff_scale = tofixed("1.8")
 function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aiming, dospread, doaiming, newpos)
 	local me = p.realmo
+	pt.swinganim = Paint.SWING_ANIM + max(wep:get(pt,"firerate") - Paint.SWING_ANIM, 0) * 3
+	pt.swingoffset = pt.swinganim - Paint.SWING_ANIM
 	
 	-- melee hitbox
 	local mradius = FixedMul(wep:get(pt,"melee_radius"), me.scale)
@@ -57,6 +59,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 	melee.height = mheight
 	melee.target = me
 	melee.color = baseproj.color
+	melee.pellet = true -- hack for smaller hitmarker
 	local fakerange = mradius * 4
 	local range = melee.radius
 	local gravflip = P_MobjFlip(me)
@@ -74,12 +77,16 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 			P_DamageMobj(found, melee, me, mdamage)
 			Paint:doProjHitmarker(melee, found, false, false, true)
 			Paint.HUD:damageNumber(p, found, mdamage)
+			found.hitbymelee = true
+			found.hitmeleetic = leveltime
 		elseif (found.type == MT_PLAYER)
 			if Paint_canHurtPlayer(p, found.player)
 				local newdamage = Paint:damagePlayer(found.player, melee, p, mdamage)
 				Paint:playHurtSound(found.player)
 				Paint:doProjHitmarker(melee, found, false)
 				Paint.HUD:damageNumber(p, found, newdamage)
+				found.hitbymelee = true
+				found.hitmeleetic = leveltime
 			elseif Paint_canHurtPlayer(p, found.player, true, true)
 			and not Paint:isFriendlyFire(p,found.player)
 				Paint:doProjHitmarker(melee, found, false, true, true)
@@ -160,6 +167,8 @@ end
 
 function Paint.wcallback_splatana_ondryfire(p,pt,wep, angle, aiming, dospread, doaiming)
 	local me = p.realmo
+	pt.swinganim = Paint.SWING_ANIM + max(wep:get(pt,"firerate") - Paint.SWING_ANIM, 0) * 3
+	pt.swingoffset = pt.swinganim - Paint.SWING_ANIM
 	
 	local mradius = FixedMul(wep:get(pt,"melee_radius"), me.scale)
 	local mheight = FixedMul(wep:get(pt,"melee_height"), me.scale)
@@ -200,4 +209,10 @@ function Paint.wcallback_splatana_onhit(p,pt,wep, proj, inf, target, damage)
 		if not (gproj and gproj.valid) then continue end
 		gproj.nohitmarker = true
 	end
+	/*
+	if target.hitbymelee
+	and abs(leveltime - target.hitmeleetic) <= 2
+		Paint:doProjHitmarker(proj, target, false, false, false, true)
+	end
+	*/
 end
