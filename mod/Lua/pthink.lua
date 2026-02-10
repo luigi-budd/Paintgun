@@ -147,7 +147,7 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 			wepmo.mirrored = not $
 		end
 		fireangle = $ + FixedAngle(180*progress)
-		wepmo.angle = $ - FixedAngle(90*FU - 180*progress)
+		wepmo.angle = $ - FixedAngle(90*FU - 180*progress) + FixedAngle(cur_weapon:get(pt,"swipeangleoffset"))
 		
 		local swipestate = cur_weapon:get(pt,"weaponstate_swipe")
 		if swipestate
@@ -455,12 +455,14 @@ addHook("PlayerThink",function(p)
 		Paint:giveWeapon(p, "basic")
 		Paint:giveWeapon(p, "rapid")
 		Paint:giveWeapon(p, "charger")
+		/*
 		Paint:giveWeapon(p, "blaster")
 		Paint:giveWeapon(p, "dualie_squelchers")
 		Paint:giveWeapon(p, "splat_dualies")
 		Paint:giveWeapon(p, "brella")
 		Paint:giveWeapon(p, "undercover_brella")
 		Paint:giveWeapon(p, "wiper")
+		*/
 	end
 	local pt = p.paint
 	local skin = skins[p.skin]

@@ -311,7 +311,7 @@ function Paint:initPlayer(p)
 		inventory = {
 			items = {},
 			curslot = 1,
-			slots = 9,
+			slots = 3,
 		},
 		
 		hp = 100*FU,
@@ -441,6 +441,7 @@ dofile("weapons/player.lua")
 dofile("hud/main.lua")
 dofile("auxiliary.lua")
 dofile("enemy.lua")
+dofile("menus/main.lua")
 
 addHook("NetVars",function(n)
 	Paint.modes = n($)

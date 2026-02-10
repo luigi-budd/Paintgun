@@ -21,6 +21,7 @@ addHook("PreThinkFrame", do
 	
 	ML.client.menuactive = false
 	if ML.client.currentMenu.id == -1
+	and (#ML.client.popups == 0)
 		ML.client.currentMenu.layers = {}
 		ML.client.menuTime = 0
 		return

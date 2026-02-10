@@ -54,6 +54,7 @@ addHook("HUD",function(v)
 	ML.HUD.stage_id = -1
 	
 	if ML.client.currentMenu.id == -1
+	and (#ML.client.popups == 0)
 		ML.HUD.menu_fake_width = 1
 		ML.HUD.menu_fake_height = 1
 		return

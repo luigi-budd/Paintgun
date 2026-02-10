@@ -2,6 +2,7 @@ local hsprd = tofixed("4.86")
 
 Paint:registerWeapon({
 	realname = "Splattershot",
+	icon = "PTMAIN_SSHOT",
 	
 	name = "basic",
 	subtype = "suctionbomb",

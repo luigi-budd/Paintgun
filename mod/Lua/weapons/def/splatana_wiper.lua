@@ -22,6 +22,7 @@ sfxinfo[freeslot("sfx_p_s8_a")].caption = "Dry fire"
 local pshot = mobjinfo[MT_PAINT_SHOT]
 Paint:registerWeapon({
 	realname = "Splatana Wiper",
+	icon = "PTMAIN_SWIPER",
 	
 	name = "wiper",
 	--subtype = "torpedo",
@@ -42,13 +43,14 @@ Paint:registerWeapon({
 	nodryfirelag = true,
 	dofireanim = false,
 	allowdrycolor = true,
+	swipeangleoffset = 180*FU,
 	
 	inkcost = FU * 3,
 	inkdelay = TR/2,
 	
 	weaponstate = S_PAINT_GUN_WIPER,
 	weaponstate_swipe = S_PAINT_GUN_WIPER_S,
-	weaponstate_scale = FU,
+	weaponstate_scale = FU/4,
 	
 	spawnspeed = FixedMul(tofixed("3.3"), Paint.DU2FU), -- 2.266 splat3 distance units
 	str_tics = 5, -- straight state lasts this many tics

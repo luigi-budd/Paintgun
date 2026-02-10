@@ -2,10 +2,15 @@ local HUD = Paint.HUD
 
 local CLASStoICON = {
 	[WPT_SHOOTER] = "SHOOTER",
+	[WPT_ROLLER]  = "ROLLER",
 	[WPT_CHARGER] = "CHARGER",
-	[WPT_BLASTER] = "BLASTER",
+	[WPT_SLOSHER] = "SLOSHER",
+	[WPT_GATLING] = "GATLING",
 	[WPT_DUALIES] = "DUALIE",
 	[WPT_BRELLA]  = "BRELLA",
+	[WPT_BLASTER] = "BLASTER",
+	[WPT_BRUSH]   = "BRUSH",
+	[WPT_BOW]     = "BOW",
 	[WPT_KATANA]  = "KATANA",
 }
 
@@ -19,6 +24,16 @@ addHook("HUD",function(v,p,cam)
 	local x = ((160 - ((6 + 2)*inv.slots)/2) + 4)*FU
 	local y = (200 - 6)*FU
 	local flags = V_SNAPTOBOTTOM
+	
+	if p.jointime <= 20*TR
+		local btwpn = input.gameControlToKeyNum(GC_WEPSLOT1)
+		if btwpn
+			local btstr = input.keyNumToName(btwpn)
+			v.drawScaled((160 - 65)*FU, 199*FU, FU/2, v.cachePatch("PAINT_KBUT"), flags)
+			v.drawString(160 - 65, 193, btstr, flags, "small-thin-center")
+			v.drawString(160 - 60, 194, " - Inventory", V_ALLOWLOWERCASE|flags, "small-thin")
+		end
+	end
 	
 	local sub_t = Paint.subs[Paint.weapons[pt.weapon_id].subtype or ""]
 	if sub_t
@@ -42,8 +57,8 @@ addHook("HUD",function(v,p,cam)
 			)
 		end
 		if inv.items[i] ~= nil
-			v.drawScaled(x,y,FU/16,
-				v.cachePatch("PTCLASS_"..CLASStoICON[ Paint.weapons[inv.items[i]].guntype] ),
+			v.drawScaled(x,y,FU/32,
+				v.cachePatch(Paint.weapons[inv.items[i]].icon),
 				flags|(inv.curslot ~= i and V_30TRANS or 0),
 				inv.curslot ~= i and v.getColormap(TC_BLINK,SKINCOLOR_BLACK,"AllBlack") or nil
 			)

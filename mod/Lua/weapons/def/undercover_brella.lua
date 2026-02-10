@@ -31,6 +31,7 @@ states[S_PAINT_GUN_UCBRELLA_CAN] = {
 local MIN_DAMAGE = 9*FU
 Paint:registerWeapon({
 	realname = "Undercover Brella",
+	icon = "PTMAIN_UBRELLA",
 	
 	name = "undercover_brella",
 	--subtype = "inkmine",

@@ -22,6 +22,7 @@ sfxinfo[freeslot("sfx_p_s4_7")].caption = "Dualies split"
 --squelchers
 Paint:registerWeapon({
 	realname = "Dualie Squelchers",
+	icon = "PTMAIN_DSQUELCHER",
 	
 	name = "dualie_squelchers",
 	handoffset = 5*FU,

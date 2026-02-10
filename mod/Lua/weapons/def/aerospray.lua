@@ -13,6 +13,7 @@ local point63 = tofixed(".63")
 
 Paint:registerWeapon({
 	realname = "Aerospray MG",
+	icon = "PTMAIN_AEROSPRAY",
 	
 	name = "rapid",
 	subtype = "burstbomb",

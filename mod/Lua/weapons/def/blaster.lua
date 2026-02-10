@@ -15,6 +15,7 @@ sfxinfo[sfx_p_s3_0] = {
 
 Paint:registerWeapon({
 	realname = "Blaster",
+	icon = "PTMAIN_BLASTER",
 	
 	name = "blaster",
 	--subtype = "autobomb",

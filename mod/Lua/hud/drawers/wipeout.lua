@@ -72,7 +72,7 @@ addHook("HUD",function(v,p,cam)
 			lt.wait = $ - 1
 			continue
 		end
-
+		
 		local fade = 0
 		local oy = 0
 		if lt.tics
@@ -80,11 +80,11 @@ addHook("HUD",function(v,p,cam)
 			if start < 10 and start > 0
 				fade = (10 - start) << V_ALPHASHIFT
 			end
-
+			
 			oy = ease.outback(FU - (LETTER_FRAC * lt.tics), LETTER_UP, 0, -FU*12)
 			lt.tics = $ - 1
 		end
-
+		
 		v.drawScaled(x,y + oy, scale, v.cachePatch(lpatch..i), fade|master_fade, cmap)
 		x = $ + (spacing[i] * scale)
 	end

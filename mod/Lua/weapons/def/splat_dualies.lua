@@ -13,6 +13,7 @@ sfxinfo[sfx_p_s6_5].caption = "Dodge roll"
 
 Paint:registerWeapon({
 	realname = "Splat Dualies",
+	icon = "PTMAIN_SDUALIES",
 	
 	name = "splat_dualies",
 	subtype = "suctionbomb",

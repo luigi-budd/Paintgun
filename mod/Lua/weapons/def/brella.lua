@@ -28,7 +28,8 @@ states[S_PAINT_GUN_BRELLA_OPN] = {
 local MIN_DAMAGE = 10*FU + (FU*8/10)
 Paint:registerWeapon({
 	realname = "Splat Brella",
-	
+	icon = "PTMAIN_SBRELLA",
+
 	name = "brella",
 	--subtype = "sprinkler",
 	handoffset = 8*FU,

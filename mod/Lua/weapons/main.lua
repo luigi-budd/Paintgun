@@ -75,15 +75,17 @@ function Paint:registerSubWeapon(props)
 end
 
 -- weapon classes
-rawset(_G, "WPT_SHOOTER", 1)
-rawset(_G, "WPT_CHARGER", 2)
--- splatanas use bulletsimple
-rawset(_G, "WPT_KATANA", 3)
-rawset(_G, "WPT_BRUSH", 4)
-rawset(_G, "WPT_BLASTER", 5)
-rawset(_G, "WPT_DUALIES", 6)
-rawset(_G, "WPT_BRELLA", 7)
-rawset(_G, "WPT_SLOSHER", 8)
+rawset(_G, "WPT_SHOOTER", 1 )
+rawset(_G, "WPT_ROLLER",  2 )
+rawset(_G, "WPT_CHARGER", 3 )
+rawset(_G, "WPT_SLOSHER", 4 )
+rawset(_G, "WPT_GATLING", 5 )
+rawset(_G, "WPT_DUALIES", 6 )
+rawset(_G, "WPT_BRELLA",  7 )
+rawset(_G, "WPT_BLASTER", 8 )
+rawset(_G, "WPT_BRUSH",   9 )
+rawset(_G, "WPT_BOW",     10)
+rawset(_G, "WPT_KATANA",  11)
 
 -- shot states
 rawset(_G, "SS_STRAIGHT", 1)
@@ -97,6 +99,7 @@ rawset(_G, "SS_FREE", 3)
 Paint.weapons = {}
 local weapon_meta = {
 	realname = "Main Weapon",
+	icon = "MISSING",
 	
 	range = 405 * FU, --about 2.3 splat3 distance units
 	damage = 24*FU,
@@ -325,6 +328,7 @@ local weapon_meta = {
 	c_radius = 16*FU, -- radius and height for the center projectile
 	c_height = 32*FU,
 	weaponstate_swipe = nil,
+	swipeangleoffset = 0,
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
@@ -564,7 +568,7 @@ end
 function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hsprd, vsprd)
 	local me = p.mo
 	local pt = p.paint
-	local dofireanim = cur_weapon:get(pt,"allowfireanim")
+	local dofireanim = cur_weapon:get(pt,"dofireanim")
 	
 	pt.inkdelay = max($, cur_weapon:get(pt,"inkdelay"))
 	if (pt.inktank < cur_weapon:get(pt,"inkcost") - 1)
