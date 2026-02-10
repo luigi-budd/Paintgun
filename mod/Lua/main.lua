@@ -2,6 +2,10 @@
 -- https://wiki.srb2.org/wiki/User:Clairebun/Sandbox/Common_Lua_Functions#L_DecimalFixed
 rawset(_G,"tofixed",function(str)
 	if str == nil return nil end
+	if str:sub(1,1) == "."
+		str = "0" .. $
+	end
+	
 	local dec_offset = string.find(str,'%.')
 	if dec_offset == nil
 		return (tonumber(str) or 0)*FRACUNIT
