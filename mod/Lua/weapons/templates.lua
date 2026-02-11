@@ -58,3 +58,36 @@ function Paint.wtemplate_brella(p,pt, weapon, key,value)
 		return true
 	end
 end
+
+function Paint.wtemplate_splatana(p,pt, weapon, key,value, crosshair)
+	local crosshaircheck = false
+	if crosshair
+		crosshaircheck = pt.charge > 0
+	else
+		crosshaircheck = pt.maxchargeshot
+	end
+	
+	if key == "crs_guideframe"
+	and (pt.charge)
+		return weapon:get(pt,"crs_chargedguideframe")
+	elseif key == "h_fuse"
+	and crosshaircheck
+		return weapon:get(pt,"v_fuse")
+	elseif key == "totaldamage"
+	and (pt.maxchargeshot)
+		return weapon:get(pt,"maxdamage")
+	elseif key == "spawnspeed"
+	and crosshaircheck
+		return weapon:get(pt,"v_speed")
+	
+	elseif key == "melee_damage"
+	and (pt.maxchargeshot)
+		return weapon:get(pt,"vmelee_damage")
+	elseif key == "melee_radius"
+	and (pt.maxchargeshot)
+		return weapon:get(pt,"vmelee_radius")
+	elseif key == "melee_height"
+	and (pt.maxchargeshot)
+		return weapon:get(pt,"vmelee_height")
+	end
+end

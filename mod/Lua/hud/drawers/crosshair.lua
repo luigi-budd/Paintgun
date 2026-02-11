@@ -29,7 +29,7 @@ local function drawReticle(v,x,y, p, type)
 	local prefix = "PAINT_CR_"
 	local wep = Paint.weapons[p.paint.weapon_id]
 	local pt = p.paint
-	local crossscale = wep:get(pt,"crs_scale")
+	local crossscale = wep:get(pt,"crs_scale",true)
 	
 	-- when brella-class loses its shield
 	if (wep.guntype == WPT_BRELLA)
@@ -73,13 +73,13 @@ local function is_shooter(type)
 end
 
 local function getrange(ray, pt, cur_weapon, chargerdupe)
-	local range = cur_weapon:get(pt,"range")
+	local range = cur_weapon:get(pt,"range",true)
 	if chargerdupe
 		range = cur_weapon.range
 	end
 	
 	if is_shooter(type)
-		range = FixedMul(cur_weapon:get(pt,"spawnspeed") * cur_weapon:get(pt,"str_tics"), proj.scale)
+		range = FixedMul(cur_weapon:get(pt,"spawnspeed",true) * cur_weapon:get(pt,"str_tics",true), proj.scale)
 	end
 	
 	return range
@@ -114,6 +114,18 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 			me.y + weaponoffset[2] + FixedMul(aimoffset_dist, aimoffset_vec.y),
 			ray.z + FixedMul(aimoffset_dist, aimoffset_vec.z)
 		)
+
+		ray.str_tics			= cur_weapon:get(pt,"str_tics",true)
+		ray.str2brk_maxspeed	= FixedMul(cur_weapon:get(pt,"str2brk_maxspeed",true), ray.scale)
+		ray.brk_airresist		= cur_weapon:get(pt,"brk_airresist",true)
+		ray.brk_gravity			= cur_weapon:get(pt,"brk_gravity",true)
+		ray.brk2fre_minz		= FixedMul(cur_weapon:get(pt,"brk2fre_minz",true), ray.scale)
+		ray.brk2fre_minxy		= FixedMul(cur_weapon:get(pt,"brk2fre_minxy",true), ray.scale)
+		ray.brk2fre_tics		= cur_weapon:get(pt,"brk2fre_tics",true)
+		ray.fre_airresist		= cur_weapon:get(pt,"fre_airresist",true)
+		ray.fre_gravity			= cur_weapon:get(pt,"fre_gravity",true)
+		ray.crs_guideframe		= cur_weapon:get(pt,"crs_guideframe",true)
+		
 		ray.finalpos = Paint:aimProjectile(p,ray, angle, CMD_AIMING, false,nil, dualieflip, true, nil,nil, chargerdupe)
 		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		local aimvec = SphereToCartesian(ray.angle, CMD_AIMING)
@@ -129,17 +141,6 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 		ray.flags = mobjinfo[MT_PAINT_SHOT].flags|MF_NOCLIP|MF_NOCLIPHEIGHT &~MF_SLIDEME
 		ray.target = me
 		ray.sprite = SPR_NULL
-		
-		ray.str_tics			= cur_weapon:get(pt,"str_tics")
-		ray.str2brk_maxspeed	= FixedMul(cur_weapon:get(pt,"str2brk_maxspeed"), ray.scale)
-		ray.brk_airresist		= cur_weapon:get(pt,"brk_airresist")
-		ray.brk_gravity			= cur_weapon:get(pt,"brk_gravity")
-		ray.brk2fre_minz		= FixedMul(cur_weapon:get(pt,"brk2fre_minz"), ray.scale)
-		ray.brk2fre_minxy		= FixedMul(cur_weapon:get(pt,"brk2fre_minxy"), ray.scale)
-		ray.brk2fre_tics		= cur_weapon:get(pt,"brk2fre_tics")
-		ray.fre_airresist		= cur_weapon:get(pt,"fre_airresist")
-		ray.fre_gravity			= cur_weapon:get(pt,"fre_gravity")
-		ray.crs_guideframe		= cur_weapon:get(pt,"crs_guideframe")
 		
 		if (dualieflip or chargerdupe)
 			d_raycast = ray
@@ -286,16 +287,16 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		end
 		ray.sprite = SPR_NULL
 		
-		ray.str_tics			= cur_weapon:get(pt,"str_tics")
-		ray.str2brk_maxspeed	= FixedMul(cur_weapon:get(pt,"str2brk_maxspeed"), ray.scale)
-		ray.brk_airresist		= cur_weapon:get(pt,"brk_airresist")
-		ray.brk_gravity			= cur_weapon:get(pt,"brk_gravity")
-		ray.brk2fre_minz		= FixedMul(cur_weapon:get(pt,"brk2fre_minz"), ray.scale)
-		ray.brk2fre_minxy		= FixedMul(cur_weapon:get(pt,"brk2fre_minxy"), ray.scale)
-		ray.brk2fre_tics		= cur_weapon:get(pt,"brk2fre_tics")
-		ray.fre_airresist		= cur_weapon:get(pt,"fre_airresist")
-		ray.fre_gravity			= cur_weapon:get(pt,"fre_gravity")
-		ray.crs_guideframe		= cur_weapon:get(pt,"crs_guideframe")
+		ray.str_tics			= cur_weapon:get(pt,"str_tics",true)
+		ray.str2brk_maxspeed	= FixedMul(cur_weapon:get(pt,"str2brk_maxspeed",true), ray.scale)
+		ray.brk_airresist		= cur_weapon:get(pt,"brk_airresist",true)
+		ray.brk_gravity			= cur_weapon:get(pt,"brk_gravity",true)
+		ray.brk2fre_minz		= FixedMul(cur_weapon:get(pt,"brk2fre_minz",true), ray.scale)
+		ray.brk2fre_minxy		= FixedMul(cur_weapon:get(pt,"brk2fre_minxy",true), ray.scale)
+		ray.brk2fre_tics		= cur_weapon:get(pt,"brk2fre_tics",true)
+		ray.fre_airresist		= cur_weapon:get(pt,"fre_airresist",true)
+		ray.fre_gravity			= cur_weapon:get(pt,"fre_gravity",true)
+		ray.crs_guideframe		= cur_weapon:get(pt,"crs_guideframe",true)
 
 		if (dualieflip)
 			dh_raycast2 = ray
@@ -421,7 +422,7 @@ local charger_vfx = 0
 local function drawWeaponEVFX(v,p,cam)
 	local pt = p.paint
 	local wep = Paint.weapons[pt.weapon_id]
-	local crossscale = wep:get(pt,"crs_scale")
+	local crossscale = wep:get(pt,"crs_scale",true)
 	
 	if charger_vfx
 		v.drawScaled(cross_x,cross_y,
@@ -432,7 +433,7 @@ local function drawWeaponEVFX(v,p,cam)
 	end
 	if wep.guntype == WPT_CHARGER
 	and (pt.charge or pt.storedcharge)
-		local chargetime = wep:get(pt,"chargetime")
+		local chargetime = wep:get(pt,"chargetime",true)
 		if pt.justcharged
 			charger_vfx = 10
 		end
@@ -505,7 +506,7 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 		MID_X = result.x
 		y = result.y
 	end
-	local crossscale = wep:get(pt,"crs_scale")
+	local crossscale = wep:get(pt,"crs_scale",true)
 	SCALE = FixedMul($, crossscale)
 	
 	--120 fov == 4 mult
@@ -650,23 +651,45 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 		else
 			local prefix = "PAINT_CR_K_"
 			local suffix = (dh_workray.direct and "B" or "N")
-			local sections = 3
+			local sections = wep:get(pt,"crs_sections",true)
+			local sec_fixed = sections*FU
 			local pad = 4 * SCALE
-			local l_sprd = min(FixedDiv(L_hspread, sections*FU) + pad, 0)
-			local r_sprd = max(FixedDiv(R_hspread, sections*FU) - pad, 0)
-			for i = 1, sections
-				v.drawScaled(
-					MID_X - pad + (l_sprd * i),
-					y,
-					crossscale/4, v.cachePatch(prefix.."UNC_"..suffix), V_FLIP,
-					clr
-				)
-				v.drawScaled(
-					MID_X + pad + (r_sprd * i),
-					y,
-					crossscale/4, v.cachePatch(prefix.."UNC_"..suffix), V_FLIP,
-					clr
-				)
+			local l_sprd = min(FixedDiv(L_hspread, sec_fixed) + pad, 0)
+			local r_sprd = max(FixedDiv(R_hspread, sec_fixed) - pad, 0)
+			if (pt.charge)
+				local chargetime = wep:get(pt,"chargetime",true)
+				local frac = FixedDiv(pt.charge, chargetime)
+
+				for i = 1, sections
+					local suffix = (pt.charge >= chargetime) and "1" or (FixedDiv(i*FU, sec_fixed) > frac and "0" or "1")
+					v.drawScaled(
+						MID_X,
+						y - pad + (l_sprd * i),
+						crossscale/4, v.cachePatch(prefix.."CRG_"..suffix), 0,
+						clr
+					)
+					v.drawScaled(
+						MID_X,
+						y + pad + (r_sprd * i),
+						crossscale/4, v.cachePatch(prefix.."CRG_"..suffix), 0,
+						clr
+					)
+				end
+			else
+				for i = 1, sections
+					v.drawScaled(
+						MID_X - pad + (l_sprd * i),
+						y,
+						crossscale/4, v.cachePatch(prefix.."UNC_"..suffix), 0,
+						clr
+					)
+					v.drawScaled(
+						MID_X + pad + (r_sprd * i),
+						y,
+						crossscale/4, v.cachePatch(prefix.."UNC_"..suffix), 0,
+						clr
+					)
+				end
 			end
 		end
 	end

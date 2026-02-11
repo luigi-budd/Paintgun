@@ -45,6 +45,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 	local mradius = FixedMul(wep:get(pt,"melee_radius"), me.scale)
 	local mheight = FixedMul(wep:get(pt,"melee_height"), me.scale)
 	local mdamage = wep:get(pt,"melee_damage")
+	print(mdamage/FU)
 	
 	local mdist = FixedDiv(me.radius, me.scale) + mradius
 	local mzoff = FixedDiv(me.height,me.scale)/2 - (mheight/2)
@@ -60,6 +61,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 	melee.target = me
 	melee.color = baseproj.color
 	melee.pellet = true -- hack for smaller hitmarker
+	melee.powerful = pt.maxchargeshot -- hack again
 	local fakerange = mradius * 4
 	local range = melee.radius
 	local gravflip = P_MobjFlip(me)
@@ -83,7 +85,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 			if Paint_canHurtPlayer(p, found.player)
 				local newdamage = Paint:damagePlayer(found.player, melee, p, mdamage)
 				Paint:playHurtSound(found.player)
-				Paint:doProjHitmarker(melee, found, false)
+				Paint:doProjHitmarker(melee, found, false, true)
 				Paint.HUD:damageNumber(p, found, newdamage)
 				found.hitbymelee = true
 				found.hitmeleetic = leveltime
@@ -107,6 +109,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 	fx.aiming = aiming
 	fx.scale = FixedMul(FixedDiv(mradius, 64*me.scale), whiff_scale)
 	fx.renderflags = $|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT|(pt.shotsfired % 2 and RF_HORIZONTALFLIP or 0)
+	fx.maxchargeshot = pt.maxchargeshot
 	P_CreateFloorSpriteSlope(fx)
 	
 	local maxdamage = wep:get(pt,"totaldamage")
@@ -122,6 +125,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 	if not (baseproj and baseproj.valid) then return end
 	
 	local spawned = {}
+	local vertical = false --pt.maxchargeshot
 	
 	local side = angle + ANGLE_90
 	local groups = wep:get(pt,"groups")
@@ -144,12 +148,26 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 			proj.momy = baseproj.momy
 			proj.momz = baseproj.momz
 			proj.groupmembers = {baseproj}
+			if info.state ~= nil
+				proj.state = info.state
+			end
+			-- the projectile on the left is mirrored
+			proj.mirrored = j == 1
 			
-			P_SetOrigin(proj,
-				newpos.x + P_ReturnThrustX(nil,side, offset * j),
-				newpos.y + P_ReturnThrustY(nil,side, offset * j),
-				newpos.z + (baseproj.height - proj.height)/2
-			)
+			if vertical
+				P_SetOrigin(proj,
+					newpos.x + P_ReturnThrustX(nil,side, offset * j),
+					newpos.y + P_ReturnThrustY(nil,side, offset * j),
+					newpos.z + (baseproj.height - proj.height)/2
+				)
+			else
+				proj.spriteyoffset = -(baseproj.height - proj.height)/2
+				P_SetOrigin(proj,
+					newpos.x + P_ReturnThrustX(nil,side, offset * j),
+					newpos.y + P_ReturnThrustY(nil,side, offset * j),
+					newpos.z + (baseproj.height - proj.height)/2
+				)
+			end
 			table.insert(baseproj.groupmembers, proj)
 			table.insert(spawned, proj)
 		end
@@ -199,6 +217,7 @@ function Paint.wcallback_splatana_ondryfire(p,pt,wep, angle, aiming, dospread, d
 	fx.renderflags = $|RF_NOSPLATBILLBOARD|RF_SLOPESPLAT|(pt.shotsfired % 2 and RF_HORIZONTALFLIP or 0)
 	fx.translation = "Grayscale"
 	fx.alpha = FU/2
+	fx.maxchargeshot = pt.maxchargeshot
 	P_CreateFloorSpriteSlope(fx)
 end
 

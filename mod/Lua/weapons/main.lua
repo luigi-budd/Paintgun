@@ -315,6 +315,7 @@ local weapon_meta = {
 		offset = fixed_t,
 		radius = fixed_t,
 		height = fixed_t,
+		state = statenum_t,
 		
 		a group is spawned on both sides of the center projectile
 		offset `offset` fracs + `radius`
@@ -324,11 +325,27 @@ local weapon_meta = {
 	melee_damage = 15*FU,
 	melee_radius = 64*FU,
 	melee_height = 12*FU,
+	--vertical dupes
+	vmelee_damage = 120*FU,
+	vmelee_radius = 50*FU,
+	vmelee_height = 40*FU,
+	--
 	h_fuse = 4, -- horizontal slashes disappear after this many tics
+	v_fuse = 13, -- vertical slashes
+	v_speed = FixedMul(tofixed("1.2"), Paint.DU2FU), -- spawnspeed for vertical slashes
 	c_radius = 16*FU, -- radius and height for the center projectile
 	c_height = 32*FU,
 	weaponstate_swipe = nil,
 	swipeangleoffset = 0,
+	-- charger chargetime and mincharge are used for charge slashes,
+	-- however, if attack is held for less than mincharge, a horizontal slash
+	-- will be fired instead of no projectile
+	-- charger strong_sounds is also used for charged slashes
+	-- charger charge_sound is also used
+	-- charger maxdamage is also used for charge slashes
+	crs_sections = 3, -- how many bars to draw on the crosshair
+	crs_chargedguideframe = 14,
+	
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies
@@ -359,10 +376,10 @@ registerMetatable(weapon_meta)
 
 function Paint:registerWeapon(props)
 	assert(props.name, "Properties table must have a name field")
-	props.get = function(self, paint, key)
+	props.get = function(self, paint, key, crosshair)
 		local value = self[key]
 		if self.abilitywrap ~= nil
-			local temp = self.abilitywrap(paint.player, paint, self, key, value)
+			local temp = self.abilitywrap(paint.player, paint, self, key, value, crosshair)
 			if temp ~= nil
 				value = temp
 			end
@@ -446,7 +463,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	
 	hsprd = $ or 0
 	vsprd = $ or 0
-	local speed = FixedMul(weap:get(pt,"spawnspeed"), proj.scale)
+	local speed = FixedMul(weap:get(pt,"spawnspeed",crosshair), proj.scale)
 	if (weap.guntype == WPT_CHARGER)
 		speed = proj.radius * 2
 	end
@@ -456,11 +473,11 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	local handoffset  = {Paint:getWeaponOffset(me,pt,angle - ANGLE_90, weap, dualieflip, true)}
 	handoffset[4], handoffset[5] = handoffset[1], handoffset[2]
 	
-	local range = FixedMul(chargerdupe and (weap.range) or (weap:get(pt,"range")), me.scale)
+	local range = FixedMul(chargerdupe and (weap.range) or (weap:get(pt,"range",crosshair)), me.scale)
 	local aimvec = P_Vec3.SphereToCartesian(angle,aiming)
 	-- for shooters, adjust the range to be at the end of straight state
 	if (weap.guntype ~= WPT_CHARGER and weap.guntype ~= WPT_BLASTER)
-		range = speed * weap:get(pt,"str_tics")
+		range = speed * weap:get(pt,"str_tics",crosshair)
 	end
 	
 	-- Aim in the center (but offset)
@@ -469,7 +486,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		if handoffset[3] -- dualie flipped
 			f_angle = $ - ANGLE_180
 		end
-		local soff = FixedMul(weap:get(pt,"shotoffset"),me.scale) + me.radius
+		local soff = FixedMul(weap:get(pt,"shotoffset",crosshair),me.scale) + me.radius
 		handoffset[1] = P_ReturnThrustX(nil, f_angle, soff)
 		handoffset[2] = P_ReturnThrustY(nil, f_angle, soff)
 		handoffset[4], handoffset[5] = handoffset[1], handoffset[2]
@@ -503,15 +520,15 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 		--angle = $ - h_spread
 		--aiming = $ + FixedAngle(v_spread)
 	end
-	if (weap:get(pt,"neverspreadatall"))
+	if (weap:get(pt,"neverspreadatall",crosshair))
 	-- 100% accurate for these (usually blasters)
-	or ((weap:get(pt,"neverspreadonground") and not me.jumptime))
+	or ((weap:get(pt,"neverspreadonground",crosshair) and not me.jumptime))
 		h_spread = 0
 		v_spread = 0
 	end
 	-- apparently shooters dont have any vertical spread in splatoon
 	-- weapon.v_spread will stay for visuals and other weapon classes
-	if not (weap:get(pt,"verticalspread"))
+	if not (weap:get(pt,"verticalspread",crosshair))
 		v_spread = 0
 	end
 	
@@ -733,17 +750,17 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 			pt.shieldwait = max($, cur_weapon:get(pt,"deploywait"))
 		end
 	end
-
+	
+	local weaponsound = cur_weapon.sounds[P_RandomRange(1, #cur_weapon.sounds)]
+	local weaponvolume = cur_weapon:get(pt,"soundvolume")
 	if (cur_weapon.guntype == WPT_CHARGER)
-		local sound
 		local chargetime = cur_weapon:get(pt,"chargetime")
 		local chargeprogress = min(FixedDiv(pt.charge, chargetime), FU)
 		if pt.charge >= chargetime/2
-			sound = cur_weapon.strong_sounds[P_RandomRange(1, #cur_weapon.strong_sounds)]
+			weaponsound = cur_weapon.strong_sounds[P_RandomRange(1, #cur_weapon.strong_sounds)]
 		else
-			sound = cur_weapon.weak_sounds[P_RandomRange(1, #cur_weapon.weak_sounds)]
+			weaponsound = cur_weapon.weak_sounds[P_RandomRange(1, #cur_weapon.weak_sounds)]
 		end
-		S_StartSoundAtVolume(me, sound, cur_weapon.soundvolume)
 		
 		pt.cooldown = (firerate + (FixedMul((cur_weapon:get(pt,"maxfirerate") - firerate)*FU, chargeprogress)/FU)) + 1
 		pt.endlag = pt.cooldown
@@ -761,8 +778,6 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 			proj.damage = wep_damage + FixedMul(cur_weapon:get(pt,"partialdamage") - wep_damage, ease.linear(chargeprogress,0,FU))
 			proj.pierces = 0
 		end
-	elseif not pt.calledbacks.onfire
-		S_StartSoundAtVolume(me, cur_weapon.sounds[P_RandomRange(1, #cur_weapon.sounds)], cur_weapon.soundvolume)
 	end
 	if (cur_weapon.guntype == WPT_BRELLA)
 		proj.damage = wep_damage + FixedMul(cur_weapon:get(pt,"maxdamage") - wep_damage, P_RandomFixed())
@@ -773,6 +788,14 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	end
 	if (cur_weapon.guntype == WPT_KATANA)
 		proj.fuse = cur_weapon:get(pt,"h_fuse")
+		
+		if (pt.charge >= cur_weapon:get(pt,"chargetime"))
+			weaponsound = cur_weapon.strong_sounds[P_RandomRange(1, #cur_weapon.strong_sounds)]
+		end
+	end
+	
+	if not pt.calledbacks.onfire
+		S_StartSoundAtVolume(me, weaponsound, weaponvolume)
 	end
 	
 	proj.basedamage = proj.damage

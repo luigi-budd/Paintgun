@@ -18,6 +18,7 @@ for i = 0,9
 end
 sfxinfo[      sfx_p_s8_9      ].caption = "Dry fire"
 sfxinfo[freeslot("sfx_p_s8_a")].caption = "Dry fire"
+sfxinfo[freeslot("sfx_p_s8_b")].caption = "Charging"
 
 local pshot = mobjinfo[MT_PAINT_SHOT]
 Paint:registerWeapon({
@@ -30,6 +31,7 @@ Paint:registerWeapon({
 	h_spread = {14*FU, 14*FU},
 	handoffset = 8*FU,
 	damage = 30*FU,
+	maxdamage = 60*FU,
 	totaldamage = 30*FU,
 	capdamage = true,
 	firerate = 8,
@@ -44,6 +46,10 @@ Paint:registerWeapon({
 	dofireanim = false,
 	allowdrycolor = true,
 	swipeangleoffset = 180*FU,
+	shotstate = S_PAINT_HSLASH_C,
+	
+	chargetime = 8*FU, -- takes 8 tics to fully charge
+	mincharge = 4,
 	
 	inkcost = FU * 3,
 	inkdelay = TR/2,
@@ -53,7 +59,7 @@ Paint:registerWeapon({
 	weaponstate_scale = FU/4,
 	
 	spawnspeed = FixedMul(tofixed("3.3"), Paint.DU2FU), -- 2.266 splat3 distance units
-	str_tics = 5, -- straight state lasts this many tics
+	str_tics = 50, -- straight state lasts this many tics
 	str2brk_maxspeed = 0, -- when ending straight state, cap xyspeed to this
 	brk_airresist = FU, -- xy AND z moms are affected by air resistance
 	brk_gravity = 0,
@@ -71,6 +77,10 @@ Paint:registerWeapon({
 	drysounds = {
 		sfx_p_s8_9, sfx_p_s8_a,
 	},
+	strong_sounds = {
+		sfx_p_s8_6, sfx_p_s8_7, sfx_p_s8_8,
+	},
+	charge_sound = sfx_p_s8_b,
 	
 	groupnum = 1,
 	groups = {
@@ -78,6 +88,7 @@ Paint:registerWeapon({
 			offset = pshot.radius + 4*FU,
 			radius = pshot.radius,
 			height = pshot.height,
+			state = S_PAINT_HSLASH_L,
 		}
 	},
 	
@@ -86,4 +97,5 @@ Paint:registerWeapon({
 		ondryfire = Paint.wcallback_splatana_ondryfire,
 		onhit = Paint.wcallback_splatana_onhit,
 	},
+	abilitywrap = Paint.wtemplate_splatana,
 })

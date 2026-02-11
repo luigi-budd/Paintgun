@@ -230,6 +230,8 @@ function Paint:initPlayer(p)
 		firewait = 0,
 		justfired = false,
 		nofiring = false,
+		katanawait = false, --ugh
+		maxchargeshot = false, -- for katanas, true if fired at 100% charge
 		cooldown = 0,
 		
 		-- percentage

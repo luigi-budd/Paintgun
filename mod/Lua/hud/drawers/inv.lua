@@ -27,12 +27,13 @@ addHook("HUD",function(v,p,cam)
 	
 	if p.jointime <= 20*TR
 		local btwpn = input.gameControlToKeyNum(GC_WEPSLOT1)
+		local btstr = "unbound"
 		if btwpn
-			local btstr = input.keyNumToName(btwpn)
-			v.drawScaled((160 - 65)*FU, 199*FU, FU/2, v.cachePatch("PAINT_KBUT"), flags)
-			v.drawString(160 - 65, 193, btstr, flags, "small-thin-center")
-			v.drawString(160 - 60, 194, " - Inventory", V_ALLOWLOWERCASE|flags, "small-thin")
+			btstr = input.keyNumToName(btwpn)
 		end
+		v.drawScaled((160 - 65)*FU, 199*FU, FU/2, v.cachePatch("PAINT_KBUT"), flags)
+		v.drawString(160 - 65, 193, btstr, flags, "small-thin-center")
+		v.drawString(160 - 60, 194, " - Inventory", V_ALLOWLOWERCASE|flags, "small-thin")
 	end
 	
 	local sub_t = Paint.subs[Paint.weapons[pt.weapon_id].subtype or ""]

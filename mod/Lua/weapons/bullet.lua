@@ -24,6 +24,9 @@ freeslot(
 	"S_PAINT_SHOT_BIG", 
 	"S_PAINT_SHOT_PELLET",
 	
+	"S_PAINT_HSLASH_L",
+	"S_PAINT_HSLASH_C",
+	
 	"SPR_PAINT_MISC",
 	"SPR_PAINT_GUN"
 )
@@ -45,6 +48,20 @@ states[S_PAINT_SHOT_PELLET] = {
 	tics = -1,
 	nextstate = S_PAINT_SHOT_PELLET
 }
+
+states[S_PAINT_HSLASH_L] = {
+	sprite = SPR_PAINT_SHOT,
+	frame = 5|FF_SEMIBRIGHT,
+	tics = -1,
+	nextstate = S_PAINT_HSLASH_L
+}
+states[S_PAINT_HSLASH_C] = {
+	sprite = SPR_PAINT_SHOT,
+	frame = 4|FF_SEMIBRIGHT,
+	tics = -1,
+	nextstate = S_PAINT_HSLASH_C
+}
+
 mobjinfo[MT_PAINT_SHOT] = {
 	doomednum = -1,
 	radius = 12*FU,
@@ -765,6 +782,8 @@ addHook("MobjThinker",function(shot)
 				sp.colorized = true
 				sp.color = shot.color
 				sp.state = S_SPRK3
+				sp.spriteyoffset = shot.spriteyoffset
+				sp.mirrored = P_RandomChance(FU/2)
 				local oldtics = sp.tics
 				sp.tics = $ / 3
 				sp.frame = ($|FF_SEMIBRIGHT &~FF_TRANSMASK)|(oldtics - sp.tics)
@@ -973,14 +992,21 @@ addHook("MobjThinker",function(shot)
 	elseif shot.state == mobjinfo[MT_MSSHIELD_FRONT].spawnstate
 		P_MoveOrigin(shot, me.x,me.y,me.z)
 	elseif shot.state == S_PAINT_WHIFF
-		P_MoveOrigin(shot, me.x,me.y,me.z + shot.zoff)
-
+		local ox,oy = 0,0
 		local slope = shot.floorspriteslope
 		slope.o = {
 			x = shot.x, y = shot.y, z = shot.z
 		}
 		slope.zangle = shot.aiming
 		slope.xydirection = shot.angle
+		if shot.maxchargeshot
+			slope.xydirection = $ - ANGLE_90
+			slope.zangle = -ANGLE_45
+			ox = P_ReturnThrustX(nil, slope.xydirection, 16*shot.scale)
+			oy = P_ReturnThrustY(nil, slope.xydirection, 16*shot.scale)
+		end
+		
+		P_MoveOrigin(shot, me.x + ox, me.y + oy, me.z + shot.zoff)
 		
 		--wumbo steve
 		shot.spritexscale = FU

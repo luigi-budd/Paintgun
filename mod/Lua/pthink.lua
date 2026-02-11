@@ -110,8 +110,9 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 	else
 		wepmo.mirrored = false
 	end
+	wepmo.rollangle = 0
 	
-	local offx,offy = 0,0
+	local offx,offy,offz = 0,0,0
 	local firing = false
 	if ((pt.deployshield or pt.shieldlag)
 	or (pt.firewait or pt.fireheld or pt.endlag))
@@ -147,7 +148,12 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 			wepmo.mirrored = not $
 		end
 		fireangle = $ + FixedAngle(180*progress)
-		wepmo.angle = $ - FixedAngle(90*FU - 180*progress) + FixedAngle(cur_weapon:get(pt,"swipeangleoffset"))
+		
+		local rot = (pt.maxchargeshot) and 180 or 90
+		wepmo.angle = $ - FixedAngle(90*FU - rot*progress) + FixedAngle(cur_weapon:get(pt,"swipeangleoffset"))
+		if pt.maxchargeshot
+			offz = 16 * progress
+		end
 		
 		local swipestate = cur_weapon:get(pt,"weaponstate_swipe")
 		if swipestate
@@ -155,10 +161,22 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 		end
 		
 		pt.swinganim = $ - 1
+	elseif (cur_weapon.guntype == WPT_KATANA)
+		local progress = FixedDiv(pt.charge, cur_weapon:get(pt,"chargetime"))
+		fireangle = $ + FixedAngle(50*FU - 80*progress)
+		
+		if progress
+			local swipestate = cur_weapon:get(pt,"weaponstate_swipe")
+			if swipestate
+				wepmo.state = swipestate
+			end
+			wepmo.angle = $ + FixedAngle(cur_weapon:get(pt,"swipeangleoffset"))
+			wepmo.angle = $ - FixedAngle(60*progress)
+		end
 	end
 	
 	local handoffset = {Paint:getWeaponOffset(me,pt,fireangle - ANGLE_90, cur_weapon, dualieflip, false)}
-	local zoffset = (41*me.height)/48 - (12 * me.scale) + FixedMul(pt.weaponzoffset, me.scale)*P_MobjFlip(me)
+	local zoffset = (41*me.height)/48 - (12 * me.scale) + FixedMul(pt.weaponzoffset + offz, me.scale)*P_MobjFlip(me)
 	teleport(wepmo,
 		me.x + handoffset[1] + offx,
 		me.y + handoffset[2] + offy,
@@ -900,10 +918,17 @@ addHook("PlayerThink",function(p)
 				justpressedfire = true
 				pt.firewait = cur_weapon.startlag
 				if (cur_weapon.guntype == WPT_BRELLA)
-				or (cur_weapon.guntype == WPT_KATANA)
+				--or (cur_weapon.guntype == WPT_KATANA)
+					local queuewait = cur_weapon:get(pt,"firerate")
+					if (cur_weapon.guntype == WPT_BRELLA)
+						queuewait = $ * 3/4
+					else
+						queuewait = $ / 2
+					end
+					
 					if not (pt.cooldown or pt.endlag or pt.shieldlag)
 						S_StartSound(me, cur_weapon:get(pt,"readysound") or sfx_none)
-					elseif (pt.cooldown < cur_weapon:get(pt,"firerate") * 3/4)
+					elseif (pt.cooldown < queuewait)
 						pt.firequeued = true
 					end
 				end
@@ -1455,8 +1480,7 @@ addHook("PlayerThink",function(p)
 		if (cur_weapon.guntype == WPT_SHOOTER
 		or cur_weapon.guntype == WPT_BLASTER
 		or cur_weapon.guntype == WPT_DUALIES
-		or cur_weapon.guntype == WPT_BRELLA
-		or cur_weapon.guntype == WPT_KATANA)
+		or cur_weapon.guntype == WPT_BRELLA)
 			if ( ( (justpressedfire or (pt.fireheld and not cur_weapon:get(pt,"tapfire"))) and pt.cooldown <= 0) )
 			and (p.cmd.buttons & BT_ATTACK)
 			and (pt.firewait <= 1)
@@ -1596,6 +1620,78 @@ addHook("PlayerThink",function(p)
 				S_StopSoundByID(me, slow_charge_sound)
 			end
 			Paint:chargerSightline(p)
+		-- katanas are a bit similar to chargers, but are mostly shooter-based
+		elseif (cur_weapon.guntype == WPT_KATANA)
+			local charge_time = cur_weapon:get(pt,"chargetime")
+			local min_charge_time = cur_weapon:get(pt,"mincharge")
+			
+			local nofiring = false
+			local firing = ( ( (justpressedfire or (pt.fireheld)) ) )
+				and (p.cmd.buttons & BT_ATTACK)
+			
+			if (firing and (pt.cooldown or pt.firewait or pt.katanawait))
+				firing = false
+				nofiring = true
+				if justpressedfire
+					p.cmd.buttons = $ &~BT_ATTACK
+					pt.firequeued = true
+				end
+				if (pt.fireheld >= min_charge_time)
+					pt.firequeued = false
+				end
+			end
+			
+			local charge_sound = cur_weapon:get(pt,"charge_sound")
+			if firing and (pt.fireheld >= min_charge_time)
+				
+				local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "inkcost")+1)
+				local slowcharge = lowink
+				
+				doslowdown = true
+				if not pt.charge
+					pt.oldinktank = pt.inktank
+					pt.oldinkanim = pt.oldinktank
+					S_StartSound(me, charge_sound)
+				end
+				
+				if lowink
+					Paint.HUD:lowInkWarning(p, TR/2)
+				end
+				local step = FU
+				if (slowcharge)
+					step = $ / 3
+				end
+				pt.charge = min($ + step, charge_time)
+				pt.chargetics = $ + 1
+				if pt.charge >= charge_time
+					if not pt.maxcharged
+						S_StartSound(nil, cur_weapon.charged_sound, p)
+						pt.maxcharged = true
+					end
+				end
+				
+				local mincost = cur_weapon:get(pt,"mininkcost")
+				local chargeprogress = min(FixedDiv(pt.charge, charge_time), FU)
+				pt.inkqueue = mincost + FixedMul(cur_weapon.inkcost - mincost, chargeprogress)
+				pt.wasfastcharging = not slowcharge
+				
+				pt.anglefix = max($, 1)
+			end
+			
+			if (not firing and ((p.lastbuttons & BT_ATTACK)))
+			and not (nofiring)
+			or (pt.firequeued and pt.cooldown <= 0)
+				pt.charge = min($, charge_time)
+				pt.maxchargeshot = pt.charge >= charge_time
+				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+				pt.charge = 0
+				
+				S_StopSoundByID(me, charge_sound)
+				pt.maxcharged = false
+				pt.katanawait = false
+				pt.firequeued = false
+				pt.nofiring = true
+			end
 		end
 	end
 	if (pt.store_lag or pt.storedcharge)
