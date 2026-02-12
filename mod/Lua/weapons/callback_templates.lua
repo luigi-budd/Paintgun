@@ -45,7 +45,6 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 	local mradius = FixedMul(wep:get(pt,"melee_radius"), me.scale)
 	local mheight = FixedMul(wep:get(pt,"melee_height"), me.scale)
 	local mdamage = wep:get(pt,"melee_damage")
-	print(mdamage/FU)
 	
 	local mdist = FixedDiv(me.radius, me.scale) + mradius
 	local mzoff = FixedDiv(me.height,me.scale)/2 - (mheight/2)
@@ -191,7 +190,7 @@ function Paint.wcallback_splatana_ondryfire(p,pt,wep, angle, aiming, dospread, d
 	local mradius = FixedMul(wep:get(pt,"melee_radius"), me.scale)
 	local mheight = FixedMul(wep:get(pt,"melee_height"), me.scale)
 	
-	local mdist = FixedDiv(me.radius, me.scale) + mradius
+	local mdist = FixedDiv(me.radius, me.scale) + mradius + FixedMul(wep:get(pt,"melee_offset"), me.scale)
 	local mzoff = FixedDiv(me.height,me.scale)/2 - (mheight/2)
 	
 	local melee = P_SpawnMobjFromMobj(me,

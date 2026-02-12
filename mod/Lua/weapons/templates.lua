@@ -79,7 +79,13 @@ function Paint.wtemplate_splatana(p,pt, weapon, key,value, crosshair)
 	elseif key == "spawnspeed"
 	and crosshaircheck
 		return weapon:get(pt,"v_speed")
-	
+	elseif key == "shootspeed"
+	and pt.charge
+		return weapon:get(pt,"charging_shootspeed")
+	elseif key == "inkcost"
+	and pt.maxchargeshot
+		return weapon:get(pt,"v_inkcost")
+		
 	elseif key == "melee_damage"
 	and (pt.maxchargeshot)
 		return weapon:get(pt,"vmelee_damage")
@@ -89,5 +95,8 @@ function Paint.wtemplate_splatana(p,pt, weapon, key,value, crosshair)
 	elseif key == "melee_height"
 	and (pt.maxchargeshot)
 		return weapon:get(pt,"vmelee_height")
+	elseif key == "melee_offset"
+	and (pt.maxchargeshot)
+		return weapon:get(pt,"vmelee_offset")
 	end
 end

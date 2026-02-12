@@ -325,14 +325,17 @@ local weapon_meta = {
 	melee_damage = 15*FU,
 	melee_radius = 64*FU,
 	melee_height = 12*FU,
+	melee_offset = 0,
 	--vertical dupes
 	vmelee_damage = 120*FU,
 	vmelee_radius = 50*FU,
 	vmelee_height = 40*FU,
+	vmelee_offset = 12*FU,
 	--
 	h_fuse = 4, -- horizontal slashes disappear after this many tics
 	v_fuse = 13, -- vertical slashes
 	v_speed = FixedMul(tofixed("1.2"), Paint.DU2FU), -- spawnspeed for vertical slashes
+	v_inkcost = 6*FU, -- inkcost for vertical slashes
 	c_radius = 16*FU, -- radius and height for the center projectile
 	c_height = 32*FU,
 	weaponstate_swipe = nil,
@@ -345,7 +348,7 @@ local weapon_meta = {
 	-- charger maxdamage is also used for charge slashes
 	crs_sections = 3, -- how many bars to draw on the crosshair
 	crs_chargedguideframe = 14,
-	
+	charging_shootspeed = FU/10,
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies

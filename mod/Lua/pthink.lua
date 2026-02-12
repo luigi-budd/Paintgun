@@ -149,7 +149,7 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 		end
 		fireangle = $ + FixedAngle(180*progress)
 		
-		local rot = (pt.maxchargeshot) and 180 or 90
+		local rot = (pt.maxchargeshot) and 90 or 180
 		wepmo.angle = $ - FixedAngle(90*FU - rot*progress) + FixedAngle(cur_weapon:get(pt,"swipeangleoffset"))
 		if pt.maxchargeshot
 			offz = 16 * progress
@@ -949,14 +949,19 @@ addHook("PlayerThink",function(p)
 						pt.storedcharge = pt.charge
 					end
 					pt.charge = 0
-					local charge_sound = cur_weapon:get(pt,"charging_sound", p)
-					local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound", p)
+					local charge_sound = cur_weapon:get(pt,"charging_sound")
+					local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound")
 					S_StopSoundByID(me, charge_sound)
 					S_StopSoundByID(me, slow_charge_sound)
 					
 					pt.maxcharged = false
 					pt.justcharged = false
 					pt.wasfastcharging = false
+				elseif (cur_weapon.guntype == WPT_KATANA)
+					pt.charge = 0
+					
+					local charge_sound = cur_weapon:get(pt,"charge_sound")
+					S_StopSoundByID(me, charge_sound)
 				end
 			end
 		else
