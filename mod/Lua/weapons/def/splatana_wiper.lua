@@ -39,7 +39,7 @@ Paint:registerWeapon({
 	firerate = 8,
 	endlag = 10,
 	tapfire = true,
-	shootspeed = FU/3,
+	shootspeed = FU * 3/5,
 	spread_jumpspread = 0,
 	spread_jump = 0,
 	spread_jumpchance = 0,
@@ -89,6 +89,8 @@ Paint:registerWeapon({
 
 	groupnum = 1,
 	groups = {
+		-- TODO: only the center projectile should have
+		--		 a slash sprite
 		{
 			offset = pshot.radius + 4*FU,
 			radius = pshot.radius,

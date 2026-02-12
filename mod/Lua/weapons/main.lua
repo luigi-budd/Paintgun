@@ -354,7 +354,7 @@ local weapon_meta = {
 	crs_sections = 3, -- how many bars to draw on the crosshair
 	crs_chargingsections = 4,
 	crs_chargedguideframe = 14,
-	charging_shootspeed = FU/10,
+	charging_shootspeed = FU * 3/5,
 	vshotstate = nil, -- only the center hitbox gets a visual for vslashes
 	
 	weaponstate = S_PAINT_GUN,

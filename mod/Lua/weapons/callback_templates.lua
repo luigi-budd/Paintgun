@@ -52,7 +52,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 	local melee = P_SpawnMobjFromMobj(me,
 		P_ReturnThrustX(nil,angle,mdist) + FixedDiv(me.momx, me.scale),
 		P_ReturnThrustY(nil,angle,mdist) + FixedDiv(me.momy, me.scale),
-		mzoff,
+		mzoff + FixedMul(FixedDiv(me.height,me.scale)/2, sin(aiming)),
 		MT_RAY
 	)
 	melee.radius = mradius

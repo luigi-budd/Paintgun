@@ -44,6 +44,11 @@ end)
 Paint.basePlayer = {}
 local BP = Paint.basePlayer
 
+BP.BASE_NSPEED = 20*FU
+BP.SWIM_NSPEED = 30*FU
+
+BP.BASE_JUMPF = FU*11/10
+
 local SWING_HALF = 105*FU
 local SWING_RANGE = SWING_HALF*2
 
@@ -1109,10 +1114,12 @@ addHook("PlayerThink",function(p)
 		
 		local dostoreaura = false
 		p.charflags = ($ &~(SF_NOSKID|SF_NOJUMPSPIN))|(skin.flags & (SF_NOSKID|SF_NOJUMPSPIN))
-		p.normalspeed = skin.normalspeed * 60 / 100
+		p.normalspeed = BP.BASE_NSPEED
 		p.thrustfactor = skin.thrustfactor
 		p.accelstart = skin.accelstart
 		p.acceleration = skin.acceleration
+		p.jumpfactor = BP.BASE_JUMPF
+		
 		local wallangle = me.angle - ANGLE_90
 		if (pt.squidtime >= MAX_SQUIDTIME)
 			local touchingwall = false
@@ -1151,7 +1158,7 @@ addHook("PlayerThink",function(p)
 					P_MovePlayer(p)
 				end
 				
-				p.normalspeed = skin.normalspeed
+				p.normalspeed = BP.SWIM_NSPEED
 				p.thrustfactor = $*6/4
 				if pt.substrafe 
 					p.accelstart = $ * 4
@@ -1808,7 +1815,7 @@ addHook("PlayerThink",function(p)
 			dd.count = 0
 			dd.leave = 0
 			pt.turretmode = false
-			p.jumpfactor = skin.jumpfactor
+			p.jumpfactor = BP.BASE_JUMPF
 		end
 		/*
 		print(leveltime .. " dd = {")
@@ -1994,7 +2001,7 @@ addHook("PlayerThink",function(p)
 		if (pt.deployshield or pt.shieldlag)
 			slowdown = cur_weapon:get(pt,"shieldingspeed")
 		end
-		p.normalspeed = FixedMul(skin.normalspeed * 60 / 100, slowdown)
+		p.normalspeed = FixedMul($, slowdown)
 		p.charflags = $|SF_NOJUMPSPIN
 	end
 	if (p.gotflag)
