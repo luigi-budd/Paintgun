@@ -124,7 +124,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 	if not (baseproj and baseproj.valid) then return end
 	
 	local spawned = {}
-	local vertical = false --pt.maxchargeshot
+	local vertical = pt.maxchargeshot
 	
 	local side = angle + ANGLE_90
 	local groups = wep:get(pt,"groups")
@@ -142,6 +142,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 			proj.radius = p_rad
 			proj.height = p_hei
 			proj.totaldamage = maxdamage
+			proj.damage = baseproj.damage
 			
 			proj.momx = baseproj.momx
 			proj.momy = baseproj.momy
@@ -154,10 +155,12 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 			proj.mirrored = j == 1
 			
 			if vertical
+				local dist = (offset * j)
+				local zoff = FixedMul(cos(aiming), dist)
 				P_SetOrigin(proj,
-					newpos.x + P_ReturnThrustX(nil,side, offset * j),
-					newpos.y + P_ReturnThrustY(nil,side, offset * j),
-					newpos.z + (baseproj.height - proj.height)/2
+					newpos.x - FixedMul(FixedMul(sin(aiming), dist), cos(angle)),
+					newpos.y - FixedMul(FixedMul(sin(aiming), dist), sin(angle)),
+					newpos.z + (baseproj.height - proj.height)/2 + zoff
 				)
 			else
 				proj.spriteyoffset = -(baseproj.height - proj.height)/2

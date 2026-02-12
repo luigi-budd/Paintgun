@@ -960,8 +960,10 @@ addHook("PlayerThink",function(p)
 				elseif (cur_weapon.guntype == WPT_KATANA)
 					pt.charge = 0
 					
-					local charge_sound = cur_weapon:get(pt,"charge_sound")
+					local charge_sound = cur_weapon:get(pt,"charging_sound")
+					local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound")
 					S_StopSoundByID(me, charge_sound)
+					S_StopSoundByID(me, slow_charge_sound)
 				end
 			end
 		else
@@ -1627,6 +1629,7 @@ addHook("PlayerThink",function(p)
 			Paint:chargerSightline(p)
 		-- katanas are a bit similar to chargers, but are mostly shooter-based
 		elseif (cur_weapon.guntype == WPT_KATANA)
+		and not (pt.disable.main)
 			local charge_time = cur_weapon:get(pt,"chargetime")
 			local min_charge_time = cur_weapon:get(pt,"mincharge")
 			
@@ -1646,7 +1649,8 @@ addHook("PlayerThink",function(p)
 				end
 			end
 			
-			local charge_sound = cur_weapon:get(pt,"charge_sound")
+			local charging_sound = cur_weapon:get(pt,"charging_sound")
+			local slow_charging_sound = cur_weapon:get(pt,"slow_charging_sound")
 			if firing and (pt.fireheld >= min_charge_time)
 				
 				local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "inkcost")+1)
@@ -1656,7 +1660,7 @@ addHook("PlayerThink",function(p)
 				if not pt.charge
 					pt.oldinktank = pt.inktank
 					pt.oldinkanim = pt.oldinktank
-					S_StartSound(me, charge_sound)
+					S_StartSound(me, slowcharge and slow_charging_sound or charging_sound)
 				end
 				
 				if lowink
@@ -1691,7 +1695,8 @@ addHook("PlayerThink",function(p)
 				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 				pt.charge = 0
 				
-				S_StopSoundByID(me, charge_sound)
+				S_StopSoundByID(me, charging_sound)
+				S_StopSoundByID(me, slow_charging_sound)
 				pt.maxcharged = false
 				pt.katanawait = false
 				pt.firequeued = false

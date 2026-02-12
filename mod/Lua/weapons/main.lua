@@ -140,6 +140,9 @@ local weapon_meta = {
 		...
 		*/
 	},
+	-- dupes for abilitywraps to use
+	groupnum2 = {},
+	groups2 = {},
 	
 	--shooter-specific
 	h_spread = {6*FU, 6*FU},
@@ -336,19 +339,23 @@ local weapon_meta = {
 	v_fuse = 13, -- vertical slashes
 	v_speed = FixedMul(tofixed("1.2"), Paint.DU2FU), -- spawnspeed for vertical slashes
 	v_inkcost = 6*FU, -- inkcost for vertical slashes
-	c_radius = 16*FU, -- radius and height for the center projectile
-	c_height = 32*FU,
+	c_radius = 14*FU, -- radius and height for the center projectile
+	c_height = 20*FU,
+	vc_radius = 16*FU, -- radius and height for the center projectile
+	vc_height = 32*FU,
 	weaponstate_swipe = nil,
 	swipeangleoffset = 0,
 	-- charger chargetime and mincharge are used for charge slashes,
 	-- however, if attack is held for less than mincharge, a horizontal slash
 	-- will be fired instead of no projectile
 	-- charger strong_sounds is also used for charged slashes
-	-- charger charge_sound is also used
+	-- charger charging_sound and slow_charging_sound are also used
 	-- charger maxdamage is also used for charge slashes
 	crs_sections = 3, -- how many bars to draw on the crosshair
+	crs_chargingsections = 4,
 	crs_chargedguideframe = 14,
 	charging_shootspeed = FU/10,
+	vshotstate = nil, -- only the center hitbox gets a visual for vslashes
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies

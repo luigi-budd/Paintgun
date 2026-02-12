@@ -70,10 +70,13 @@ function Paint.wtemplate_splatana(p,pt, weapon, key,value, crosshair)
 	if key == "crs_guideframe"
 	and (pt.charge)
 		return weapon:get(pt,"crs_chargedguideframe")
+	elseif key == "crs_sections"
+	and (pt.charge)
+		return weapon:get(pt,"crs_chargingsections")
 	elseif key == "h_fuse"
 	and crosshaircheck
 		return weapon:get(pt,"v_fuse")
-	elseif key == "totaldamage"
+	elseif (key == "totaldamage" or key == "damage")
 	and (pt.maxchargeshot)
 		return weapon:get(pt,"maxdamage")
 	elseif key == "spawnspeed"
@@ -85,7 +88,13 @@ function Paint.wtemplate_splatana(p,pt, weapon, key,value, crosshair)
 	elseif key == "inkcost"
 	and pt.maxchargeshot
 		return weapon:get(pt,"v_inkcost")
-		
+	elseif key == "firewithnoink"
+	and pt.maxchargeshot
+		return true
+	elseif key == "shotstate"
+	and pt.maxchargeshot
+		return weapon:get(pt,"vshotstate")
+	
 	elseif key == "melee_damage"
 	and (pt.maxchargeshot)
 		return weapon:get(pt,"vmelee_damage")
@@ -98,5 +107,20 @@ function Paint.wtemplate_splatana(p,pt, weapon, key,value, crosshair)
 	elseif key == "melee_offset"
 	and (pt.maxchargeshot)
 		return weapon:get(pt,"vmelee_offset")
+		
+	elseif key == "groups"
+	and (pt.maxchargeshot)
+		return weapon:get(pt,"groups2")
+	elseif key == "groupnum"
+	and (pt.maxchargeshot)
+		return weapon:get(pt,"groupnum2")
+	
+	elseif key == "c_radius"
+	and (pt.maxchargeshot)
+		return weapon:get(pt,"vc_radius")
+	elseif key == "c_height"
+	and (pt.maxchargeshot)
+		return weapon:get(pt,"vc_height")
+		
 	end
 end

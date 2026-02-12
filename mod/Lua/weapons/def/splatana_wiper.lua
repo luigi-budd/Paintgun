@@ -19,6 +19,7 @@ end
 sfxinfo[      sfx_p_s8_9      ].caption = "Dry fire"
 sfxinfo[freeslot("sfx_p_s8_a")].caption = "Dry fire"
 sfxinfo[freeslot("sfx_p_s8_b")].caption = "Charging"
+sfxinfo[freeslot("sfx_p_s8_c")].caption = "Charging"
 
 local pshot = mobjinfo[MT_PAINT_SHOT]
 Paint:registerWeapon({
@@ -29,6 +30,7 @@ Paint:registerWeapon({
 	--subtype = "torpedo",
 	guntype = WPT_KATANA,
 	h_spread = {14*FU, 14*FU},
+	v_spread = {14*FU, 14*FU},
 	handoffset = 8*FU,
 	damage = 30*FU,
 	maxdamage = 60*FU,
@@ -47,6 +49,7 @@ Paint:registerWeapon({
 	allowdrycolor = true,
 	swipeangleoffset = 180*FU,
 	shotstate = S_PAINT_HSLASH_C,
+	vshotstate = S_PAINT_HSLASH_V,
 	
 	chargetime = 8*FU, -- takes 8 tics to fully charge
 	mincharge = 4,
@@ -80,8 +83,10 @@ Paint:registerWeapon({
 	strong_sounds = {
 		sfx_p_s8_6, sfx_p_s8_7, sfx_p_s8_8,
 	},
-	charge_sound = sfx_p_s8_b,
 	
+	charging_sound = sfx_p_s8_b,
+	slow_charging_sound = sfx_p_s8_c,
+
 	groupnum = 1,
 	groups = {
 		{
@@ -90,6 +95,27 @@ Paint:registerWeapon({
 			height = pshot.height,
 			state = S_PAINT_HSLASH_L,
 		}
+	},
+	groupnum2 = 3,
+	groups2 = {
+		{
+			offset = pshot.height * 3/5,
+			radius = pshot.radius * 4/5,
+			height = pshot.height * 4/5,
+			state = S_INVISIBLE,
+		},
+		{
+			offset = pshot.height * 7/5,
+			radius = pshot.radius * 3/5,
+			height = pshot.height * 3/5,
+			state = S_INVISIBLE,
+		},
+		{
+			offset = pshot.height * 10/5,
+			radius = pshot.radius * 2/5,
+			height = pshot.height * 2/5,
+			state = S_INVISIBLE,
+		},
 	},
 	
 	callbacks = {

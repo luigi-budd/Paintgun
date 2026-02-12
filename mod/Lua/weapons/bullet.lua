@@ -26,6 +26,7 @@ freeslot(
 	
 	"S_PAINT_HSLASH_L",
 	"S_PAINT_HSLASH_C",
+	"S_PAINT_HSLASH_V",
 	
 	"SPR_PAINT_MISC",
 	"SPR_PAINT_GUN"
@@ -58,6 +59,12 @@ states[S_PAINT_HSLASH_L] = {
 states[S_PAINT_HSLASH_C] = {
 	sprite = SPR_PAINT_SHOT,
 	frame = 4|FF_SEMIBRIGHT,
+	tics = -1,
+	nextstate = S_PAINT_HSLASH_C
+}
+states[S_PAINT_HSLASH_V] = {
+	sprite = SPR_PAINT_SHOT,
+	frame = 6|FF_SEMIBRIGHT,
 	tics = -1,
 	nextstate = S_PAINT_HSLASH_C
 }
@@ -715,12 +722,6 @@ addHook("MobjThinker",function(shot)
 		end
 		return
 	end
-	if shot.quartersteps
-		for i = 1,3
-			if P_RailThinker(shot) then return end
-			if HandleFloorSplat(shot) then return end
-		end
-	end
 	
 	if wep.guntype == WPT_BLASTER
 		if (leveltime % 3 == 0)
@@ -820,6 +821,13 @@ addHook("MobjThinker",function(shot)
 				FU),
 				shot.basedamage - shot.falloffdamage, 0 
 			)
+		end
+	end
+	
+	if shot.quartersteps
+		for i = 1,3
+			if P_RailThinker(shot) then return end
+			if HandleFloorSplat(shot) then return end
 		end
 	end
 	

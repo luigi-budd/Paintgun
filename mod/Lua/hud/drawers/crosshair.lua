@@ -659,7 +659,9 @@ local function crosshairdrawer(v,p,cam, pt, dflip, chargerdupe)
 			if (pt.charge)
 				local chargetime = wep:get(pt,"chargetime",true)
 				local frac = FixedDiv(pt.charge, chargetime)
-
+				l_sprd = min(FixedDiv(B_vspread, sec_fixed) + pad, 0)
+				r_sprd = max(FixedDiv(T_vspread, sec_fixed) - pad, 0)
+				
 				for i = 1, sections
 					local suffix = (pt.charge >= chargetime) and "1" or (FixedDiv(i*FU, sec_fixed) > frac and "0" or "1")
 					v.drawScaled(
