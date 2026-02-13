@@ -308,6 +308,10 @@ function Paint:damagePlayer(p, shot, source_player, damage, inf) -- mobj if no p
 	end
 	
 	if (source_player and source_player.valid)
+		if (gametype == GT_COOP)
+			damage = $ / 10
+		end
+		
 		if pt.hitlist[#source_player] == nil
 			pt.hitlist[#source_player] = {damage = 0}
 		end
