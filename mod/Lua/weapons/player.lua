@@ -285,7 +285,7 @@ function Paint:checkBulletParams(me, pt, shot, damage)
 	return damage
 end
 
-function Paint:damagePlayer(p, shot, source_player, damage, inf) -- mobj if no player
+function Paint:damagePlayer(p, shot, source_player, damage, inf, noassists) -- mobj if no player
 	local weptype = Paint.weapons[shot.weapon_id]
 	if damage == nil
 		damage = weptype.damage
@@ -312,11 +312,13 @@ function Paint:damagePlayer(p, shot, source_player, damage, inf) -- mobj if no p
 			damage = $ / 10
 		end
 		
-		if pt.hitlist[#source_player] == nil
-			pt.hitlist[#source_player] = {damage = 0}
+		if noassists
+			if pt.hitlist[#source_player] == nil
+				pt.hitlist[#source_player] = {damage = 0}
+			end
+			pt.hitlist[#source_player].damage = $ + damage
+			pt.hittime = 3*TR
 		end
-		pt.hitlist[#source_player].damage = $ + damage
-		pt.hittime = 3*TR
 	end
 	
 	--print(leveltime.." damaged "..p.name)

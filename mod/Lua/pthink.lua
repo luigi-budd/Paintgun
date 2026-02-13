@@ -2138,7 +2138,7 @@ addHook("PlayerThink",function(p)
 		
 		if pt.inink == Paint.ININK_ENEMY
 			if not S_SoundPlaying(me, sfx_pt_ow2)
-				S_StartSound(me, sfx_pt_ow2, p)
+				S_StartSoundAtVolume(me, sfx_pt_ow2, (p == displayplayer) and 255 or 255/2)
 			end
 			if (p == displayplayer or p == secondarydisplayplayer)
 				P_StartQuake(FU*3/2, 2)

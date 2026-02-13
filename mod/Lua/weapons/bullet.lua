@@ -1110,10 +1110,10 @@ addHook("TouchSpecial",function(splat,mo)
 		Paint:setPlayerInInk(targp, Paint.ININK_FRIENDLY)
 	elseif (pnt.inink ~= Paint.ININK_FRIENDLY) -- stepping in friendly ink should have precedence over enemy ink
 		if pnt.hp >= MIN_INK_HP
-			Paint:damagePlayer(targp, splat, p, FixedDiv(18*FU, TR*FU))
+			Paint:damagePlayer(targp, splat, p, FixedDiv(18*FU, TR*FU), nil, true)
 			pnt.hp = max($, MIN_INK_HP)
 		end
-		Paint:damagePlayer(targp, splat, p, 0)
+		Paint:damagePlayer(targp, splat, p, 0, nil, true)
 		Paint:setPlayerInInk(targp, Paint.ININK_ENEMY)
 	end
 	return nope(splat,mo);
