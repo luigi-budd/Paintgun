@@ -245,16 +245,17 @@ ML.addMenu({
 		for i = 1, inv.slots
 			menu.workinv.items[i] = inv.items[i]
 		end
+		menu.curslot = inv.curslot
 	end,
 	exit = function()
 		local p = consoleplayer
 		local menu = ML.menus[ML.findMenu("Paint_WeaponPicker")]
 		local minv = menu.workinv
 		
-		COM_BufInsertText(p, ("_paint_setinv %s %s %s %s"):format(
+		ML.client.commandbuffer = ("_paint_setinv %s %s %s %s"):format(
 			luasig,
 			minv.items[1], minv.items[2], minv.items[3]
-		))
+		)
 	end
 })
 
