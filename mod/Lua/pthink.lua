@@ -221,7 +221,7 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 			if frac ~= FU
 				frac = $ * 3/4
 			end
-			s.alpha = clamp(0, frac - 1, FU)
+			s.alpha = clamp(0, frac, FU - 1)
 			P_SetScale(s, s.scale/2, true)
 		end
 		if pt.justcharged
@@ -1058,6 +1058,33 @@ addHook("PlayerThink",function(p)
 	p.shieldscale = skin.shieldscale
 	pt.squidtoggle = false
 	do -- swim stuff
+		-- in hide and seek
+		if (gametyperules & (GTR_TAG|GTR_HIDEFROZEN) == (GTR_TAG|GTR_HIDEFROZEN))
+		and (p.pflags & PF_TAGIT == 0)
+			local cv_hidetime = CV.FindVar("hidetime")
+			
+			if leveltime >= cv_hidetime.value
+			and not pt.hidenseekon
+				pt.hidenseekon = true
+				pt.squidhidetoggle = (p.cmd.buttons & BT_SPIN == BT_SPIN)
+			elseif leveltime < cv_hidetime.value
+				pt.hidenseekon = false
+			end
+			
+			if pt.hidenseekon
+				if (pt.spinheld == 1)
+					pt.squidhidetoggle = not $
+				end
+				if pt.squidhidetoggle
+					p.cmd.buttons = $|BT_SPIN
+				else
+					p.cmd.buttons = $ &~BT_SPIN
+				end
+			end
+		else
+			pt.hidenseekon = false
+		end
+		
 		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
 		local easing = ease.inquad
 		local oldclimbing = (pt.hidden and pt.wallink)
@@ -1158,7 +1185,7 @@ addHook("PlayerThink",function(p)
 						or S_SoundPlaying(me, sfx_pt_b3)
 						or S_SoundPlaying(me, sfx_pt_b4)
 					) and (chance) and (pt.squididle >= TR/3) then
-						S_StartSoundAtVolume(me, sfx, 255/2)
+						S_StartSoundAtVolume(me, sfx, 255/3)
 					end
 					pt.squididle = min($ + 1, TR/2)
 				elseif pt.squididle
@@ -2224,8 +2251,9 @@ addHook("MapLoad",function()
 	for p in players.iterate
 		if not (p and p.valid) then continue end
 		if not (p.paint) then continue end
-
+		
 		p.paint.turfpoints = 0
+		p.paint.hidenseekon = false
 	end
 end)
 

@@ -338,6 +338,8 @@ function Paint:initPlayer(p)
 		squidanim = 0,
 		squidlag = 0,
 		squidtoggle = false,
+		squidhidetoggle = false, -- when in hide&seek and after hidetime, pressing spin will toggle swim form
+		hidenseekon = false,
 		squididle = 0,
 		hidden = false,
 		wasinsquid = 0,
@@ -407,6 +409,7 @@ function Paint:resetPlayer(p)
 	pt.squidtime = 0
 	pt.squidanim = 0
 	pt.squidlag = 0
+	pt.squidhidetoggle = false
 	
 	pt.teammates = nil
 	Paint:setTeammates()

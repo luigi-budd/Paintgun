@@ -301,6 +301,12 @@ states[S_PAINT_SPLATTER] = {
 			return
 		end
 		
+		if (gametyperules & (GTR_TAG|GTR_HIDEFROZEN) == (GTR_TAG|GTR_HIDEFROZEN))
+		and (splat.tracer_player and splat.tracer_player.valid and (splat.tracer_player.pflags & PF_TAGIT == 0))
+		and CV.splatter_lifetime.value ~= -1
+			splat.fuse = CV_VALUE
+		end
+		
 		if (splat.lifespan == nil)
 			splat.lifespan = -1
 		end
@@ -1093,7 +1099,7 @@ addHook("TouchSpecial",function(splat,mo)
 	local targp = mo.player
 	local pnt = targp.paint
 	if not Paint:playerIsActive(targp) then return nope(splat,mo); end
-	if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) > (splat.radius*6/7) then return nope(splat,mo); end
+	--if R_PointToDist2(splat.x,splat.y, mo.x,mo.y) > (splat.radius*6/7) then return nope(splat,mo); end
 	if (pnt.inkleveltime == leveltime) then return nope(splat,mo); end
 	pnt.inkleveltime = leveltime
 	

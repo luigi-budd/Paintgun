@@ -220,10 +220,21 @@ local weapon_meta = {
 	storagelaserlag = 15,
 	
 	--blaster specific
-	splashradius = 112*FU,
-	splashdamage = {50*FU,70*FU}, -- min, max splash damage (damage field is direct hit)
+	/*
+		[GROUP INFO]
+		radius = fixed_t,
+		damage = fixed_t,
+		
+		-- each group "adds" a damage radius on explosion
+		-- blasters always explode 2 tics after they reach brake state
+	*/
+	/*[DEPRECATED]*/ splashradius = 112*FU,
+	/*[DEPRECATED]*/ splashdamage = {50*FU,70*FU}, -- min, max splash damage (damage field is direct hit)
 	blast_sounds = {}, -- end of range
 	explode_sounds = {}, -- hit geometry
+	geo_damagemul = FU/2, -- hitting geometry multiplies both by this scale
+	geo_rangemul = FU/2,
+	lerp_damage = true,
 	
 	--dualie specific
 	shotoffset = 2*FU, -- how far from the center are we offset?

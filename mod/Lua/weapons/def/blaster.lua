@@ -43,12 +43,25 @@ Paint:registerWeapon({
 	spread_jumpchance = (FU * 50), -- set spread chance to this when jumping
 
 	spawnspeed = FixedMul(FixedMul(tofixed("0.945"), Paint.DU2FU), Paint.SIXTY2THIRTYFIVE),
-	str_tics = 4, -- straight state lasts this many tics
-	str2brk_maxspeed = FixedMul(FixedMul(tofixed("0.9131"), Paint.DU2FU), Paint.SIXTY2THIRTYFIVE), -- when ending straight state, cap xyspeed to this
+	str_tics = 8, -- straight state lasts this many tics
+	str2brk_maxspeed = FixedMul(tofixed("0.9131"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
 	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
-	brk_gravity = 0, --FixedMul(tofixed("0.07"), Paint.DU2FU),
-	brk2fre_tics = 3, -- or when brake state lasts this many tics
-	crs_guideframe = 7, -- crosshair is placed at this frame in the shot's lifetime
+	brk_gravity = tofixed("0.07"),
+	brk2fre_minz = FixedMul(tofixed("-0.15"), Paint.DU2FU), -- go to free when momz is below this
+	brk2fre_minxy = FixedMul(tofixed("0.2355"), Paint.DU2FU), -- or go to free when xyspeed is below this
+	brk2fre_tics = 4, -- or when brake state lasts this many tics
+	fre_airresist = FU * 98/100,
+	fre_gravity = FixedMul(tofixed("0.016"), Paint.DU2FU),
+	crs_guideframe = 9, -- crosshair is placed at this frame in the shot's lifetime
+	
+	groupnum = 2,
+	groups = {
+		{
+			radius = 100
+		}
+	},
+	geo_damagemul = FU/2,
+	geo_rangemul = tofixed("0.4234"),
 	
 	guntype = WPT_BLASTER,
 	
