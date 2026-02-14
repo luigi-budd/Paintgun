@@ -256,6 +256,7 @@ ML.addMenu({
 			luasig,
 			minv.items[1], minv.items[2], minv.items[3]
 		)
+		ML.client.commandbufferwait = 3
 	end
 })
 

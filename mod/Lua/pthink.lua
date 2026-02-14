@@ -1148,6 +1148,23 @@ addHook("PlayerThink",function(p)
 			p.charflags = $|SF_NOSKID
 			if (pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me))
 			or wallclimb
+				Paint.HUD:musicLerp(p, 15, FU/2)
+				if (FixedHypot(FixedHypot(me.momx,me.momy),me.momz) <= 6*FU)
+					local sfx = P_RandomRange(sfx_pt_b0, sfx_pt_b4)
+					local chance = P_RandomChance(FU/2)
+					if not (S_SoundPlaying(me, sfx_pt_b0)
+						or S_SoundPlaying(me, sfx_pt_b1)
+						or S_SoundPlaying(me, sfx_pt_b2)
+						or S_SoundPlaying(me, sfx_pt_b3)
+						or S_SoundPlaying(me, sfx_pt_b4)
+					) and (chance) and (pt.squididle >= TR/3) then
+						S_StartSoundAtVolume(me, sfx, 255/2)
+					end
+					pt.squididle = min($ + 1, TR/2)
+				elseif pt.squididle
+					pt.squididle = $ - 1
+				end
+				
 				me.flags2 = $|MF2_DONTDRAW
 				pt.hidden = true
 				p.shieldscale = 0
@@ -1359,6 +1376,7 @@ addHook("PlayerThink",function(p)
 			end
 		else
 			pt.wallink = 0
+			pt.squididle = 0
 			
 			if pt.wasclimbing
 				me.momz = $/3

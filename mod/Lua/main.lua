@@ -57,6 +57,10 @@ sfxinfo[sfx_pt_ow1].flags = SF_X2AWAYSOUND|SF_TOTALLYSINGLE
 sfxinfo[freeslot("sfx_pt_al")].caption = "\x85".."Armor lost!\x80"
 sfxinfo[freeslot("sfx_pt_ag")].caption = "\x82".."Armor get!\x80"
 
+for i = 0,4
+	sfxinfo[freeslot("sfx_pt_b"..i)].caption = "/"
+end
+
 --sorry that these are all wavs
 for i = 0,12
 	-- 0 - 8: floor splat sounds
@@ -334,6 +338,7 @@ function Paint:initPlayer(p)
 		squidanim = 0,
 		squidlag = 0,
 		squidtoggle = false,
+		squididle = 0,
 		hidden = false,
 		wasinsquid = 0,
 		

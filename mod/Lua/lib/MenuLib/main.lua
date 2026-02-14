@@ -19,6 +19,15 @@ addHook("PreThinkFrame", do
 	end
 	waittoupdate = false
 	
+	if ML.client.commandbuffer ~= nil
+		if not ML.client.commandbufferwait
+			COM_BufInsertText(consoleplayer,ML.client.commandbuffer)
+			ML.client.commandbuffer = nil
+		else
+			ML.client.commandbufferwait = $ - 1
+		end
+	end
+	
 	ML.client.menuactive = false
 	if ML.client.currentMenu.id == -1
 	and (#ML.client.popups == 0)
@@ -34,11 +43,6 @@ addHook("PreThinkFrame", do
 	
 	ML.client.mouse_x = ML.clamp(0, $, BASEVIDWIDTH*FU)
 	ML.client.mouse_y = ML.clamp(0, $, BASEVIDHEIGHT*FU)
-	
-	if ML.client.commandbuffer ~= nil
-		COM_BufInsertText(consoleplayer,ML.client.commandbuffer)
-		ML.client.commandbuffer = nil
-	end
 end)
 
 --keyhandler object stuff

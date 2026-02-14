@@ -25,4 +25,5 @@ dofiles("drawers/",{
 	"wipeout.lua",
 	
 	"cameralag.lua",
+	"musicvolume.lua",
 })

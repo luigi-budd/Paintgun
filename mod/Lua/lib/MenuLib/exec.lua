@@ -124,6 +124,7 @@ MenuLib.client = {
 	textbuffer_tooltip = nil,
 	
 	commandbuffer = nil,
+	commandbufferwait = 0,
 }
 
 
