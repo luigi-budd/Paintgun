@@ -1063,11 +1063,11 @@ addHook("PlayerThink",function(p)
 		and (p.pflags & PF_TAGIT == 0)
 			local cv_hidetime = CV.FindVar("hidetime")
 			
-			if leveltime >= cv_hidetime.value
+			if leveltime >= cv_hidetime.value*TR
 			and not pt.hidenseekon
 				pt.hidenseekon = true
 				pt.squidhidetoggle = (p.cmd.buttons & BT_SPIN == BT_SPIN)
-			elseif leveltime < cv_hidetime.value
+			elseif leveltime < cv_hidetime.value*TR
 				pt.hidenseekon = false
 			end
 			
