@@ -437,8 +437,8 @@ Paint.SIGNAL_HELP		= 4
 -- distance-unit 2 fracunit scale factor
 -- .35 du = 16 fu (player radii)
 -- 45.714 is the scale factor cause, of math reasons :think:
--- multiply 1.71428 to get 1/60 -> 1/35
 Paint.DU2FU = 46*FU
+-- multiply by 1.71428 to get 1/60 -> 1/35
 Paint.SIXTY2THIRTYFIVE = tofixed("1.71428")
 
 dofile("cvars/main.lua")

@@ -1193,6 +1193,12 @@ addHook("PlayerThink",function(p)
 				end
 			else
 				p.normalspeed = $/3
+				--- yyyyyyup
+				S_StopSoundByID(me, sfx_pt_b0)
+				S_StopSoundByID(me, sfx_pt_b1)
+				S_StopSoundByID(me, sfx_pt_b2)
+				S_StopSoundByID(me, sfx_pt_b3)
+				S_StopSoundByID(me, sfx_pt_b4)
 			end
 			
 			if wallclimb
