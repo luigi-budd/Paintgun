@@ -170,7 +170,8 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	if (gametyperules & GTR_TAG)
 	and (source_player and source_player.valid and source_player.pflags & PF_TAGIT)
 		P_DamageMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf, DMG_INSTAKILL)
-		Paint.HUD:killConfirm(source_player, p)
+		P_KillMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf)
+		--Paint.HUD:killConfirm(source_player, p)
 	else
 		P_KillMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf)
 	end

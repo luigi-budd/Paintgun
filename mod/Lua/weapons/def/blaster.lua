@@ -57,8 +57,13 @@ Paint:registerWeapon({
 	groupnum = 2,
 	groups = {
 		{
-			radius = 100
-		}
+			radius = FixedMul(tofixed("1.11"), Paint.DU2FU),
+			damage = 70*FU
+		},
+		{
+			radius = FixedMul(tofixed("3.47"), Paint.DU2FU),
+			damage = 50*FU
+		},
 	},
 	geo_damagemul = FU/2,
 	geo_rangemul = tofixed("0.4234"),
@@ -78,6 +83,11 @@ Paint:registerWeapon({
 		sfx_p_s3_1
 	},
 	soundvolume = 255,
+
+
+	callbacks = {
+		onfire = Paint.wcallback_blaster_onfire
+	},
 	/*
 	sounds = {
 		sfx_p_s1_0, sfx_p_s1_1, sfx_p_s1_2, sfx_p_s1_3, sfx_p_s1_4, sfx_p_s1_5, sfx_p_s1_6

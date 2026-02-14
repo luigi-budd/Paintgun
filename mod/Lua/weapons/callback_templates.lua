@@ -237,3 +237,7 @@ function Paint.wcallback_splatana_onhit(p,pt,wep, proj, inf, target, damage)
 	end
 	*/
 end
+
+function Paint.wcallback_blaster_onfire(p,pt,wep, proj, mom_vec, angle, aiming, dospread, doaiming)
+
+end
