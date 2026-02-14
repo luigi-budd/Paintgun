@@ -111,6 +111,10 @@ end
 function Paint:killPlayer(p, shot, source_player, inf)
 	local pt = p.paint
 	local me = p.mo
+	
+	if (p.pflags & (PF_TAGIT|PF_GAMETYPEOVER))
+		return
+	end
 
 	if (p.powers[pw_shield] ~= 0)
 	or (gametype == GT_COOP and (pt.brokenarmor == false))
@@ -170,8 +174,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	if (gametyperules & GTR_TAG)
 	and (source_player and source_player.valid and source_player.pflags & PF_TAGIT)
 		P_DamageMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf, DMG_INSTAKILL)
-		P_KillMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf)
-		--Paint.HUD:killConfirm(source_player, p)
+		p.pflags = $|PF_TAGIT &~PF_GAMETYPEOVER
 	else
 		P_KillMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf)
 	end
@@ -180,7 +183,9 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	if not Paint.isFriendlyFire(p,source_player)
 		--CONS_Printf(sorp, "\x82Killed "..p.name.."!")
 		if source_player and source_player.valid
-			P_AddPlayerScore(source_player, 500)
+			if not (gametyperules & (GTR_TAG|GTR_HIDEFROZEN))
+				P_AddPlayerScore(source_player, 500)
+			end
 			Paint.HUD:killConfirm(source_player, p)
 		end
 		if pt.hittime

@@ -1185,7 +1185,8 @@ addHook("PlayerThink",function(p)
 						or S_SoundPlaying(me, sfx_pt_b3)
 						or S_SoundPlaying(me, sfx_pt_b4)
 					) and (chance) and (pt.squididle >= TR/3) then
-						S_StartSoundAtVolume(me, sfx, 255/3)
+						local vol = (p == displayplayer) and (255/4) or (255/7)
+						S_StartSoundAtVolume(me, sfx, vol)
 					end
 					pt.squididle = min($ + 1, TR/2)
 				elseif pt.squididle
