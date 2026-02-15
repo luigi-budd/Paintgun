@@ -239,5 +239,27 @@ function Paint.wcallback_splatana_onhit(p,pt,wep, proj, inf, target, damage)
 end
 
 function Paint.wcallback_blaster_onfire(p,pt,wep, proj, mom_vec, angle, aiming, dospread, doaiming)
-
+	if not (proj and proj.valid) then return end
+	
+	local groups = wep:get(pt,"groups")
+	proj.groups = {}
+	proj.groupnum = wep:get(pt,"groupnum")
+	local outerdist = 0
+	local innerdist = INT32_MAX
+	for i = 1, proj.groupnum
+		outerdist = max($, groups[i].radius)
+		innerdist = min($, groups[i].radius)
+		proj.groups[i] = {
+			radius = groups[i].radius,
+			damage = groups[i].damage
+		}
+	end
+	proj.outerdist = FixedMul(outerdist, proj.scale)
+	proj.innerdist = FixedMul(innerdist, proj.scale)
+	
+	proj.geo_damagemul = wep:get(pt,"geo_damagemul")
+	proj.geo_rangemul = wep:get(pt,"geo_rangemul")
+	proj.lerp_damage = wep:get(pt,"lerp_damage")
+	proj.blocksearch = FixedMul(wep:get(pt,"blocksearch"), proj.scale)
+	proj.blastertype = true
 end

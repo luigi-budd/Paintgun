@@ -230,6 +230,7 @@ local weapon_meta = {
 	*/
 	/*[DEPRECATED]*/ splashradius = 112*FU,
 	/*[DEPRECATED]*/ splashdamage = {50*FU,70*FU}, -- min, max splash damage (damage field is direct hit)
+	blocksearch = FixedMul(tofixed("4"), Paint.DU2FU), -- separate from splash damage, how much of the blockmap should we search
 	blast_sounds = {}, -- end of range
 	explode_sounds = {}, -- hit geometry
 	geo_damagemul = FU/2, -- hitting geometry multiplies both by this scale

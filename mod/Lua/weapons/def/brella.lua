@@ -87,6 +87,7 @@ Paint:registerWeapon({
 			numprojs = 4
 		}
 	},
+	geo_rangemul = tofixed("0.4234"),
 	
 	-- brellas... DONT... use bulletsimple..... :scream:
 	-- this is close enough to how the brella was before

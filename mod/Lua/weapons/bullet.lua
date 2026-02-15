@@ -196,6 +196,137 @@ local function CheckPaperMerging(splat, mo)
 	end
 end
 
+--direct hits most likely wouldve been handled by the mobjcollide before this is ran
+local function splash_blockmap(ray, mo)
+	if not (ray and ray.valid) then return end
+	if not (mo and mo.valid) then return end
+	if not mo.health then return end
+	if (mo == ray.donthit) then return end
+	if (ray.donthit and ray.donthit.paint_shield and (mo == ray.donthit.tracer))
+		return
+	end
+	if not P_CheckSight(ray, mo) then return end
+	local wep = Paint.weapons[ray.weapon_id]
+	local splashrad = ray.outerdist
+	if abs(ray.x - mo.x) > splashrad + mo.radius
+	or abs(ray.y - mo.y) > splashrad + mo.radius
+		return
+	end
+
+	local dist = R_PointTo3DDist(ray.x, ray.y, ray.z, mo.x,mo.y,mo.z)
+	if dist > splashrad then return end
+	
+	local damage = 0
+	local groups = ray.groups
+	local linear = ray.linear
+	local prevgroupdam = 0
+	local prevgrouprad = 0
+	for i = ray.groupnum, 1, -1
+		local info = groups[i]
+		if (dist > info.radius)
+			if prevgroupdam
+				damage = ease.linear(
+					FixedDiv(dist - prevgrouprad, info.radius - prevgrouprad), prevgroupdam, info.damage
+				)
+			end
+			prevgroupdam = info.damage
+			prevgrouprad = info.radius
+			continue
+		end
+		damage = info.damage
+		prevgroupdam = info.damage
+		prevgrouprad = info.radius
+	end
+
+	if (mo.paint_shieldmobj and mo.paint_shieldmobj.valid)
+	and Paint.checkShieldBlocking(mo, ray)
+		P_DamageMobj(mo.paint_shieldmobj, ray, ray.target, damage)
+		return
+	end
+	
+	if Paint_canHurtEnemy(ray.target.player, mo)
+	or mo.type == MT_TNTBARREL
+		P_DamageMobj(mo, ray, ray.target, damage)
+		Paint:doProjHitmarker(ray, mo, false, false, true)
+		Paint.HUD:damageNumber(ray.target.player, mo, damage)
+		return
+	end
+	
+	local me = ray.target
+	local p = me.player
+	
+	if mo.type == MT_PLAYER
+	and mo ~= me
+		if Paint_canHurtPlayer(p, mo.player)
+			local newdamage = Paint:damagePlayer(mo.player, ray, p, damage)
+			Paint:playHurtSound(mo.player)
+			Paint:doProjHitmarker(ray, mo, false)
+			Paint.HUD:damageNumber(ray.target.player, mo, newdamage)
+		elseif Paint_canHurtPlayer(p, mo.player, true, true)
+		and not Paint:isFriendlyFire(p,mo.player)
+			Paint:doProjHitmarker(ray, mo, false, true, true)
+		end
+	end
+end
+local function ExplodeShot(shot)
+	if shot.exploded then return end
+	shot.exploded = true
+
+	shot.powerful = false
+	P_SetOrigin(shot,shot.x,shot.y,shot.z)
+	if not (shot and shot.valid) then return end
+	local wep = Paint.weapons[shot.weapon_id]
+	local sfx = P_SpawnGhostMobj(shot)
+	sfx.flags2 = $|MF2_DONTDRAW
+	sfx.fuse = 2 * TR; sfx.tics = sfx.fuse
+	local sound = wep.blast_sounds[P_RandomRange(1,#wep.blast_sounds)]
+	S_StartSound(sfx, sound)
+	S_StartSound(sfx, sound)
+	
+	local splashrad = shot.blocksearch
+	local px = shot.x
+	local py = shot.y
+	local br = splashrad * 7/5
+	searchBlockmap("objects",splash_blockmap, shot, px-br, px+br, py-br, py+br)
+	
+	Paint.explosionVFX(shot, shot.outerdist)
+	
+	/*
+	for i = -1,1,2
+		local z = splashrad * i
+		P_SpawnMobjFromMobj(shot, splashrad, splashrad, z, MT_THOK)
+		P_SpawnMobjFromMobj(shot, splashrad, -splashrad, z, MT_THOK)
+		P_SpawnMobjFromMobj(shot, -splashrad, splashrad, z, MT_THOK)
+		P_SpawnMobjFromMobj(shot, -splashrad, -splashrad, z, MT_THOK)
+	end
+	local max = 16
+	local fa = FixedDiv(360*FU, max*FU)
+	for i = 0,max-1
+		for j = 0, (max*2)-1
+			local v = SphereToCartesian(FixedAngle(fa*i), FixedAngle(fa*j))
+			P_SpawnMobjFromMobj(shot,
+				FixedMul(splashrad,v.x),
+				FixedMul(splashrad,v.y),
+				FixedMul(splashrad,v.z),
+				MT_THOK
+			)
+		end
+	end
+	*/
+	--P_KillMobj(shot)
+end
+
+local function BlasterFieldHit(shot)
+	local dmul = shot.geo_damagemul
+	local rmul = shot.geo_rangemul
+	for i = 1, shot.groupnum
+		shot.groups[i].damage = FixedMul($, dmul)
+		shot.groups[i].radius = FixedMul($, rmul)
+	end
+	shot.outerdist = FixedMul($, rmul)
+	shot.blocksearch = FixedMul($, rmul)
+end
+
 local function splattersound(shot, collided)
 	if shot.nosound
 		return
@@ -220,8 +351,8 @@ local function splattersound(shot, collided)
 		S_StartSoundAtVolume(sfx, sound, volume)
 	end
 	
-	if collided then return end
 	if not wep then return end
+
 	if wep.guntype == WPT_BLASTER
 	and not shot.trail
 		local sound = wep.explode_sounds[P_RandomRange(1,#wep.explode_sounds)]
@@ -274,7 +405,14 @@ local function HandleFloorSplat(shot)
 		end
 		
 		splattersound(shot, not shot.trail)
-		P_RemoveMobj(shot); return true
+		if shot.blastertype
+			BlasterFieldHit(shot)
+			ExplodeShot(shot)
+		end
+		if (shot and shot.valid)
+			P_RemoveMobj(shot)
+		end
+		return true
 	end
 end
 
@@ -424,6 +562,7 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo, critical)
 	
 	local hitmarker
 	local startrange, endrange = sfx_pnt_h0, sfx_pnt_h5
+	local extra = true
 	if (mo.paint_shield)
 		startrange, endrange = sfx_pnt_s0, sfx_pnt_s5
 	end
@@ -432,29 +571,25 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo, critical)
 	end
 	if (mo.paint_lifesaver)
 		startrange, endrange = sfx_pnt_r0, sfx_pnt_r0
+		extra = false
 	end
 	hitmarker = P_RandomRange(startrange, endrange)
 	if critical
 		hitmarker = sfx_pnt_h6
+		extra = false
 	end
 	if shot.powerful and not nullify
 		hitmarker = sfx_pnt_h7
+		extra = false
 	end
 	
 	if (hitmark_tic ~= leveltime) or critical
 		S_StartSound(nil, hitmarker, shot.target.player)
-		if not (mo.paint_lifesaver or (critical or (shot.powerful and not nullify)))
+		if extra
 			S_StartSoundAtVolume(nil, hitmarker, 255/2, shot.target.player) --Bruh
 		end
 	end
 	hitmark_tic = leveltime
-	
-	if splatter and not nullify
-		splattersound(shot, true)
-		if not shot.pellet
-			splattersound(shot, true)
-		end
-	end
 	
 	local pos = {
 		x = shot.x,
@@ -471,102 +606,16 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo, critical)
 	
 	local rollangle = FixedAngle(360 * P_RandomFixed())
 	Paint.HUD:hitMarker(shot.target.player, pos, rollangle, (shot.pellet and FU/2 or FU), shot.powerful or critical, nullify)
+
+	if splatter and not nullify
+		splattersound(shot, true)
+		if (shot and shot.valid)
+		and not shot.pellet
+			splattersound(shot, true)
+		end
+	end
 end
 
---direct hits most likely wouldve been handled by the mobjcollide before this is ran
-local function splash_blockmap(ray, mo)
-	if not (ray and ray.valid) then return end
-	if not (mo and mo.valid) then return end
-	if not mo.health then return end
-	if (mo == ray.donthit) then return end
-	if (ray.donthit and ray.donthit.paint_shield and (mo == ray.donthit.tracer))
-		return
-	end
-	if not P_CheckSight(ray, mo) then return end
-	local wep = Paint.weapons[ray.weapon_id]
-	local splashrad = FixedMul(wep:get(ray.target.player.paint,"splashradius"), ray.scale)
-	if abs(ray.x - mo.x) > splashrad + mo.radius
-	or abs(ray.y - mo.y) > splashrad + mo.radius
-		return
-	end
-	local dist = R_PointTo3DDist(ray.x, ray.y, ray.z, mo.x,mo.y,mo.z)
-	if dist > splashrad then return end
-	
-	local damage = wep.splashdamage[1] + FixedMul(wep.splashdamage[2] - wep.splashdamage[1], FixedDiv(dist, splashrad))
-	if (mo.paint_shieldmobj and mo.paint_shieldmobj.valid)
-	and Paint.checkShieldBlocking(mo, ray)
-		P_DamageMobj(mo.paint_shieldmobj, ray, ray.target, damage)
-		return
-	end
-	
-	if Paint_canHurtEnemy(ray.target.player, mo)
-	or mo.type == MT_TNTBARREL
-		P_DamageMobj(mo, ray, ray.target, damage)
-		Paint:doProjHitmarker(ray, mo, false, false, true)
-		Paint.HUD:damageNumber(ray.target.player, mo, damage)
-		return
-	end
-	
-	local me = ray.target
-	local p = me.player
-	
-	if mo.type == MT_PLAYER
-	and mo ~= me
-		if Paint_canHurtPlayer(p, mo.player)
-			local newdamage = Paint:damagePlayer(mo.player, ray, p, damage)
-			Paint:playHurtSound(mo.player)
-			Paint:doProjHitmarker(ray, mo, false)
-			Paint.HUD:damageNumber(ray.target.player, mo, newdamage)
-		elseif Paint_canHurtPlayer(p, mo.player, true, true)
-		and not Paint:isFriendlyFire(p,mo.player)
-			Paint:doProjHitmarker(ray, mo, false, true, true)
-		end
-	end
-end
-local function ExplodeShot(shot)
-	shot.powerful = false
-	P_SetOrigin(shot,shot.x,shot.y,shot.z)
-	if not (shot and shot.valid) then return end
-	local wep = Paint.weapons[shot.weapon_id]
-	local sfx = P_SpawnGhostMobj(shot)
-	sfx.flags2 = $|MF2_DONTDRAW
-	sfx.fuse = 2 * TR; sfx.tics = sfx.fuse
-	local sound = wep.blast_sounds[P_RandomRange(1,#wep.blast_sounds)]
-	S_StartSound(sfx, sound)
-	S_StartSound(sfx, sound)
-	
-	local splashrad = wep:get(shot.target.player.paint,"splashradius")
-	local px = shot.x
-	local py = shot.y
-	local br = splashrad * 7/5
-	searchBlockmap("objects",splash_blockmap, shot, px-br, px+br, py-br, py+br)
-	
-	Paint.explosionVFX(shot, splashrad)
-	
-	/*
-	for i = -1,1,2
-		local z = splashrad * i
-		P_SpawnMobjFromMobj(shot, splashrad, splashrad, z, MT_THOK)
-		P_SpawnMobjFromMobj(shot, splashrad, -splashrad, z, MT_THOK)
-		P_SpawnMobjFromMobj(shot, -splashrad, splashrad, z, MT_THOK)
-		P_SpawnMobjFromMobj(shot, -splashrad, -splashrad, z, MT_THOK)
-	end
-	local max = 16
-	local fa = FixedDiv(360*FU, max*FU)
-	for i = 0,max-1
-		for j = 0, (max*2)-1
-			local v = SphereToCartesian(FixedAngle(fa*i), FixedAngle(fa*j))
-			P_SpawnMobjFromMobj(shot,
-				FixedMul(splashrad,v.x),
-				FixedMul(splashrad,v.y),
-				FixedMul(splashrad,v.z),
-				MT_THOK
-			)
-		end
-	end
-	*/
-	P_KillMobj(shot)
-end
 local function CreateTrail(shot)
 	local wep = Paint.weapons[shot.weapon_id]
 	local drop = P_SpawnMobjFromMobj(shot,0,0,0, wep.shottype)
@@ -744,6 +793,7 @@ addHook("MobjThinker",function(shot)
 		if shot.lifespan >= shot.crs_guideframe
 			shot.momx,shot.momy,shot.momz = 0,0,0
 			ExplodeShot(shot)
+			P_KillMobj(shot)
 			return
 		end
 	else
@@ -880,6 +930,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 			if wep.guntype == WPT_BLASTER
 				shot.donthit = mo
 				ExplodeShot(shot)
+				P_KillMobj(shot)
 				return
 			end
 		end
@@ -972,7 +1023,13 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 	end
 	
 	splattersound(mo, true)
-	P_RemoveMobj(mo)
+	if mo.blastertype
+		BlasterFieldHit(mo)
+		ExplodeShot(mo)
+	end
+	if (mo and mo.valid)
+		P_RemoveMobj(mo)
+	end
 end, MT_PAINT_SHOT)
 
 addHook("MobjThinker",function(shot)
