@@ -1865,6 +1865,7 @@ addHook("PlayerThink",function(p)
 			dd.getup = max($-1, 1)
 			if (dd.getup == 1)
 			and (cur_weapon.guntype == WPT_KATANA)
+			and pt.turretmode
 				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 				pt.charge = 0
 				pt.firequeued = false
