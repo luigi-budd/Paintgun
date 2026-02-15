@@ -479,8 +479,8 @@ function Paint:doDodgeRoll(p)
 	
 	local wep = Paint.weapons[pt.weapon_id]
 	if (wep == nil) then return end
-	if (wep.guntype ~= WPT_DUALIES) then return end
-
+	--if (wep.guntype ~= WPT_DUALIES) then return end
+	
 	local dd = pt.dodgeroll
 	if dd.count >= wep:get(pt,"dodgerolls") then return end
 	if (pt.inktank < wep:get(pt,"dodgeinkcost")) then Paint.HUD:lowInkWarning(p); return end
@@ -555,7 +555,11 @@ function Paint:doDodgeRoll(p)
 	dd.tics = wep:get(pt,"dodgelength")
 	dd.count = $ + 1
 	pt.firewait = dd.tics + wep:get(pt,"dodgeendlag")
-	S_StartSound(me, wep:get(pt,"dodgesound") or sfx_pt_dge)
+	local sfx = wep:get(pt,"dodgesound")
+	if sfx == nil
+		sfx = sfx_pt_dge
+	end
+	S_StartSound(me,sfx)
 	
 	Paint.HUD:cameraLag(p, wep:get(pt,"dodgecamlag"))
 	return true

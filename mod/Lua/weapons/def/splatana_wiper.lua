@@ -87,6 +87,16 @@ Paint:registerWeapon({
 	charging_sound = sfx_p_s8_b,
 	slow_charging_sound = sfx_p_s8_c,
 
+	dodgerolls = 1, -- use endlag variable
+	dodgeslide = false, -- dualie squelchers
+	dodgelength = 4,
+	dodgedist = FixedMul(tofixed("2.0"), Paint.DU2FU),
+	dodgeendlag = 0, -- wait this many tics AFTER rolling to start firing
+	dodgecamlag = 6,
+	dodgegetup = 8, -- you can get up after this many tics
+	dodgeinkcost = 0, -- use this much ink for dodge rolls
+	dodgesound = sfx_pt_lug,
+	
 	groupnum = 1,
 	groups = {
 		-- TODO: only the center projectile should have

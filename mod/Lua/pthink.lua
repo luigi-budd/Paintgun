@@ -918,6 +918,12 @@ addHook("PlayerThink",function(p)
 		end
 		
 		if (p.cmd.buttons & BT_ATTACK)
+			pt.realfireheld = $ + 1
+		else
+			pt.realfireheld = 0
+		end
+		
+		if (p.cmd.buttons & BT_ATTACK)
 		and not (pt.nofiring or pt.disable.main)
 			if not pt.fireheld
 				justpressedfire = true
@@ -1702,7 +1708,8 @@ addHook("PlayerThink",function(p)
 			local firing = ( ( (justpressedfire or (pt.fireheld)) ) )
 				and (p.cmd.buttons & BT_ATTACK)
 			
-			if (firing and (pt.cooldown or pt.firewait or pt.katanawait))
+			if (firing and (pt.cooldown or pt.firewait))
+			and not (pt.dodgeroll.tics)
 				firing = false
 				nofiring = true
 				if justpressedfire
@@ -1713,11 +1720,17 @@ addHook("PlayerThink",function(p)
 					pt.firequeued = false
 				end
 			end
+			if (pt.realfireheld >= min_charge_time)
+			and (pt.nofiring)
+				pt.nofiring = false
+			end
+			if ((p.cmd.buttons & BT_ATTACK == 0) and (p.lastbuttons & BT_ATTACK) and pt.cooldown <= 2)
+				pt.firequeued = true
+			end
 			
 			local charging_sound = cur_weapon:get(pt,"charging_sound")
 			local slow_charging_sound = cur_weapon:get(pt,"slow_charging_sound")
 			if firing and (pt.fireheld >= min_charge_time)
-				
 				local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "inkcost")+1)
 				local slowcharge = lowink
 				
@@ -1752,21 +1765,29 @@ addHook("PlayerThink",function(p)
 				pt.anglefix = max($, 1)
 			end
 			
-			if (not firing and ((p.lastbuttons & BT_ATTACK)))
-			and not (nofiring)
-			or (pt.firequeued and pt.cooldown <= 0)
+			if (not firing and (pt.waskatanacharging))
+			and not (nofiring or pt.dodgeroll.tics > 1)
+			or (pt.firequeued and pt.cooldown <= 1)
+			and not (pt.dodgeroll.tics)
+				pt.firequeued = false
+				pt.nofiring = true
+				
 				pt.charge = min($, charge_time)
 				pt.maxchargeshot = pt.charge >= charge_time
-				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
-				pt.charge = 0
+				if (pt.forwardmove >= 40)
+				and pt.maxchargeshot
+				and P_IsObjectOnGround(me)
+					Paint:doDodgeRoll(p)
+				else
+					Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+					pt.charge = 0
+				end
 				
 				S_StopSoundByID(me, charging_sound)
 				S_StopSoundByID(me, slow_charging_sound)
 				pt.maxcharged = false
-				pt.katanawait = false
-				pt.firequeued = false
-				pt.nofiring = true
 			end
+			pt.waskatanacharging = firing
 		end
 	end
 	if (pt.store_lag or pt.storedcharge)
@@ -1781,7 +1802,8 @@ addHook("PlayerThink",function(p)
 	
 	-- handle dodge rolls
 	local dd = pt.dodgeroll
-	if cur_weapon.guntype == WPT_DUALIES
+	if (cur_weapon.guntype == WPT_DUALIES)
+	or (cur_weapon.guntype == WPT_KATANA)
 		local inpain = (P_PlayerInPain(p) or me.state == S_PLAY_PAIN or (not me.health))
 		if dd.tics and not inpain
 			local frac = FU - FixedDiv(dd.tics*FU, cur_weapon:get(pt,"dodgelength")*FU)
@@ -1814,10 +1836,11 @@ addHook("PlayerThink",function(p)
 				me.state = S_PLAY_GLIDE_LANDING
 				me.momx = dd.momx
 				me.momy = dd.momy
-				dd.getup = cur_weapon:get(pt,"dodgegetup")
-				pt.turretmode = true
 				dd.momx = 0;dd.momx = 0
 				P_MovePlayer(p)
+				
+				dd.getup = cur_weapon:get(pt,"dodgegetup")
+				pt.turretmode = true
 			end
 			p.pflags = $|PF_FULLSTASIS
 			p.jumpfactor = 0
@@ -1840,6 +1863,16 @@ addHook("PlayerThink",function(p)
 			end
 			
 			dd.getup = max($-1, 1)
+			if (dd.getup == 1)
+			and (cur_weapon.guntype == WPT_KATANA)
+				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+				pt.charge = 0
+				pt.firequeued = false
+				pt.nofiring = true
+				pt.firewait = 0
+				dd.leave = 5
+			end
+			
 			if ((pt.forwardmove ~= 0 or pt.sidemove ~= 0)
 			or not (p.cmd.buttons & BT_ATTACK))
 			or (pt.inktank < cur_weapon:get(pt,"inkcost"))

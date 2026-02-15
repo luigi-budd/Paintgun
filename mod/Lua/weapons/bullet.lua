@@ -782,6 +782,19 @@ addHook("MobjThinker",function(shot)
 	if wep.guntype == WPT_BLASTER
 		if (leveltime % 3 == 0)
 			P_SpawnGhostMobj(shot).blendmode = AST_ADD
+			
+			local fx = P_SpawnMobjFromMobj(shot, 0,0,0, MT_PAINT_SHOT)
+			fx.visualfadestupidshit = true
+			fx.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
+			fx.fuse = 9
+			fx.sprite = SPR_PAINT_MISC
+			fx.frame = ($ &~FF_FRAMEMASK)|18
+			fx.renderflags = $|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
+			fx.blendmode = AST_ADD
+			fx.colorized = true
+			fx.color = shot.color
+			fx.scale = $ / 2
+			fx.angle = shot.angle + ANGLE_90
 		end
 		local d = CreateTrail(shot)
 		if (d and d.valid)

@@ -231,10 +231,11 @@ function Paint:initPlayer(p)
 		jumpheld = 0,
 		spinheld = 0,
 		fireheld = 0,
+		realfireheld = 0, -- bypasses pt.nofiring
 		firewait = 0,
 		justfired = false,
 		nofiring = false,
-		katanawait = false, --ugh
+		waskatanacharging = false, --ugh
 		maxchargeshot = false, -- for katanas, true if fired at 100% charge
 		cooldown = 0,
 		

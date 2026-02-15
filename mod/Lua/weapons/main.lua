@@ -18,6 +18,7 @@ sfxinfo[sfx_p_s2_1].flags = SF_X2AWAYSOUND
 sfxinfo[sfx_p_s2_2].flags = SF_X2AWAYSOUND|SF_X4AWAYSOUND
 
 sfxinfo[freeslot("sfx_pt_dge")].caption = "Dodge roll"
+sfxinfo[freeslot("sfx_pt_lug")].caption = "Lunge"
 
 rawset(_G, "SUBMOVE_LATERAL", 50*FU)
 rawset(_G, "SUBMOVE_VERTICAL", SUBMOVE_LATERAL)
@@ -343,7 +344,7 @@ local weapon_meta = {
 	melee_offset = 0,
 	--vertical dupes
 	vmelee_damage = 120*FU,
-	vmelee_radius = 50*FU,
+	vmelee_radius = 64*FU,
 	vmelee_height = 40*FU,
 	vmelee_offset = 12*FU,
 	--
