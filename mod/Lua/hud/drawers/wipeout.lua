@@ -44,7 +44,7 @@ addHook("HUD",function(v,p,cam)
 	end
 	
 	local x = 160*FU
-	local y = 70*FU
+	local y = 55*FU
 	local scale = FU / 2
 
 	local cmap = v.getColormap(TC_DEFAULT, (wipeteam == 1) and skincolor_redteam or skincolor_blueteam)

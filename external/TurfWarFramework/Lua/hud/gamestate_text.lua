@@ -17,7 +17,7 @@ return function(v)
 	if not msg.tics then return end
 	
 	local x = 160
-	local y = 50
+	local y = 45
 	local fade = 0
 	if (msg.tics < 10)
 		fade = (10 - msg.tics)
