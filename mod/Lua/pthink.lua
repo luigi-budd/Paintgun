@@ -1416,6 +1416,12 @@ addHook("PlayerThink",function(p)
 				me.momz = $/3
 			end
 			pt.wasclimbing = false
+			--- yyyyyyup
+			S_StopSoundByID(me, sfx_pt_b0)
+			S_StopSoundByID(me, sfx_pt_b1)
+			S_StopSoundByID(me, sfx_pt_b2)
+			S_StopSoundByID(me, sfx_pt_b3)
+			S_StopSoundByID(me, sfx_pt_b4)
 		end
 		if me.last_hidden ~= pt.hidden
 		and me.last_hidden ~= nil
