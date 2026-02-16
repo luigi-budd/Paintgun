@@ -36,7 +36,7 @@ Paint:registerWeapon({
 	maxdamage = 60*FU,
 	totaldamage = 30*FU,
 	capdamage = true,
-	firerate = 9,
+	firerate = 8,
 	endlag = 11,
 	tapfire = true,
 	shootspeed = FU * 3/5,
