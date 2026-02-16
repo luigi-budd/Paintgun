@@ -268,6 +268,7 @@ addHook("KeyDown", function(key)
 	if chatactive then return end
 	--if ML.client.currentMenu.id ~= -1 then return end
 	if (#ML.client.popups) then return end
+	if not (consoleplayer and consoleplayer.valid and consoleplayer.paint and consoleplayer.paint.active) then return end
 	
 	local wp5_f, wp5_s = input.gameControlToKeyNum(GC_WEPSLOT1)
 	
