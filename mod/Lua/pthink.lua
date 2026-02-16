@@ -507,6 +507,12 @@ addHook("PlayerThink",function(p)
 				if (wepmo.tracer and wepmo.tracer.valid)
 					P_RemoveMobj(wepmo.tracer)
 				end
+				if (wepmo.target and wepmo.target.valid)
+					P_RemoveMobj(wepmo.target)
+				end
+				if (wepmo.linemobj and wepmo.linemobj.valid)
+					P_RemoveMobj(wepmo.linemobj)
+				end
 				P_RemoveMobj(wepmo)
 			end
 			
@@ -2358,7 +2364,7 @@ addHook("PostThinkFrame", do
 	for p in players.iterate
 		local me = p.mo
 		local pt = p.paint
-		if not pt then continue end
+		if not (pt and pt.active) then continue end
 		
 		if (p.playerstate == PST_REBORN)
 			local overlay = pt.paintoverlay
