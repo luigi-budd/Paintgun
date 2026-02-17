@@ -1872,6 +1872,10 @@ addHook("PlayerThink",function(p)
 			if (dd.getup == 1)
 			and (cur_weapon.guntype == WPT_KATANA)
 			and pt.turretmode
+				-- reset to normal height
+				pt.turretmode = false
+				P_MovePlayer(p)
+				
 				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
 				pt.charge = 0
 				pt.firequeued = false
@@ -2604,8 +2608,8 @@ addHook("PlayerHeight",function(p)
 	local me = p.realmo
 	if not (me and me.valid) then return end
 	
-	if (pt.turretmode or pt.dodgeroll.getup) or pt.dodgeroll.tics
-		return P_GetPlayerSpinHeight(p)
+	if (pt.turretmode or (pt.dodgeroll.getup)) or pt.dodgeroll.tics
+		return (Paint.weapons[pt.weapon_id].guntype == WPT_DUALIES) and P_GetPlayerSpinHeight(p) or P_GetPlayerHeight(p)
 	end
 	if not pt.squidtime then return end
 	
