@@ -199,3 +199,20 @@ states[S_PAINT_WHIFF] = {
 	var2 = 1,
 	tics = G + 1
 }
+
+freeslot("S_PAINT_HITSPLASH1")
+states[S_PAINT_HITSPLASH1] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 49|FF_FULLBRIGHT|FF_ANIMATE,
+	var1 = 4,
+	var2 = 1,
+	tics = 4 + 1
+}
+freeslot("S_PAINT_HITSPLASH2")
+states[S_PAINT_HITSPLASH2] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 54|FF_FULLBRIGHT|FF_ANIMATE,
+	var1 = 4,
+	var2 = 1,
+	tics = 4 + 1
+}

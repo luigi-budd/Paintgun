@@ -76,17 +76,17 @@ function Paint:registerSubWeapon(props)
 end
 
 -- weapon classes
-rawset(_G, "WPT_SHOOTER", 1 )
+rawset(_G, "WPT_SHOOTER", 1 ) -- x
 rawset(_G, "WPT_ROLLER",  2 )
-rawset(_G, "WPT_CHARGER", 3 )
+rawset(_G, "WPT_CHARGER", 3 ) -- x
 rawset(_G, "WPT_SLOSHER", 4 )
 rawset(_G, "WPT_GATLING", 5 )
-rawset(_G, "WPT_DUALIES", 6 )
-rawset(_G, "WPT_BRELLA",  7 )
-rawset(_G, "WPT_BLASTER", 8 )
+rawset(_G, "WPT_DUALIES", 6 ) -- x
+rawset(_G, "WPT_BRELLA",  7 ) -- x
+rawset(_G, "WPT_BLASTER", 8 ) -- x
 rawset(_G, "WPT_BRUSH",   9 )
 rawset(_G, "WPT_BOW",     10)
-rawset(_G, "WPT_KATANA",  11)
+rawset(_G, "WPT_KATANA",  11) -- x
 
 -- shot states
 rawset(_G, "SS_STRAIGHT", 1)
@@ -369,6 +369,53 @@ local weapon_meta = {
 	crs_chargedguideframe = 14,
 	charging_shootspeed = FU * 3/5,
 	vshotstate = nil, -- only the center hitbox gets a visual for vslashes
+	
+	--roller-brush-specific
+	/*
+		[GROUP INFO]
+		numprojs = int,
+		state = statenum_t,
+		spawndegree = fixed_t,
+		spawnwidth = fixed_t,
+		spawnspeed = fixed_t,
+		speedoffset = fixed_t,
+		angleoffset = fixed_t,
+		spawnoffset = fixed_t,
+		-- brush attributes
+		leftangoff = fixed_t,
+		rightangoff = fixed_t,
+		upwardsmul = fixed_t,
+		
+		a group is spawned from the player
+		
+		spawndegree determines how wide a group spread on 1 side,
+		so 30 degrees would spread a group left 30d and right 30d evenly spread by numprojs,
+		totaling to a 60d spread
+		
+		spawnwidth adjusts how far a projectile spawns on both sides,
+		so 1 du of spawnwidth would spread all projectiles on the left a total of 1 du,
+		and all projectiles on the right a total of 1 du, equalling a total width of 2 du
+		
+		all projectiles spawn with spawnspeed speed, and have their speed
+		offset [-speedoffset, speedoffset]
+		so if spawnspeed is 5 du, and speedoffset is 1 du, all projectiles can spawn
+		with speeds from [4, 6]
+		
+		angleoffset is a multiplier, and multiplies the final speed and adds it perpendicularly
+		so if angleoffset is 0.2, the multiplier will be random from [-0.2, 0.2]
+		
+		^ 4 (base speed)
+		|
+		|
+		|
+		|--> + 0.8 (4 * 0.2) (angle offset)
+		
+		spawnoffset moves the projectile randomly in all 3 axes
+		from [-spawnoffset, spawnoffset]
+		
+		upwardsmul for brushes is like angleoffset, but for the z axis
+		
+	*/
 	
 	weaponstate = S_PAINT_GUN,
 	dualie_weaponstate = nil, -- state for the weaponmobjdupe for dualies

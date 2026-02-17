@@ -327,6 +327,19 @@ local function BlasterFieldHit(shot)
 	shot.blocksearch = FixedMul($, rmul)
 end
 
+local function HitSplat(shot, floor)
+	if shot.trail then return end
+	local s = P_SpawnMobjFromMobj(shot, 0,0,(floor) and 2*FU or 0, MT_PARTICLE)
+	s.state = P_RandomRange(S_PAINT_HITSPLASH1, S_PAINT_HITSPLASH2)
+	s.color = shot.color
+	s.angle = shot.angle
+	if floor
+		s.frame = $ &~FF_PAPERSPRITE
+		s.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD
+	end
+	s.mirrored = P_RandomChance(FU/2)
+end
+
 local function splattersound(shot, collided)
 	if shot.nosound
 		return
@@ -404,6 +417,7 @@ local function HandleFloorSplat(shot)
 			P_SetOrigin(hole, shot.x, shot.y, bull_z)
 		end
 		
+		HitSplat(shot, true)
 		splattersound(shot, not shot.trail)
 		if shot.blastertype
 			BlasterFieldHit(shot)
@@ -934,6 +948,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 	if Paint_canHurtEnemy(p, mo)
 	or mo.type == MT_TNTBARREL
 		P_DamageMobj(mo,shot,me, shot.damage)
+		HitSplat(shot)
 		Paint:doProjHitmarker(shot, mo, true)
 		Paint.HUD:damageNumber(p, mo, shot.damage)
 		
@@ -959,6 +974,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 		end
 		return
 	elseif Paint_canHurtEnemy(shot.target.player, mo, nil,nil, true)
+		HitSplat(shot)
 		Paint:doProjHitmarker(shot, mo, true, true)
 		P_RemoveMobj(shot)
 		return
@@ -970,6 +986,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 			local play = mo.player
 			local newdamage = Paint:damagePlayer(play,shot,p, shot.damage)
 			Paint:playHurtSound(play)
+			HitSplat(shot)
 			Paint:doProjHitmarker(shot, mo, true)
 			Paint.HUD:damageNumber(p, mo, newdamage)
 			if (wep.guntype == WPT_CHARGER
@@ -996,6 +1013,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 		-- invicible but not a teammate
 		elseif Paint_canHurtPlayer(p, mo.player, true)
 		and not Paint:isFriendlyFire(p,mo.player)
+			HitSplat(shot)
 			Paint:doProjHitmarker(shot, mo, true, true)
 			P_RemoveMobj(shot)
 			return
@@ -1035,6 +1053,7 @@ addHook("MobjMoveBlocked", function(mo, moagainst, line)
 		)
 	end
 	
+	HitSplat(mo)
 	splattersound(mo, true)
 	if mo.blastertype
 		BlasterFieldHit(mo)
