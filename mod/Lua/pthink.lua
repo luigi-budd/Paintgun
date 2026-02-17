@@ -1187,7 +1187,7 @@ addHook("PlayerThink",function(p)
 			p.charflags = $|SF_NOSKID
 			if (pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me))
 			or wallclimb
-				Paint.HUD:musicLerp(p, 15, FU/2)
+				Paint.HUD:musicLerp(p, 20, FU/2)
 				if (FixedHypot(FixedHypot(me.momx,me.momy),me.momz) <= 6*FU)
 					local sfx = P_RandomRange(sfx_pt_b0, sfx_pt_b4)
 					local chance = P_RandomChance(FU/2)
