@@ -222,6 +222,7 @@ addHook("MobjThinker",function(sub)
 	end
 	
 	if sub.fusetimer <= 32
+	and sub.fusetimer ~= -1
 		local timer = sub.fusetimer
 		local flashtime = 1 << (timer * 3/5)
 		flashtime = $ * 3/5
@@ -316,6 +317,7 @@ addHook("MobjThinker",function(sub)
 	end
 	
 	if dofuse
+	and sub.fusetimer ~= -1
 		if sub.fusetimer <= TR
 		and not sub.playedalarm
 			Paint:teamSound(sub.tracer_player, sub, sfx_pb_alm, nil, sfx_pb_alm)

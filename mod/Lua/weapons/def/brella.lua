@@ -31,7 +31,7 @@ Paint:registerWeapon({
 	icon = "PTMAIN_SBRELLA",
 
 	name = "brella",
-	--subtype = "sprinkler",
+	subtype = "sprinkler",
 	handoffset = 8*FU,
 	range = 355 * FU,
 	dropoff = 310*FU,

@@ -67,7 +67,7 @@ addHook("HUD",function(v,p,cam)
 			v.drawScaled(x + FixedMul(wid, FixedDiv(sub_t:get(pt,"inkcost"), 100*FU)),
 				y,
 				FU,
-				v.cachePatch("PAINT_FPSUBLINE"),
+				v.cachePatch((fast and pt.inktank >= sub_t:get(pt,"inkcost")) and "PAINT_FPFSUBLINE" or "PAINT_FPSUBLINE"),
 				blend,v.getColormap(TC_DEFAULT, color, nil)
 			)
 		end
