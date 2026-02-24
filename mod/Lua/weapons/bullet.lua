@@ -330,7 +330,7 @@ end
 local function HitSplat(shot, floor)
 	if shot.trail then return end
 	local s = P_SpawnMobjFromMobj(shot, 0,0,(floor) and 2*FU or 0, MT_PARTICLE)
-	s.state = P_RandomRange(S_PAINT_HITSPLASH1, S_PAINT_HITSPLASH2)
+	s.state = P_RandomRange(S_PAINT_HITSPLASH0, S_PAINT_HITSPLASH2)
 	s.color = shot.color
 	s.angle = shot.angle
 	if floor
