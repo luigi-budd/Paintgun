@@ -1,4 +1,4 @@
 dofile("main.lua")
 dofile("pthink.lua")
 
-print("made by luigi budd")
+print("\x89Made by EpixGamer21")
