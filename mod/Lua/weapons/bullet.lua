@@ -358,7 +358,7 @@ local function splattersound(shot, collided)
 	end
 
 	local sound = P_RandomRange(startsound,endsound)
-	local volume = wep and wep.splatvolume or 255
+	local volume = shot.splatvolume or 255
 	S_StartSoundAtVolume(sfx, sound, volume)
 	if not shot.trail
 		S_StartSoundAtVolume(sfx, sound, volume)
@@ -921,6 +921,7 @@ addHook("MobjThinker",function(shot)
 	if shot.lifespan <= shot.str_tics
 	and ((shot.frame & FF_FRAMEMASK == 0)
 	or (shot.frame & FF_FRAMEMASK == 3))
+	and (shot.shotstretch)
 		local stretch = 7*FU
 		if shot.lifespan > 2
 			stretch = $ - ((7*FU)/2) * (shot.lifespan - 2)
@@ -932,7 +933,7 @@ end,MT_PAINT_SHOT)
 addHook("MobjMoveCollide",function(shot,mo)
 	if not (shot and shot.valid) then return end
 	if not shot.init then return false; end
-	if shot.trail then return false; end
+	if (shot.trail) then return false; end
 	if not (mo and mo.valid) then return end
 	if not mo.health then return end
 	if not L_ZCollide(shot,mo) then return end

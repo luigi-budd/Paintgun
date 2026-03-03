@@ -101,6 +101,7 @@ Paint.weapons = {}
 local weapon_meta = {
 	realname = "Main Weapon",
 	icon = "MISSING",
+	hidden = false,
 	
 	range = 405 * FU, --about 2.3 splat3 distance units
 	damage = 24*FU,
@@ -116,6 +117,7 @@ local weapon_meta = {
 	shottype = MT_PAINT_SHOT,
 	shotscale = FU, -- visual scale
 	shotstate = nil, -- leave nil for mobjinfo[shottype].spawnstate
+	shotstretch = true, -- stretch shots when theyre in straight state
 	
 	guntype = WPT_SHOOTER,
 	handoffset = 16 * FU,
@@ -461,6 +463,8 @@ function Paint:registerWeapon(props)
 	})
 	Paint.weapons[props.name] = props
 end
+-- blank dummy weapon
+Paint:registerWeapon({name = "null", hidden = true})
 
 function Paint:giveWeapon(p, wep_name, slot)
 	if self.weapons[wep_name] == nil
@@ -791,6 +795,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	
 	proj.spritexscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
 	proj.spriteyscale = FixedMul($, cur_weapon:get(pt,"shotscale"))
+	proj.shotstretch = cur_weapon:get(pt,"shotstretch")
 	proj.basescale = proj.spritexscale
 	proj.color = Paint:getPlayerColor(p)
 	proj.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
@@ -823,6 +828,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	
 	local weaponsound = cur_weapon.sounds[P_RandomRange(1, #cur_weapon.sounds)]
 	local weaponvolume = cur_weapon:get(pt,"soundvolume")
+	proj.splatvolume = cur_weapon:get(pt,"splatvolume")
 	if (cur_weapon.guntype == WPT_CHARGER)
 		local chargetime = cur_weapon:get(pt,"chargetime")
 		local chargeprogress = min(FixedDiv(pt.charge, chargetime), FU)

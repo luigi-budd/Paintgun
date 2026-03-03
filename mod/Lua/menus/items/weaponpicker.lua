@@ -123,6 +123,8 @@ ML.addMenu({
 		end
 		
 		for name, info in pairs(Paint.weapons)
+			if info.hidden then continue end
+			
 			if (menu.filter ~= 0)
 			and (menu.filter & CLASS2BIT[info.guntype] == 0)
 				continue
