@@ -54,6 +54,8 @@ local sub_meta = {
 	blockedfunc = nil,
 	-- function(mobj_t "sub", string "subtype", boolean "aimline")
 	physicsthink = nil,
+	-- function(mobj_t "sub")
+	deathstate = nil,
 }
 registerMetatable(sub_meta)
 

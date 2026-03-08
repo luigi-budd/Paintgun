@@ -1,6 +1,7 @@
 freeslot(
 	"SPR_PAINT_BOMB",
 	"S_PAINT_BOMB",
+	"S_PAINT_BOMB_DEATH",
 	"MT_PAINT_BOMB"
 )
 states[S_PAINT_BOMB] = {
@@ -8,13 +9,25 @@ states[S_PAINT_BOMB] = {
 	sprite = SPR_PAINT_BOMB,
 	tics = -1,
 }
+states[S_PAINT_BOMB_DEATH] = {
+	frame = 0|FF_SEMIBRIGHT,
+	sprite = SPR_NULL,
+	tics = 1,
+	action = function(bomb)
+		local subdef = Paint.subs[bomb.subtype]
+		if subdef.deathstate == nil then return end
+		
+		subdef.deathstate(bomb)
+	end
+}
 
 mobjinfo[MT_PAINT_BOMB] = {
 	doomednum = -1,
 	radius = 16*FU,
 	height = 32*FU,
 	flags = MF_NOGRAVITY,
-	spawnstate = S_PAINT_BOMB
+	spawnstate = S_PAINT_BOMB,
+	deathstate = S_PAINT_BOMB_DEATH,
 }
 sfxinfo[freeslot("sfx_pb_fly")] = {
 	caption = "/",

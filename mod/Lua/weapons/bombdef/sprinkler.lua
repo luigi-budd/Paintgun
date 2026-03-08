@@ -86,6 +86,18 @@ Paint:registerWeapon({
 	crs_guideframe = 8, -- crosshair is placed at this frame in the shot's lifetime
 })
 
+local function pain_func(mo, inf,sor, damage)
+	if mo.phase == nil then return end
+	
+	mo.paint_hp = max($ - damage, 0)
+	if mo.paint_hp <= 0
+		mo.paint_destroyed = true
+		return true
+	end
+	return false
+end
+addHook("ShouldDamage",pain_func, MT_PAINT_BOMB)
+
 Paint:registerSubWeapon({
 	realname = "Sprinkler",
 	name = "sprinkler",
@@ -150,6 +162,12 @@ Paint:registerSubWeapon({
 		bomb.forceangle = bomb.angle
 		bomb.baseangle = bomb.angle
 		bomb.tracer_player.submobj = bomb
+		
+		bomb.paint_maxhp = 120*FU
+		bomb.paint_hp = bomb.paint_maxhp
+		bomb.paint_team = bomb.tracer_player.ctfteam
+		bomb.flags = $|MF_SHOOTABLE
+		bomb.takis_flingme = true
 		return true
 	end,
 	physicsthink = function(bomb, subtype, aimline)
@@ -160,6 +178,7 @@ Paint:registerSubWeapon({
 			and bomb.tracer_player.mo.health
 		)
 			P_KillMobj(bomb)
+			return
 		end
 		
 		bomb.phasetime = $ - 1

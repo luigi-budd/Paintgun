@@ -48,6 +48,17 @@ rawset(_G,"Paint_canHurtEnemy",function(p, mobj,flags,exclude, nobs)
 		end
 	end
 	
+	if (p and p.valid)
+		if mobj.paint_team == p.ctfteam
+		and G_GametypeHasTeams()
+			return false
+		end
+		if (mobj.tracer_player and mobj.tracer_player.valid)
+		and (mobj.tracer_player == p)
+			return false
+		end
+	end
+	
 	/*
 		if true, force a hit
 		if false, force no hits
