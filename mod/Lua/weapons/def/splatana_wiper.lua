@@ -31,6 +31,7 @@ Paint:registerWeapon({
 	guntype = WPT_KATANA,
 	h_spread = {14*FU, 14*FU},
 	v_spread = {14*FU, 14*FU},
+	naturalaiming = 0,
 	handoffset = 8*FU,
 	damage = 30*FU,
 	maxdamage = 60*FU,

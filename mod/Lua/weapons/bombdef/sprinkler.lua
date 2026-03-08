@@ -155,7 +155,10 @@ Paint:registerSubWeapon({
 	physicsthink = function(bomb, subtype, aimline)
 		if aimline then return end
 		if not bomb.alreadyblocked then return end
-		if not (bomb.tracer_player and bomb.tracer_player.valid and bomb.tracer_player.mo and bomb.tracer_player.valid)
+		if not (bomb.tracer_player and bomb.tracer_player.valid
+			and bomb.tracer_player.mo and bomb.tracer_player.mo.valid
+			and bomb.tracer_player.mo.health
+		)
 			P_KillMobj(bomb)
 		end
 		
@@ -196,7 +199,7 @@ Paint:registerSubWeapon({
 				local dist = 22*FU
 				ox = P_ReturnThrustX(nil, bomb.baseangle + ANGLE_180, dist)
 				oy = P_ReturnThrustY(nil, bomb.baseangle + ANGLE_180, dist)
-			else
+			elseif not bomb.ceilingmode
 				oz = 16*FU
 			end
 			

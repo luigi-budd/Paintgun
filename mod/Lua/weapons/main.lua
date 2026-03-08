@@ -150,6 +150,7 @@ local weapon_meta = {
 	--shooter-specific
 	h_spread = {6*FU, 6*FU},
 	v_spread = {3*FU, 3*FU}, -- visual only for the crosshair if `verticalspread` is false
+	naturalaiming = 5*FU / 2,
 	verticalspread = false,
 	-- spread values (PERCETANGES [0, 100*FRACUNIT], DIVIDED BY 100*FU WHEN NEEDED)
 	spread_base = (FU * 1), -- chance to spread, similar to accelstart
@@ -535,6 +536,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	local pt = p.paint
 	local weap = self.weapons[pt.weapon_id]
 	
+	aiming = $ + FixedAngle(weap:get(pt,"naturalaiming",crosshair))
 	hsprd = $ or 0
 	vsprd = $ or 0
 	local speed = FixedMul(weap:get(pt,"spawnspeed",crosshair), proj.scale)

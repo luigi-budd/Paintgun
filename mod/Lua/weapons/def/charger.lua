@@ -11,6 +11,7 @@ Paint:registerWeapon({
 	icon = "PTMAIN_SCHARGER",
 	
 	name = "charger",
+	naturalaiming = 0,
 	handoffset = 6*FU,
 	range = FixedMul(tofixed("25.75"), Paint.DU2FU),
 	dropoff = 0,
