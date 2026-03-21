@@ -578,6 +578,7 @@ function Paint:doProjHitmarker(shot, mo, splatter, nullify, onmo, critical)
 	local startrange, endrange = sfx_pnt_h0, sfx_pnt_h5
 	local extra = true
 	if (mo.paint_shield)
+	or (mo.paint_mechanical)
 		startrange, endrange = sfx_pnt_s0, sfx_pnt_s5
 	end
 	if nullify
