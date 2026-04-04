@@ -1273,12 +1273,15 @@ addHook("PlayerThink",function(p)
 			end
 			
 			if pt.hidden
+				p.pflags = $|PF_INVIS
+				
 				local cando = true
 				if (wallclimb and not (p.cmd.forwardmove > 0 or p.cmd.sidemove ~= 0))
 					cando = false
 				end
 				if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 12*me.scale)
 				and cando
+					p.pflags = $ &~PF_INVIS
 					if not S_SoundPlaying(me, sfx_pt_swm)
 						S_StartSoundAtVolume(me,sfx_pt_swm,255/2)
 					end
@@ -1405,6 +1408,7 @@ addHook("PlayerThink",function(p)
 				end
 			else
 				S_StopSoundByID(me,sfx_pt_swm)
+				p.pflags = $ &~PF_INVIS
 			end
 			pt.wallink = max($ - 1, 0)
 			
@@ -1423,6 +1427,7 @@ addHook("PlayerThink",function(p)
 		else
 			pt.wallink = 0
 			pt.squididle = 0
+			p.pflags = $ &~PF_INVIS
 			
 			if pt.wasclimbing
 				me.momz = $/3
