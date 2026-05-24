@@ -21,7 +21,7 @@ return function(id,instant)
 			popupitem_t.goingdown = true
 			popupitem_t.lifespan = min($, 7)
 		end
-		
+
 		if ML.client.currentMenu.id == -1
 			input.ignoregameinputs = false
 		end
