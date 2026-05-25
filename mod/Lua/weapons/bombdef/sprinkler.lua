@@ -101,7 +101,7 @@ addHook("ShouldDamage",pain_func, MT_PAINT_BOMB)
 Paint:registerSubWeapon({
 	realname = "Sprinkler",
 	name = "sprinkler",
-	icon = "PTSUB_SUCTION",
+	icon = "PTSUB_SPRINKLER",
 	spawnstate = S_PAINT_SUCTIONBOMB_W,
 
 	fuse = -1,
