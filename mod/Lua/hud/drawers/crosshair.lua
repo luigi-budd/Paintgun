@@ -47,7 +47,7 @@ local function drawReticle(v,x,y, p, type)
 	elseif type == CRTYPE_STANDBY
 		v.drawScaled(x,y, crossscale/4, v.cachePatch("PAINT_CR_RET"))
 		v.drawScaled(x,y, crossscale/4, v.cachePatch(prefix.."BASE"), CRBASE_TRANS)
-	elseif type == CRTYPE_CHARGERBASE
+	elseif type == CRTYPE_CHARGERBASE and (pt.charge or pt.storedcharge)
 		v.drawScaled(x,y, crossscale/4, v.cachePatch(prefix.."CBASE"), V_50TRANS)
 	elseif type == CRTYPE_BRELLAVFX
 		v.drawScaled(x,y, crossscale/4, v.cachePatch("PAINT_CR_BRES"), V_ADD|((10 - brella_vfx)<<V_ALPHASHIFT), v.getColormap(TC_DEFAULT, Paint:getPlayerColor(p)))
@@ -114,7 +114,7 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 			me.y + weaponoffset[2] + FixedMul(aimoffset_dist, aimoffset_vec.y),
 			ray.z + FixedMul(aimoffset_dist, aimoffset_vec.z)
 		)
-
+		
 		ray.str_tics			= cur_weapon:get(pt,"str_tics",true)
 		ray.str2brk_maxspeed	= FixedMul(cur_weapon:get(pt,"str2brk_maxspeed",true), ray.scale)
 		ray.brk_airresist		= cur_weapon:get(pt,"brk_airresist",true)
@@ -138,9 +138,18 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 		
 		ray.radius = FixedMul(mobjinfo[MT_PAINT_SHOT].radius, ray.scale)
 		ray.height = FixedMul(mobjinfo[MT_PAINT_SHOT].height, ray.scale)
-		ray.flags = mobjinfo[MT_PAINT_SHOT].flags|MF_NOCLIP|MF_NOCLIPHEIGHT &~MF_SLIDEME
+		ray.flags = mobjinfo[MT_PAINT_SHOT].flags|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY &~MF_SLIDEME
 		ray.target = me
 		ray.sprite = SPR_NULL
+		
+		if (cur_weapon:get(pt,"shottype",true) == MT_PAINT_SHOT) -- moves in quarter steps
+		and cur_weapon:get(pt,"quartersteps",true)
+		and cur_weapon.guntype ~= WPT_CHARGER
+			ray.momx = $ / 4
+			ray.momy = $ / 4
+			ray.momz = $ / 4
+			ray.quartersteps = true
+		end
 		
 		if (dualieflip or chargerdupe)
 			d_raycast = ray
@@ -154,6 +163,7 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 	if (workray and workray.valid)
 		local ray = workray
 		local range = ray.range
+		local debugtrail = Paint.CV.debug_crosshair.value
 		
 		if is_shooter(Paint.weapons[ray.weapon_id].guntype)
 			while true
@@ -165,25 +175,31 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 					break
 				else
 					Paint.bulletSimpleState(ray)
-					P_RailThinker(ray)
+					if (ray.quartersteps)
+						for i = 0,3
+							if P_RailThinker(ray) then break end
+						end
+					else
+						P_RailThinker(ray)
+					end
 				end
 				
-				/*
-				local g = P_SpawnMobjFromMobj(ray, 0,0,0,MT_THOK)
-				g.scale = $ / 4
-				g.fuse = 1
-				g.tics = 1
-				g.frame = $ &~FF_TRANSMASK
-				g.alpha = FU * 3/4
-				if (ray.s_state == SS_STRAIGHT)
-					g.color = SKINCOLOR_EMERALD
-				elseif (ray.s_state == SS_BRAKE)
-					g.color = SKINCOLOR_RED
-				else
-					g.color = SKINCOLOR_YELLOW
+				if debugtrail
+					local g = P_SpawnMobjFromMobj(ray, 0,0,0,MT_THOK)
+					g.scale = $ / 4
+					g.fuse = 1
+					g.tics = 1
+					g.frame = $ &~FF_TRANSMASK
+					g.alpha = FU * 3/4
+					if (ray.s_state == SS_STRAIGHT)
+						g.color = SKINCOLOR_EMERALD
+					elseif (ray.s_state == SS_BRAKE)
+						g.color = SKINCOLOR_RED
+					else
+						g.color = SKINCOLOR_YELLOW
+					end
+					P_SetOrigin(g, g.x,g.y,g.z)
 				end
-				P_SetOrigin(g, g.x,g.y,g.z)
-				*/
 			end
 		else
 			for i = 0,25 do
@@ -255,7 +271,7 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 			MT_THOK
 		)
 		local range = getrange(ray, pt, cur_weapon, false)
-		ray.flags = $ &~(MF_NOCLIP|MF_NOCLIPTHING|MF_NOBLOCKMAP|MF_SLIDEME)
+		ray.flags = $|MF_NOGRAVITY &~(MF_NOCLIP|MF_NOCLIPTHING|MF_NOBLOCKMAP|MF_SLIDEME)
 		ray.target = me
 		ray.weapon_id = pt.weapon_id
 		ray.lifespan = 0
@@ -297,7 +313,16 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		ray.fre_airresist		= cur_weapon:get(pt,"fre_airresist",true)
 		ray.fre_gravity			= cur_weapon:get(pt,"fre_gravity",true)
 		ray.crs_guideframe		= cur_weapon:get(pt,"crs_guideframe",true)
-
+		
+		if (cur_weapon:get(pt,"shottype",true) == MT_PAINT_SHOT) -- moves in quarter steps
+		and cur_weapon:get(pt,"quartersteps",true)
+		and cur_weapon.guntype ~= WPT_CHARGER
+			ray.momx = $ / 4
+			ray.momy = $ / 4
+			ray.momz = $ / 4
+			ray.quartersteps = true
+		end
+		
 		if (dualieflip)
 			dh_raycast2 = ray
 			local_raycasts.dhitcast = ray
@@ -325,7 +350,19 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 					searchBlockmap("objects",directhit_blockmap, ray, px-br, px+br, py-br, py+br)
 				end
 				
-				if P_RailThinker(ray)
+				if ray.quartersteps
+					for i = 0,3
+						if P_RailThinker(ray)
+						or (ray.z + ray.height >= ray.ceilingz or ray.z <= ray.floorz)
+						or (ray.momx == 0 and ray.momy == 0)
+						and (ray and ray.valid)
+							ray.momx,ray.momy,ray.momz = 0,0,0
+							ray.fuse = 1
+							ray.hit = true
+							break
+						end
+					end
+				elseif P_RailThinker(ray)
 				or (ray.z + ray.height >= ray.ceilingz or ray.z <= ray.floorz)
 				or (ray.momx == 0 and ray.momy == 0)
 				and (ray and ray.valid)
@@ -398,6 +435,8 @@ addHook("PostThinkFrame",do
 		CMD_ANGLE = p.cmd.angleturn << 16
 		CMD_AIMING = p.aiming
 	end
+	
+	if not (Paint.CV.FindVar("showhud").value) then return end
 	
 	rangecaster(p,me,pt,cur_weapon, false)
 	if (cur_weapon.guntype == WPT_DUALIES)

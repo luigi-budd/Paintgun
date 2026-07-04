@@ -41,6 +41,12 @@ CV.directhit_crosshair = CV_RegisterVar({
 	flags = CV_SHOWMODIF,
 	PossibleValue = {Accurate = 1, Performance = 2, Off = 0} 
 })
+CV.debug_crosshair = CV_RegisterVar({
+	name = "paint_crosshairdebug",
+	defaultvalue = "Off",
+	flags = CV_SHOWMODIF,
+	PossibleValue = CV_OnOff
+})
 CV.nametags = CV_RegisterVar({
 	name = "paint_nametags",
 	defaultvalue = "On",
