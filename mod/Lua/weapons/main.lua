@@ -728,7 +728,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	local doinertia = cur_weapon.inertia
 	local proj = P_SpawnMobjFromMobj(me,
 		0,0,
-		41*FixedDiv(p.mo.height,p.mo.scale)/48 - 8*FU,
+		41*FixedDiv(P_GetPlayerHeight(p),p.mo.scale)/48 - 8*FU,
 		cur_weapon.shottype
 	)
 	proj.target = me
