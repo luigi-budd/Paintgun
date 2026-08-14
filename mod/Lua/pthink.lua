@@ -364,6 +364,7 @@ BP.doInkTank = function(p)
 		)
 		tank.sparkfx.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
 	end
+	tank.renderflags = ($&~RF_ALWAYSONTOP)|((p == displayplayer) and RF_ALWAYSONTOP or 0)
 	
 	local back = tank.tracer
 	back.angle = tank.angle
@@ -420,6 +421,7 @@ BP.doInkTank = function(p)
 	line.destscale = me.scale
 	line.scalespeed = line.destscale + 1
 	line.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+	line.renderflags = ($&~RF_ALWAYSONTOP)|((p == displayplayer) and RF_ALWAYSONTOP or 0)
 	
 	tank.pitch,tank.roll = 0,0
 	back.pitch,back.roll = 0,0

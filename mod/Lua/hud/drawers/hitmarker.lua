@@ -2,7 +2,7 @@ local HUD = Paint.HUD
 local offset = 0
 
 freeslot("SPR_PAINT_HITMARKER")
-local POWERFUL_LEN = TR/2
+local POWERFUL_LEN = TR/3
 local POWERFUL_FIRST = 4
 function HUD:hitMarker(p, pos, rotangle, sizemul, powerful, blocked)
 	if displayplayer ~= p then return end
@@ -42,13 +42,13 @@ local function Icon(v,p,cam, info)
 		if el < POWERFUL_FIRST
 			local adjust = FU * (POWERFUL_FIRST - el)
 			v.drawScaled(result.x,result.y, FixedMul(scale, adjust),
-				circ, V_ADD)
+				circ, V_20TRANS|V_ADD)
 		elseif el > POWERFUL_FIRST
 			local ANIM = POWERFUL_LEN - POWERFUL_FIRST
 			local frac = ease.outexpo(((FU/ANIM)*(el - POWERFUL_FIRST)), FU, 0)
 			v.drawStretched(result.x, result.y,
 				FixedMul(10*scale, FU - frac), FixedMul(scale*3, frac or FU),
-				circ, V_ADD)
+				circ, V_20TRANS|V_ADD)
 		end
 		if el <= POWERFUL_FIRST
 			local adjust = FU
