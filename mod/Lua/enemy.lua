@@ -4,6 +4,8 @@ addHook("NetVars",function(n)
 end)
 
 local basetype = MT_BLUECRAWLA
+mobjinfo[basetype].height = $ + 8*FU
+
 addHook("MobjDamage",function(mo, inf,sor, damage)
 	if not (sor and sor.valid and sor.player and sor.player.valid and sor.player.paint and sor.player.paint.active) then return end
 	if not (mo.flags & (MF_ENEMY|MF_BOSS)) then return end

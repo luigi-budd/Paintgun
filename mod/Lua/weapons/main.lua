@@ -152,7 +152,7 @@ local weapon_meta = {
 	--shooter-specific
 	h_spread = {6*FU, 6*FU},
 	v_spread = {3*FU, 3*FU}, -- visual only for the crosshair if `verticalspread` is false
-	naturalaiming = 0, --5*FU,
+	naturalaiming = 6*FU,
 	verticalspread = false,
 	-- spread values (PERCETANGES [0, 100*FRACUNIT], DIVIDED BY 100*FU WHEN NEEDED)
 	spread_base = (FU * 1), -- chance to spread, similar to accelstart
