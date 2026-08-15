@@ -151,7 +151,7 @@ ML.addMenu({
 			v.drawFill(x, y, dimen,dimen, clr)
 			
 			v.drawScaled((x + dimen/2)*FU, (y + dimen/2)*FU,
-				FU/10,
+				info.icon_scale,
 				v.cachePatch(info.icon),
 				itrans
 			)
@@ -163,7 +163,7 @@ ML.addMenu({
 			local sub_t = Paint.subs[info.subtype or ""]
 			if sub_t
 				v.drawScaled((x + (dimen - 4))*FU, (y + 4)*FU,
-					FU/10,
+					sub_t.icon_scale,
 					v.cachePatch(sub_t.icon),
 					itrans, v.getColormap(TC_DEFAULT, SKINCOLOR_PURPLE)
 				)
@@ -194,7 +194,7 @@ ML.addMenu({
 			
 			if wep
 				v.drawScaled((x + dimen/2)*FU, (y + dimen/2)*FU,
-					FU/10,
+					wep.icon_scale,
 					v.cachePatch(wep.icon),
 					0
 				)
@@ -206,7 +206,7 @@ ML.addMenu({
 				local sub_t = Paint.subs[wep.subtype or ""]
 				if sub_t
 					v.drawScaled((x + (dimen - 4))*FU, (y + 4)*FU,
-						FU/10,
+						sub_t.icon_scale,
 						v.cachePatch(sub_t.icon),
 						0, v.getColormap(TC_DEFAULT, SKINCOLOR_PURPLE)
 					)

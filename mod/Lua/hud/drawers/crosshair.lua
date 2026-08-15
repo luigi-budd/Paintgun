@@ -151,6 +151,10 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 			ray.quartersteps = true
 		end
 		
+		if (cur_weapon.callbacks and cur_weapon.callbacks.crosshaironfire ~= nil)
+			cur_weapon.callbacks.crosshaironfire(p,pt,cur_weapon, ray, angle,CMD_AIMING, true)
+		end
+		
 		if (dualieflip or chargerdupe)
 			d_raycast = ray
 			local_raycasts.drangecast = ray
@@ -165,7 +169,13 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 		local range = ray.range
 		local debugtrail = Paint.CV.debug_crosshair.value
 		
-		if is_shooter(Paint.weapons[ray.weapon_id].guntype)
+		local wep = Paint.weapons[ray.weapon_id]
+		local crsthinker
+		if (wep.callbacks and wep.callbacks.crosshairthinker ~= nil)
+			crsthinker = wep.callbacks.crosshairthinker
+		end
+		
+		if is_shooter(wep.guntype)
 			while true
 				ray.lifespan = $ + 1
 				if (ray.lifespan >= ray.crs_guideframe)
@@ -181,6 +191,11 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 						end
 					else
 						P_RailThinker(ray)
+					end
+				end
+				if crsthinker
+					if crsthinker(p,pt,cur_weapon, ray)
+						break
 					end
 				end
 				
@@ -218,6 +233,11 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 					P_SetOrigin(ray, ray.finalpos.x, ray.finalpos.y, ray.finalpos.z)
 					ray.fuse = 1
 					break
+				end
+				if crsthinker
+					if crsthinker(p,pt,cur_weapon, ray)
+						break
+					end
 				end
 			end
 		end
@@ -323,6 +343,10 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 			ray.quartersteps = true
 		end
 		
+		if (cur_weapon.callbacks and cur_weapon.callbacks.crosshaironfire ~= nil)
+			cur_weapon.callbacks.crosshaironfire(p,pt,cur_weapon, ray, angle,CMD_AIMING, true)
+		end
+		
 		if (dualieflip)
 			dh_raycast2 = ray
 			local_raycasts.dhitcast = ray
@@ -338,8 +362,14 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		local accurate = Paint.CV.directhit_crosshair.value == 1
 		local range = ray.range
 		local br = ray.radius + 16*ray.scale
-
-		if is_shooter(Paint.weapons[ray.weapon_id].guntype)
+		
+		local wep = Paint.weapons[ray.weapon_id]
+		local crsthinker
+		if (wep.callbacks and wep.callbacks.crosshairthinker ~= nil)
+			crsthinker = wep.callbacks.crosshairthinker
+		end
+		
+		if is_shooter(wep.guntype)
 			while true
 				ray.lifespan = $ + 1
 				Paint.bulletSimpleState(ray)
@@ -373,9 +403,16 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 				end
 				
 				if (ray.lifespan >= ray.crs_guideframe)
+				or (ray.turret and ray.s_state ~= SS_STRAIGHT)
 					ray.momx,ray.momy,ray.momz = 0,0,0
 					ray.fuse = 1
 					break
+				end
+				
+				if crsthinker
+					if crsthinker(p,pt,cur_weapon, ray)
+						break
+					end
 				end
 			end
 		else
@@ -410,6 +447,11 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 					ray.momx,ray.momy,ray.momz = 0,0,0
 					ray.fuse = 1
 					break
+				end
+				if crsthinker
+					if crsthinker(p,pt,cur_weapon, ray)
+						break
+					end
 				end
 			end
 		end

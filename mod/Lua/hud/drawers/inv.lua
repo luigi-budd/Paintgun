@@ -40,7 +40,7 @@ addHook("HUD",function(v,p,cam)
 	if sub_t
 		x = $ - (80 * subscale)/2
 		v.drawScaled(x,y,subscale, v.cachePatch("PTSUB_BG"), flags)
-		v.drawScaled(x,y,subscale, v.cachePatch(sub_t.icon), flags, v.getColormap(nil,0, "AllBlack"))
+		v.drawScaled(x,y,FixedDiv(sub_t.icon_scale, FU*4/5), v.cachePatch(sub_t.icon), flags, v.getColormap(nil,0, "AllBlack"))
 		x = $ + (80 * subscale)
 	end
 	
@@ -58,7 +58,7 @@ addHook("HUD",function(v,p,cam)
 			)
 		end
 		if inv.items[i] ~= nil
-			v.drawScaled(x,y,FU/32,
+			v.drawScaled(x,y, FixedDiv(Paint.weapons[inv.items[i]].icon_scale, 3*FU + FU/5),
 				v.cachePatch(Paint.weapons[inv.items[i]].icon),
 				flags|(inv.curslot ~= i and V_30TRANS or 0),
 				inv.curslot ~= i and v.getColormap(TC_BLINK,SKINCOLOR_BLACK,"AllBlack") or nil

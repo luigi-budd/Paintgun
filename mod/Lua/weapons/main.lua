@@ -28,6 +28,7 @@ Paint.subs = {}
 local sub_meta = {
 	realname = "Sub Weapon",
 	icon = "MISSING",
+	icon_scale = FU/10,
 	spawnstate = nil,
 	spawnscale = FU/2,
 
@@ -103,6 +104,7 @@ Paint.weapons = {}
 local weapon_meta = {
 	realname = "Main Weapon",
 	icon = "MISSING",
+	icon_scale = FU/10,
 	hidden = false,
 	
 	range = 405 * FU, --about 2.3 splat3 distance units
@@ -445,6 +447,11 @@ local weapon_meta = {
 		onfire = nil,
 		ondryfire = nil,
 		onhit = nil,
+		
+		crosshaironfire = nil,
+		
+		bulletthinker = nil,
+		crosshairthinker = nil,
 	}
 }
 registerMetatable(weapon_meta)
@@ -545,6 +552,7 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	if (weap.guntype == WPT_CHARGER)
 		speed = proj.radius * 2
 	end
+	
 	mom_vec = $ or {x = 0,y = 0}
 	
 	local handoffset2 = {Paint:getWeaponOffset(me,pt,angle - ANGLE_90, weap, dualieflip, false)}

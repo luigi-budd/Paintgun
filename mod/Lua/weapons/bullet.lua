@@ -711,6 +711,7 @@ addHook("MobjThinker",function(shot)
 	shot.lifespan = $ + 1
 	shot.spritexscale = shot.basescale or FU
 	if (shot.frame & FF_FRAMEMASK == 0)
+	and (shot.state == shot.info.spawnstate)
 		--Fuck!
 		shot.spritexscale = $ * 5/2
 	end
@@ -917,7 +918,7 @@ addHook("MobjThinker",function(shot)
 	end
 	
 	shot.angle = shot.baseangle + shot.angoffset
-	shot.angoffset = $ * 6/7
+	-- shot.angoffset = $ * 6/7
 	
 	if shot.lifespan <= shot.str_tics
 	and ((shot.frame & FF_FRAMEMASK == 0)
@@ -928,6 +929,10 @@ addHook("MobjThinker",function(shot)
 			stretch = $ - ((7*FU)/2) * (shot.lifespan - 2)
 		end
 		shot.spritexscale = $ + abs(FixedMul(stretch, sin(R_PointToAngle(shot.x,shot.y) - shot.angle)))
+	end
+	
+	if (wep.callbacks and wep.callbacks.bulletthinker ~= nil)
+		wep.callbacks.bulletthinker(me.player, me.player.paint, wep, shot)
 	end
 end,MT_PAINT_SHOT)
 
