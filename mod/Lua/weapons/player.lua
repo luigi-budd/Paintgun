@@ -133,7 +133,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 		and noshield
 			pt.hp = 15*FU
 			pt.brokenarmor = true
-			pt.armorregen = 10 * TR
+			pt.armorregen = 100 * FU
 			
 			local inkcolor = Paint:getPlayerColor(p)
 			for i = 0,32

@@ -16,6 +16,7 @@ dofiles("drawers/",{
 	"inktank.lua",
 	"hpoverlay.lua",
 	"painsurge.lua",
+	"healthbar.lua",
 	"crosshair.lua",
 	"hitmarker.lua",
 	"lowink.lua",

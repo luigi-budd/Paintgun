@@ -59,3 +59,9 @@ CV.damagenumbers = CV_RegisterVar({
 	flags = CV_SHOWMODIF,
 	PossibleValue = CV_OnOff 
 })
+CV.healthbar = CV_RegisterVar({
+	name = "paint_healthbar",
+	defaultvalue = "On",
+	flags = CV_SHOWMODIF,
+	PossibleValue = CV_OnOff 
+})

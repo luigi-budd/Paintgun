@@ -2131,6 +2131,7 @@ addHook("PlayerThink",function(p)
 	end
 	
 	do
+		local fastdanger = false
 		if pt.hp ~= 100*FU
 		and (pt.timetoheal <= 0)
 			local hpinc = 0
@@ -2142,8 +2143,8 @@ addHook("PlayerThink",function(p)
 				hpinc = FixedDiv(12*FU + FU/2, TR*FU)
 			end
 			if pt.brokenarmor
-				if hpinc == 8*FU and (leveltime % 3 == 0)
-					pt.armorregen = max($ - 1, 0)
+				if hpinc == 8*FU
+					fastdanger = true
 				end
 				hpinc = 0
 			end
@@ -2152,7 +2153,12 @@ addHook("PlayerThink",function(p)
 		end
 		
 		if pt.brokenarmor
-			pt.armorregen = $ - 1
+			if fastdanger
+				pt.armorregen = $ - FixedDiv(100*FU, Paint.DANGER_TIME_FAST*FU)
+			else
+				pt.armorregen = $ - FixedDiv(100*FU, Paint.DANGER_TIME*FU)
+			end
+			
 			-- insta-regen cases
 			if (p.powers[pw_shield])
 				p.powers[pw_shield] = 0

@@ -326,6 +326,7 @@ function Paint:initPlayer(p)
 		hurttic = 0,
 		timetoheal = 0,
 		-- SP armor, set brokenarmor to false when armorregen == 0
+		-- also called danger in splatoon raiders
 		brokenarmor = false,
 		armorregen = 0, 
 		--
@@ -431,6 +432,8 @@ Paint.SQUID_HEIGHT = 25*FU
 Paint.CANOPY_ANIM = 6
 Paint.IDLE_OFFSET = -13*FU
 Paint.SWING_ANIM = 6
+Paint.DANGER_TIME = 12*TR -- fast = 4*TR
+Paint.DANGER_TIME_FAST = 4*TR -- fast = 4*TR
 
 Paint.SIGNAL_TIME = 3*TR
 Paint.SIGNAL_BOOYAH		= 1
