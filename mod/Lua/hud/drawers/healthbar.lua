@@ -57,16 +57,23 @@ end
 
 -- not the health bars from v11 unfortunately...
 -- just the healthbar from raiders
+local SLIDEIN = TR/2
+local ANIM = 5
+local cv_respawndelay
 addHook("HUD",function(v,p,cam)
 	if not CV.healthbar.value
 		if wasactive then hud.enable("lives") end
 		return
 	end
 	wasactive = true
+	if not cv_respawndelay
+		cv_respawndelay = CV_FindVar("respawndelay")
+	end
 	
 	local me = p.mo
 	if not (me and me.valid) then return end
 	if not Paint:playerIsActive(p) then return end
+	if p.spectator then return end
 	local pt = p.paint
 	
 	hud.disable("lives")
@@ -74,13 +81,43 @@ addHook("HUD",function(v,p,cam)
 	local danger = pt.brokenarmor
 	
 	local flags = V_SNAPTOBOTTOM|V_SNAPTOLEFT
-	local x = 10*FU
-	local y = (200 - 20)*FU
+	local x = 6*FU
+	local y = (200 - 22)*FU
+	if TurfWar ~= nil
+		local canmoveit = true
+		if not (gametyperules & GTR_RESPAWNDELAY) then canmoveit = false; end
+		if not (cv_respawndelay.value) then canmoveit = false; end
+		if (p.playerstate ~= PST_DEAD) then canmoveit = false; end
+		if (p.deadtimer < SLIDEIN) then canmoveit = false; end
+		
+		if canmoveit
+			local timer = (p.deadtimer - SLIDEIN) + 1
+			if timer < ANIM
+				local frac = (FU/ANIM) * (timer)
+				x = ease.inquad(frac, $, -160*FU)
+				y = ease.inquad(frac, $, $ - 16*FU)
+			else
+				x = -160*FU
+				y = $ - 16*FU
+			end
+			v.dointerp(true)
+		end
+	end
+	
 	local clrmp
 	if danger
 		clrmp = v.getColormap(TC_DEFAULT, SKINCOLOR_CARBON)
 	else
-		clrmp = v.getColormap(TC_DEFAULT, SKINCOLOR_SEAFOAM)
+		local clr = SKINCOLOR_SEAFOAM
+		if (gametyperules & GTR_TEAMS)
+			if p.ctfteam == 1
+				clr = skincolor_redteam
+			else
+				clr = skincolor_blueteam
+			end
+		end
+		
+		clrmp = v.getColormap(TC_DEFAULT, clr)
 	end
 	
 	local maxwidth = 90*FU
@@ -95,9 +132,7 @@ addHook("HUD",function(v,p,cam)
 	local width = FixedMul(maxwidth, hpprogress)
 	local height = 10*FU
 	
-	v.drawFill(x/FU,(y/FU)+1, maxwidth/FU, (height/FU)-2, 17|V_REVERSESUBTRACT|flags)
-	v.drawFill((x/FU)+1,(y/FU), (maxwidth/FU) - 2, 1, 17|V_REVERSESUBTRACT|flags)
-	v.drawFill((x/FU)+1,(y/FU)+(height/FU)-1, (maxwidth/FU) - 2, 1, 17|V_REVERSESUBTRACT|flags)
+	v.drawScaled(x,y, FU, v.cachePatch("PAINT_HEALTHBG"), V_REVERSESUBTRACT|flags)
 	
 	local ox = (leveltime*FU)/8
 	local oy = (leveltime*FU)/8
@@ -124,4 +159,5 @@ addHook("HUD",function(v,p,cam)
 			string.format("%d | %d", hp/FU, 100), flags, FU
 		)
 	end
+	v.dointerp(false)
 end,"game")
