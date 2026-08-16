@@ -1,4 +1,4 @@
-local MYVERSION = 100
+local MYVERSION = 101
 local ADDHOOK = true
 if rawget(_G, "ExactoCam_Version")
 	if ExactoCam_Version == MYVERSION then return end
@@ -33,12 +33,19 @@ local cammo = nil
 local ANGLETURN = 0
 local ANGLETURN2 = 0
 local AIMING = 0
+local ANGLE_CAP = FixedAngle(70*FU) >> 16
 addHook("PlayerCmd",function(p,cmd)
 	if p ~= consoleplayer then return end
 	
 	ANGLETURN = cmd.angleturn<<16
 	ANGLETURN2 = ANGLETURN
-	AIMING = cmd.aiming<<16
+	local aiming = cmd.aiming
+	if aiming > ANGLE_CAP
+		aiming = ANGLE_CAP
+	elseif aiming < -ANGLE_CAP
+		aiming = -ANGLE_CAP
+	end
+	AIMING = aiming<<16
 	
 	if (p.realmo.flags2 & MF2_TWOD or twodlevel)
 		if cmd.sidemove == 0
@@ -66,6 +73,11 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 	if not (p and p.valid) then return end
 	local me = p.realmo
 	if not (me and me.valid) then return end
+	
+	if (p.awayviewtics > 0)
+	and (p.awayviewmobj ~= cammo)
+		return
+	end
 	
 	if (p.powers[pw_carry] == CR_NIGHTSFALL or p.powers[pw_carry] == CR_NIGHTSMODE) then return end
 	
@@ -347,11 +359,17 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 		ANGLETURN2 = ha
 		AIMING = va
 		
-		local dist = R_PointTo3DDist(cammo.x,cammo.y,cammo.z, focusPos.x,focusPos.y,focusPos.z)
-		if dist > camdist
-			local adjust = dist - camdist
-			local moveVec = Vec3.SphereToCartesian(ha,va) * adjust
-			moveVec:ToMobjPos(cammo, false, false)
+		if (focusPos.z > me.floorz)
+			local dist = R_PointTo3DDist(cammo.x,cammo.y,cammo.z, focusPos.x,focusPos.y,focusPos.z)
+			if dist > camdist
+				local adjust = dist - camdist
+				local moveVec = Vec3.SphereToCartesian(ha,va) * adjust
+				moveVec:ToMobjPos(cammo, false, false)
+			else
+				local adjust = (dist - camdist) / 5
+				local moveVec = Vec3.SphereToCartesian(ha,va) * adjust
+				moveVec:ToMobjPos(cammo, false, false)
+			end
 		end
 	end
 	
