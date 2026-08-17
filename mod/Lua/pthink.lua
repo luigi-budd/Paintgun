@@ -602,9 +602,19 @@ addHook("PlayerThink",function(p)
 		and not (p.lastbuttons & BT_WEAPONPREV)
 			sel = $ - 1
 		end
-		if sel ~= 0
-		and not ((pt.endlag or pt.shieldlag or pt.lastslowdown)
+		local canswap = true
+		if ((pt.endlag or pt.shieldlag or pt.lastslowdown)
 		or (pt.turretmode or pt.dodgeroll.tics or pt.dodgeroll.getup))
+			canswap = false
+		end
+		
+		local thiswep = pt.inventory.items[pt.inventory.curslot]
+		if (thiswep and thiswep.callbacks and thiswep.callbacks.canswap)
+			local res = thiswep.callbacks.canswap(p,pt,thiswep, canswap)
+			if res ~= nil then canswap = res; end
+		end
+		
+		if sel ~= 0 and canswap
 			pt.inventory.curslot = $ + sel
 			if pt.inventory.curslot > pt.inventory.slots
 				pt.inventory.curslot = 1
@@ -632,6 +642,10 @@ addHook("PlayerThink",function(p)
 	end
 	local sub_t = Paint.subs[cur_weapon.subtype]
 	p.weapondelay = max($, 5)
+	
+	if (cur_weapon.callbacks and cur_weapon.callbacks.prethinker)
+		cur_weapon.callbacks.prethinker(p,pt, cur_weapon)
+	end
 	
 	-- brella shield
 	pt.shieldwait = max($-1, 0)
@@ -2274,6 +2288,10 @@ addHook("PlayerThink",function(p)
 		if pt.hittime == 0
 			pt.hitlist = {}
 		end
+	end
+
+	if (cur_weapon.callbacks and cur_weapon.callbacks.postthinker)
+		cur_weapon.callbacks.postthinker(p,pt, cur_weapon)
 	end
 end)
 

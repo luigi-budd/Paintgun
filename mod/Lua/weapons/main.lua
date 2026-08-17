@@ -452,6 +452,10 @@ local weapon_meta = {
 		
 		bulletthinker = nil,
 		crosshairthinker = nil,
+		
+		canswap = nil,
+		prethinker = nil, -- before paintgun logic, in playerthink
+		postthinker = nil, -- after paintgun logic, in playerthink
 	}
 }
 registerMetatable(weapon_meta)
