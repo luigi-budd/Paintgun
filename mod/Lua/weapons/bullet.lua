@@ -273,7 +273,7 @@ local function ExplodeShot(shot)
 	shot.exploded = true
 
 	shot.powerful = false
-	P_SetOrigin(shot,shot.x,shot.y,shot.z)
+	-- P_SetOrigin(shot,shot.x,shot.y,shot.z)
 	if not (shot and shot.valid) then return end
 	local wep = Paint.weapons[shot.weapon_id]
 	local sfx = P_SpawnGhostMobj(shot)
@@ -959,20 +959,14 @@ addHook("MobjMoveCollide",function(shot,mo)
 		Paint:doProjHitmarker(shot, mo, true)
 		Paint.HUD:damageNumber(p, mo, shot.damage)
 		
-		if (wep.guntype == WPT_CHARGER
-		and shot.charge >= wep:get(pt,"chargetime"))
-		or (wep.guntype == WPT_BLASTER)
-			if wep.guntype == WPT_BLASTER
-				shot.donthit = mo
-				ExplodeShot(shot)
-				P_KillMobj(shot)
-				return
-			end
+		if shot.blastertype
+			shot.donthit = mo
+			ExplodeShot(shot)
+			P_KillMobj(shot)
+			return
 		end
 		
-		if ((wep.guntype == WPT_CHARGER
-		and shot.pierces)
-		or (wep.pierces == -1))
+		if ((wep.guntype == WPT_CHARGER and shot.pierces) or (wep.pierces == -1))
 		and shot.powerful
 		and (not mo.paint_shield)
 			shot.pierces = $ - 1
@@ -996,19 +990,15 @@ addHook("MobjMoveCollide",function(shot,mo)
 			HitSplat(shot)
 			Paint:doProjHitmarker(shot, mo, true)
 			Paint.HUD:damageNumber(p, mo, newdamage)
-			if (wep.guntype == WPT_CHARGER
-			and shot.charge >= wep:get(pt,"chargetime"))
-			or (wep.guntype == WPT_BLASTER)
-				if wep.guntype == WPT_BLASTER
-					shot.donthit = mo
-					ExplodeShot(shot)
-					return
-				end
+			
+			if shot.blastertype
+				shot.donthit = mo
+				ExplodeShot(shot)
+				P_KillMobj(shot)
+				return
 			end
 			
-			if ((wep.guntype == WPT_CHARGER
-			and shot.pierces)
-			or (wep.pierces == -1))
+			if ((wep.guntype == WPT_CHARGER and shot.pierces) or (wep.pierces == -1))
 			and shot.powerful
 			and (not mo.paint_shield)
 				shot.pierces = $ - 1
