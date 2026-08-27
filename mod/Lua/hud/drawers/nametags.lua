@@ -95,10 +95,12 @@ addHook("HUD",function(v,p,cam)
 			pos = play.realmo
 		end
 		
+		local wvmap = vmap
 		local wcmap = cmap
 		local wacmap = acmap
 		if (va.tag)
-			wcmap = v.getStringColormap(skincolors[va.clr].chatcolor)
+			wvmap = skincolors[va.clr].chatcolor
+			wcmap = v.getStringColormap(wvmap)
 			wacmap = v.getColormap(TC_DEFAULT, va.clr)
 		end
 		
@@ -148,7 +150,7 @@ addHook("HUD",function(v,p,cam)
 		
 		-- this games string drawing is impeccable
 		v.drawScaled(pro.x - (7*pro.scale)/2, pro.y + 8*pro.scale, pro.scale, v.cachePatch("TNYFN027"), 0, wcmap)
-		v.drawString(pro.x, pro.y, str, V_ALLOWLOWERCASE|wcmap, "small-thin-fixed-center")
+		v.drawString(pro.x, pro.y, str, V_ALLOWLOWERCASE|wvmap, "small-thin-fixed-center")
 		if (va.tag)
 			v.drawScaled(tx,pro.y, pro.scale, v.cachePatch("PAINT_TNYCROSS"), 0, wcmap)
 		end
