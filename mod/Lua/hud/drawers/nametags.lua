@@ -14,6 +14,7 @@ function HUD:killNotice(target)
 	local mo = target.realmo
 	if not (mo and mo.valid) then return end
 	if not (displayplayer and displayplayer.valid) then return end
+	if displayplayer.spectator then return end
 	
 	table.insert(HUD.memory.killtags, {
 		pos = {x=mo.x,y=mo.y,z=mo.z + mo.height/2, play = target},
@@ -81,6 +82,7 @@ addHook("HUD",function(v,p,cam)
 	
 	local clr = Paint:getPlayerColor(p)
 	if clr == SKINCOLOR_NONE then return end
+	
 	local vmap = skincolors[clr].chatcolor
 	local cmap = v.getStringColormap(vmap)
 	local acmap = v.getColormap(TC_DEFAULT, clr)
@@ -142,22 +144,11 @@ addHook("HUD",function(v,p,cam)
 		local tx = pro.x
 		
 		v.dointerp(va.id)
-		v.drawScaled(pro.x - (7*pro.scale)/2, pro.y + 8*pro.scale, pro.scale, v.cachePatch("TNYFN027"), 0, wcmap)
-		
 		local str = (va.tag) and (va.name) or play.name
-		pro.x = $ - (v.stringWidth(str,0,"thin")*pro.scale)/2
-		for i = 1, str:len()
-			local char = str:sub(i,i)
-			local byte = char:byte()
-			if (byte < 26 or byte > 126) then continue; end
-			if (char == " ")
-				pro.x = $ + 4*pro.scale
-				continue
-			end
-			local letter = v.cachePatch("TNYFN" .. byteLUT[byte])
-			v.drawScaled(pro.x,pro.y, pro.scale, letter, 0, wcmap)
-			pro.x = $ + (letter.width*pro.scale)
-		end
+		
+		-- this games string drawing is impeccable
+		v.drawScaled(pro.x - (7*pro.scale)/2, pro.y + 8*pro.scale, pro.scale, v.cachePatch("TNYFN027"), 0, wcmap)
+		v.drawString(pro.x, pro.y, str, V_ALLOWLOWERCASE|wcmap, "small-thin-fixed-center")
 		if (va.tag)
 			v.drawScaled(tx,pro.y, pro.scale, v.cachePatch("PAINT_TNYCROSS"), 0, wcmap)
 		end

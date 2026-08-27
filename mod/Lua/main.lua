@@ -124,6 +124,36 @@ function Paint:setTeammates()
 		
 		return
 	end
+	
+	if (gametyperules & GTR_TAG)
+		local hiders,seekers = {},{}
+		local counted = {}
+		
+		for play in players.iterate
+			if play.spectator then continue end
+			if not play.paint then continue end
+			if not (play.mo and play.mo.valid and play.mo.health) then continue end
+			
+			if play.pflags & PF_TAGIT
+				table.insert(seekers, play)
+			else
+				table.insert(hiders, play)
+			end
+			table.insert(counted,play)
+		end
+		
+		for k,play in ipairs(counted)
+			if play.pflags & PF_TAGIT
+				play.paint.teammates = seekers
+			else
+				play.paint.teammates = hiders
+			end		
+		end
+		Paint.alphateam = seekers
+		Paint.bravoteam = hiders
+		return
+	end
+	
 	if not G_GametypeHasTeams() then return end
 	
 	--We iterate everyone in this func so

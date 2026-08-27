@@ -175,6 +175,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	and (source_player and source_player.valid and source_player.pflags & PF_TAGIT)
 		P_DamageMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf, DMG_INSTAKILL)
 		p.pflags = $|PF_TAGIT &~PF_GAMETYPEOVER
+		Paint:setTeammates()
 	else
 		P_KillMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf)
 	end
