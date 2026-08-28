@@ -701,7 +701,7 @@ addHook("AddonLoaded",do
 	
 	MapVote.RegisterGametype(GT_TURFWAR, "Team Paintball", 0, 0, TOL_PAINTGUN, TOL_MATCH)
 	MapVote.RegisterGametype(GT_FFATURFWAR, "FFA Paintball", 0, 0, TOL_PAINTGUN, TOL_MATCH)
-	MapVote.RegisterGametype(GT_CTFTURFWAR, "CTF Paintball", 0, 0, TOL_CTFTURFWAR, TOL_MATCH)
+	MapVote.RegisterGametype(GT_CTFTURFWAR, "CTF Paintball", 0, 0, TOL_CTFTURFWAR, TOL_CTF)
 	
 	addedmv = true
 end)
