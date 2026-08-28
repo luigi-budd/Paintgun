@@ -959,7 +959,10 @@ addHook("PlayerThink",function(p)
 		and not (pt.nofiring or pt.disable.main)
 			if not pt.fireheld
 				justpressedfire = true
-				pt.firewait = cur_weapon.startlag
+				if not pt.firewait
+					pt.firewait = cur_weapon.startlag
+				end
+				
 				if (cur_weapon.guntype == WPT_BRELLA)
 				--or (cur_weapon.guntype == WPT_KATANA)
 					local queuewait = cur_weapon:get(pt,"firerate")
