@@ -1205,7 +1205,7 @@ addHook("TouchSpecial",function(splat,mo)
 		friendly = Paint:mobjsOnTeam(mo, p.mo)
 	end
 	
-	if (p.pflags & PF_TAGIT) and (leveltime <= CV.FindVar("hidetime").value * TR)
+	if (p and p.valid) and (p.pflags & PF_TAGIT) and (leveltime <= CV.FindVar("hidetime").value * TR)
 		return nope(splat,mo)
 	end
 	

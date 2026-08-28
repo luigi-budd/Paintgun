@@ -1,12 +1,12 @@
-local MYVERSION = 101
+local MYVERSION = 204
 local ADDHOOK = true
 if rawget(_G, "ExactoCam_Version")
 	if ExactoCam_Version == MYVERSION then return end
 	
 	ADDHOOK = (ExactoCam_Version < MYVERSION)
+	if not ADDHOOK then return end
 end
 rawset(_G,"ExactoCam_Version", MYVERSION)
-
 local TR = TICRATE
 
 local function P_ClosestPointOnLine3D(p, lstart, lend)
@@ -28,24 +28,43 @@ local function P_ClosestPointOnLine3D(p, lstart, lend)
 	n = $ * t
 	return Vec3.Add(lstart, n)
 end
+
+local function SafeVecPos(v, mo, absolute)
+	local destx = v.x
+	local desty = v.y
+	local destz = v.z
+	if not absolute then
+		destx = $ + mo.x
+		desty = $ + mo.y
+		destz = $ + mo.z
+	end
+	
+	local oldmz = mo.momz
+	mo.momz = destz - mo.z
+	P_ZMovement(mo)
+	if (mo.momz ~= destz - mo.z) and false
+		mo.momz = oldmz; return false;
+	end
+	mo.momz = oldmz
+	
+	if not P_TryMove(mo, destx, desty, true)
+		return false
+	end
+	
+	return true
+end
+
 local cammo = nil
 
 local ANGLETURN = 0
 local ANGLETURN2 = 0
 local AIMING = 0
-local ANGLE_CAP = FixedAngle(70*FU) >> 16
 addHook("PlayerCmd",function(p,cmd)
 	if p ~= consoleplayer then return end
 	
 	ANGLETURN = cmd.angleturn<<16
 	ANGLETURN2 = ANGLETURN
-	local aiming = cmd.aiming
-	if aiming > ANGLE_CAP
-		aiming = ANGLE_CAP
-	elseif aiming < -ANGLE_CAP
-		aiming = -ANGLE_CAP
-	end
-	AIMING = aiming<<16
+	AIMING = cmd.aiming<<16
 	
 	if (p.realmo.flags2 & MF2_TWOD or twodlevel)
 		if cmd.sidemove == 0
@@ -85,8 +104,8 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 		cammo = P_SpawnMobjFromMobj(me, 0,0,0, MT_RAY)
 		cammo.fuse = -1
 		cammo.tics = -1
-		cammo.height = camera.height
-		cammo.radius = camera.radius
+		cammo.height = camera.height / 2
+		cammo.radius = camera.radius / 2
 		cammo.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOSECTOR|MF_NOBLOCKMAP|MF_NOGRAVITY|MF_NOTHINK
 	end
 	cammo.height = camera.height
@@ -175,6 +194,7 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 	local adjustVec = Vec3.SphereToCartesian(ANGLETURN, AIMING) * (-camdist)
 	adjustVec = focusPos + adjustVec
 	-- clipping / poppercam
+	cammo.flags = ($ &~(MF_NOCLIP|MF_NOCLIPHEIGHT))|(me.flags & (MF_NOCLIP|MF_NOCLIPHEIGHT))
 	if not (me.flags & (MF_NOCLIP|MF_NOCLIPHEIGHT) or p.powers[pw_carry] == CR_NIGHTSMODE or twod)
 		local camSec = R_PointInSubsector(adjustVec.x,adjustVec.y).sector
 		if camSec.camsec
@@ -231,6 +251,7 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 		*/
 		
 		--if abs(bound - adjustVec.z) >= camdist/2
+		-- TODO: replace this bs with a stepper. UGH!
 		if (adjustVec.z < botZ)
 		or (adjustVec.z > topZ)
 		or (R_PointInSubsectorOrNil(adjustVec.x,adjustVec.y) == nil)
@@ -264,6 +285,22 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 				movewasblocked = true
 			end
 		end
+		
+		--[[
+		local steps = 320
+		local offsetVec = ((adjustVec + shiftVec) - focusPos) / (steps*FU)
+		for i = steps/5, steps
+			local t = P_SpawnMobjFromMobj(cammo, 0,0,0, MT_THOK)
+			t.scale = $ / 8
+			t.tics = 2
+			t.fuse = 2
+			
+			if not SafeVecPos(focusPos + (offsetVec*(i*FU)), cammo, true)
+				print("broke", i, steps/5)
+				break
+			end
+		end
+		]]
 	end
 	/*
 	if sidefrac
@@ -272,6 +309,9 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 		adjustVec = $ + sideVec
 	end
 	*/
+	
+	local updateangles = true
+	
 	-- invisicam
 	if (p.playerstate == PST_LIVE)
 		Vec3.ToMobjPos(adjustVec + shiftVec, cammo, true, false)
@@ -302,6 +342,7 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 				if (blockingmobjs[found]) then return end
 				if (found.type == MT_PLAYER and not checkplayers) then return end
 				if (found.flags & (MF_SOLID|MF_SCENERY|MF_NOTHINK) == 0) then return end
+				if (found.type == MT_PAINT_WALLSPLAT) then return end
 				/*
 				print(found.info.typename,
 					found.flags & MF_SOLID == MF_SOLID,
@@ -332,16 +373,42 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 			local angletome = R_PointToAngle2(found.x,found.y, me.x,me.y)
 			local angdiff = AngleFixed(angletome - ANGLETURN)
 			
-			if abs(intersect.x - found.x) <= found.radius + radius
+			/*
+			local linesintersect = false
+			if (found.frame & FF_PAPERSPRITE or found.renderflags & RF_PAPERSPRITE)
+				local a = found.angle
+				local mstart = Vec3.New(
+					found.x - FixedMul(found.radius, cos(a)),
+					found.y - FixedMul(found.radius, sin(a)),
+					found.z
+				)
+				local mend = Vec3.New(
+					found.x + FixedMul(found.radius, cos(a)),
+					found.y + FixedMul(found.radius, sin(a)),
+					found.z
+				)
+				local mint = P_ClosestPointOnLine3D(intersect, mstart, mend)
+				linesintersect = (mint.x == intersect.x) and (mint.y == intersect.y)
+			end
+			*/
+			
+			if (abs(intersect.x - found.x) <= found.radius + radius
 			and abs(intersect.y - found.y) <= found.radius + radius
 			and (
 				found.z <= intersect.z + height -- check overhead
 				and found.z+found.height*3/2 >= intersect.z -- check underhead
-			)
+			))
 			and (
 				(angdiff <= 28*FU or angdiff >= (360 - 28)*FU)
 				or R_PointToDist2(adjustVec.x,adjustVec.y, found.x,found.y) <= 64*me.scale
 			)
+			--or linesintersect
+			or (abs(focusPos.x - found.x) <= found.radius + radius
+			and abs(focusPos.y - found.y) <= found.radius + radius
+			and (
+				found.z <= focusPos.z + height -- check overhead
+				and found.z+found.height*3/2 >= focusPos.z -- check underhead
+			))
 				obscuring = true
 			end
 			
@@ -355,10 +422,23 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 			end
 		end
 	else
+		updateangles = false
+		
+		-- TODO: killcam
+		/*
 		local ha,va = R_PointTo3DAngles(cammo.x,cammo.y,cammo.z, focusPos.x,focusPos.y,focusPos.z)
 		ANGLETURN2 = ha
-		AIMING = va
 		
+		local aim = AngleFixed(va)
+		if aim > 180*FU then aim = -(360*FU - $); end
+		if aim > 50*FU and aim < 180*FU
+			aim = 50*FU
+		elseif aim < -50*FU
+			aim = -50*FU
+		end
+		AIMING = FixedAngle(aim)
+		
+		camdist = $ * 3/2
 		if (focusPos.z > me.floorz)
 			local dist = R_PointTo3DDist(cammo.x,cammo.y,cammo.z, focusPos.x,focusPos.y,focusPos.z)
 			if dist > camdist
@@ -371,12 +451,17 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 				moveVec:ToMobjPos(cammo, false, false)
 			end
 		end
+		*/
 	end
 	
 	-- P_TeleportCameraMove(camera, cammo.x, cammo.y, cammo.z)
-	cammo.angle = ANGLETURN2
+	if updateangles
+		cammo.angle = ANGLETURN2
+	end
 	if camera.chase and not freecam_active
-		p.awayviewaiming = AIMING
+		if updateangles
+			p.awayviewaiming = AIMING
+		end
 		p.awayviewmobj = cammo
 		p.awayviewtics = 2
 	elseif p.awayviewmobj == cammo

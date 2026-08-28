@@ -68,3 +68,8 @@ end)
 dofile("lib/w2s.lua")
 dofile("lib/soap.lua")
 dofile("lib/knockback.lua")
+
+dofile("lib/ExactoCam/LUA_math.lua")
+dofile("lib/ExactoCam/Vec3.lua")
+dofile("lib/ExactoCam/Vec2.lua")
+dofile("lib/ExactoCam/main.lua")
