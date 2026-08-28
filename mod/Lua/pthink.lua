@@ -2124,6 +2124,8 @@ addHook("PlayerThink",function(p)
 		end
 	elseif p.panim == PA_IDLE
 	and not pt.aimingsub
+	and not ((me.skin == "pointy" or me.skin == "fluffy") and p.cc_neckenabled)
+		-- anglestand
 		p.drawangle = pt.anglestand
 	else
 		pt.anglestand = p.drawangle
@@ -2160,6 +2162,12 @@ addHook("PlayerThink",function(p)
 		end
 		p.normalspeed = FixedMul($, slowdown)
 		p.charflags = $|SF_NOJUMPSPIN
+		
+		if me.state == S_PLAY_WAIT
+			me.state = S_PLAY_STND
+		elseif me.state == S_PLAY_STND
+			me.state = S_PLAY_STND
+		end
 	end
 	if (p.gotflag)
 		p.normalspeed = $ * 8/10
