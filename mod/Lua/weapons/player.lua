@@ -191,7 +191,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 		--CONS_Printf(sorp, "\x82Killed "..p.name.."!")
 		if source_player and source_player.valid
 			if not (gametyperules & (GTR_TAG|GTR_HIDEFROZEN))
-				P_AddPlayerScore(source_player, 500)
+				P_AddPlayerScore(source_player, 110)
 			end
 			Paint.HUD:killConfirm(source_player, p)
 		end
