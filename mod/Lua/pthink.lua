@@ -42,6 +42,7 @@ addHook("PlayerCmd",function(p,cmd)
 end)
 
 Paint.basePlayer = {}
+-- welcome to bp brother
 local BP = Paint.basePlayer
 
 BP.BASE_NSPEED = 20*FU
@@ -943,6 +944,7 @@ addHook("PlayerThink",function(p)
 			p.cmd.buttons = $ &~BT_SPIN
 		end
 		
+		local oldspinheld = pt.spinheld
 		if (pt.buttons & BT_SPIN)
 			pt.spinheld = $ + 1
 		else
@@ -977,11 +979,18 @@ addHook("PlayerThink",function(p)
 					elseif (pt.cooldown < queuewait)
 						pt.firequeued = true
 					end
+				elseif (cur_weapon.guntype == WPT_KATANA)
+					if pt.realfireheld > pt.fireheld
+					and oldspinheld
+						justpressedfire = false
+						pt.firequeued = false
+					end
 				end
 			end
 			pt.fireheld = $ + 1
 			p.cmd.buttons = $|BT_ATTACK
 			
+			-- this is what makes swim form override shooting
 			if (pt.spinheld and pt.spinheld < pt.fireheld)
 				pt.fireheld = 0
 				p.cmd.buttons = $ &~BT_ATTACK
@@ -1005,6 +1014,7 @@ addHook("PlayerThink",function(p)
 					pt.wasfastcharging = false
 				elseif (cur_weapon.guntype == WPT_KATANA)
 					pt.charge = 0
+					pt.firequeued = false
 					
 					local charge_sound = cur_weapon:get(pt,"charging_sound")
 					local slow_charge_sound = cur_weapon:get(pt,"slow_charging_sound")
@@ -1024,12 +1034,18 @@ addHook("PlayerThink",function(p)
 				p.cmd.buttons = $ &~BT_ATTACK
 			end
 		end
+		print("firing",
+			p.cmd.buttons & BT_ATTACK,
+			pt.fireheld,
+			pt.firequeued
+		)
 		
 		if pt.firewait == 1
 			justpressedfire = true
 			pt.fireheld = $ + 1
 			p.cmd.buttons = $|BT_ATTACK
 		end
+		if (pt.squidtoggle) then pt.firequeued = false; end
 		if pt.firequeued
 			if pt.cooldown == 1
 				p.cmd.buttons = $ &~BT_ATTACK
@@ -1150,14 +1166,11 @@ addHook("PlayerThink",function(p)
 			me.spriteyscale = easing(frac, FU, maxsquish)
 			--pt.fireheld = 0
 			--p.cmd.buttons = $ &~BT_ATTACK
+			pt.waskatanacharging = false
 			pt.wasinsquid = true
 		else
 			if pt.wasinsquid
 				S_StartSound(me,sfx_pt_toh)
-				if pt.fireheld ~= 0
-					pt.fireheld = 1
-					justpressedfire = true
-				end
 				if pt.storedcharge
 					S_StartSound(nil, sfx_pt_kth, p)
 					pt.charge = pt.storedcharge
@@ -1226,7 +1239,7 @@ addHook("PlayerThink",function(p)
 						or S_SoundPlaying(me, sfx_pt_b3)
 						or S_SoundPlaying(me, sfx_pt_b4)
 					) and (chance) and (pt.squididle >= TR/3) then
-						local vol = (p == displayplayer) and (255/4) or (255/7)
+						local vol = (p == displayplayer) and (255/4) or (255/11)
 						S_StartSoundAtVolume(me, sfx, vol)
 					end
 					pt.squididle = min($ + 1, TR/2)
@@ -1771,7 +1784,7 @@ addHook("PlayerThink",function(p)
 			local charging_sound = cur_weapon:get(pt,"charging_sound")
 			local slow_charging_sound = cur_weapon:get(pt,"slow_charging_sound")
 			if firing and (pt.fireheld >= min_charge_time)
-				local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "inkcost")+1)
+				local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "v_inkcost")+1)
 				local slowcharge = lowink
 				
 				doslowdown = true
@@ -1797,9 +1810,9 @@ addHook("PlayerThink",function(p)
 					end
 				end
 				
-				local mincost = cur_weapon:get(pt,"mininkcost")
+				local mincost = cur_weapon:get(pt,"v_inkcost")
 				local chargeprogress = min(FixedDiv(pt.charge, charge_time), FU)
-				pt.inkqueue = mincost + FixedMul(cur_weapon.inkcost - mincost, chargeprogress)
+				pt.inkqueue = FixedMul(mincost, chargeprogress)
 				pt.wasfastcharging = not slowcharge
 				
 				pt.anglefix = max($, 1)
@@ -1838,7 +1851,7 @@ addHook("PlayerThink",function(p)
 	if not pt.charge
 		pt.chargetics = 0
 	end
-	--print("lag", pt.firewait, pt.endlag, pt.cooldown, "firerate = "..cur_weapon:get(pt,"firerate"))
+	print("lag", pt.firewait, pt.endlag, pt.cooldown, "firerate = "..cur_weapon:get(pt,"firerate"))
 	
 	-- handle dodge rolls
 	local dd = pt.dodgeroll

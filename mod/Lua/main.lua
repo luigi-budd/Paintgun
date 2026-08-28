@@ -454,6 +454,18 @@ function Paint:resetPlayer(p)
 		end
 	end
 	
+	pt.shield = nil
+	pt.shieldwait = 0
+	-- pt.shieldlag = Paint.CANOPY_ANIM, -- keep deployed for this long
+	pt.shieldregen = 0
+	pt.shieldtime = 0
+	pt.shieldlost = false
+	pt.shieldlosttime = 0
+	pt.deployshield = false
+	pt.wasdeployed = false
+	pt.shieldjustbroke = false
+	pt.shieldjustregened = false
+
 	pt.teammates = nil
 	Paint:setTeammates()
 end

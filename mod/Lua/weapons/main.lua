@@ -359,6 +359,7 @@ local weapon_meta = {
 	v_fuse = 13, -- vertical slashes
 	v_speed = FixedMul(tofixed("1.2"), Paint.DU2FU), -- spawnspeed for vertical slashes
 	v_inkcost = 6*FU, -- inkcost for vertical slashes
+	v_endlag = 12,
 	c_radius = 14*FU, -- radius and height for the center projectile
 	c_height = 20*FU,
 	vc_radius = 16*FU, -- radius and height for the center projectile

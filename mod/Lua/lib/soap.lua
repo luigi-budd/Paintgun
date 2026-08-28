@@ -42,7 +42,6 @@ rawset(_G,"Paint_canHurtEnemy",function(p, mobj,flags,exclude, nobs)
 			return false
 		end
 		if (mobj.tracer and mobj.tracer.valid)
-		and (mobj.paint_checkteams)
 			if Paint:mobjsOnTeam(p.mo, mobj.tracer)
 				return false
 			end
@@ -57,7 +56,7 @@ rawset(_G,"Paint_canHurtEnemy",function(p, mobj,flags,exclude, nobs)
 		if (mobj.tracer_player and mobj.tracer_player.valid)
 			if (mobj.tracer_player == p)
 				return false
-			else
+			elseif (mobj.paint_checkteams)
 				return Paint_canHurtPlayer(p, mobj.tracer_player)
 			end
 		end

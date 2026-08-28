@@ -555,6 +555,7 @@ mobjinfo[MT_PAINT_SPLATTER] = {
 	spawnstate = S_PAINT_SPLATTER,
 	spawnhealth = 1,
 	deathstate = S_PAINT_SPLATTER,
+	dispoffset = -300,
 }
 mobjinfo[MT_PAINT_WALLSPLAT] = {
 	doomednum = -1,

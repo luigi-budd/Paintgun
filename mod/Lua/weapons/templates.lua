@@ -94,6 +94,12 @@ function Paint.wtemplate_splatana(p,pt, weapon, key,value, crosshair)
 	elseif key == "shotstate"
 	and pt.maxchargeshot
 		return weapon:get(pt,"vshotstate")
+	elseif key == "firerate"
+	and pt.maxchargeshot
+		return weapon:get(pt,"v_endlag")
+	elseif key == "endlag"
+	and pt.maxchargeshot
+		return weapon:get(pt,"v_endlag")
 	
 	elseif key == "melee_damage"
 	and (pt.maxchargeshot)
