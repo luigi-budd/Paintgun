@@ -9,3 +9,5 @@ dofile("weapons/def/undercover_brella.lua")
 dofile("weapons/def/splatana_wiper.lua")
 
 dofile("weapons/def/ZE2/accelring.lua")
+
+dofile("weapons/def/special/rainmaker.lua")

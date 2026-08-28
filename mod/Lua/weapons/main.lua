@@ -91,6 +91,8 @@ rawset(_G, "WPT_BRUSH",   9 )
 rawset(_G, "WPT_BOW",     10)
 rawset(_G, "WPT_KATANA",  11) -- x
 
+rawset(_G, "WPT_SPECIAL",  12)
+
 -- shot states
 rawset(_G, "SS_STRAIGHT", 1)
 rawset(_G, "SS_BRAKE", 2)

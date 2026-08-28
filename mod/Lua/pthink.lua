@@ -600,6 +600,7 @@ addHook("PlayerThink",function(p)
 	me.jumptime = $ or 0
 	pt.spreadadd = 0
 	
+	local forcerainmaker = false --(p.gotflag or true)
 	local doslowdown = false
 	local fireangle = p.cmd.angleturn << 16
 	pt.old_weaponid = pt.weapon_id
@@ -619,7 +620,8 @@ addHook("PlayerThink",function(p)
 			canswap = false
 		end
 		
-		local thiswep = pt.inventory.items[pt.inventory.curslot]
+		local thiswep = Paint.weapons[pt.inventory.items[pt.inventory.curslot]]
+		if forcerainmaker then thiswep = Paint.weapons["rainmaker"]; end
 		if (thiswep and thiswep.callbacks and thiswep.callbacks.canswap)
 			local res = thiswep.callbacks.canswap(p,pt,thiswep, canswap)
 			if res ~= nil then canswap = res; end
@@ -637,6 +639,10 @@ addHook("PlayerThink",function(p)
 	end
 	
 	pt.weapon_id = pt.inventory.items[pt.inventory.curslot]
+	if forcerainmaker
+		pt.weapon_id = "rainmaker"
+	end
+	
 	local cur_weapon = Paint.weapons[pt.weapon_id]
 	if cur_weapon == nil then
 		local wepmo = pt.weaponmobj
@@ -1592,10 +1598,12 @@ addHook("PlayerThink",function(p)
 		else
 			pt.inktank = $ + ink_refill_rate
 		end
-		if oldtank < sub_t:get(pt,"inkcost")
-		and pt.inktank >= sub_t:get(pt,"inkcost")
-			S_StartSound(nil, sfx_pt_srd, p)
-			pt.justrestored = true
+		if sub_t ~= nil
+			if oldtank < sub_t:get(pt,"inkcost")
+			and pt.inktank >= sub_t:get(pt,"inkcost")
+				S_StartSound(nil, sfx_pt_srd, p)
+				pt.justrestored = true
+			end
 		end
 		pt.inktank = min($, 100*FU)
 	end
@@ -1603,7 +1611,9 @@ addHook("PlayerThink",function(p)
 	pt.justcharged = false
 	pt.inkqueue = 0
 	if not pt.squidtoggle
-		if (cur_weapon.guntype == WPT_SHOOTER
+		if (cur_weapon.guntype == WPT_SPECIAL)
+			
+		elseif (cur_weapon.guntype == WPT_SHOOTER
 		or cur_weapon.guntype == WPT_BLASTER
 		or cur_weapon.guntype == WPT_DUALIES
 		or cur_weapon.guntype == WPT_BRELLA)
@@ -1978,6 +1988,7 @@ addHook("PlayerThink",function(p)
 	local wasaiming = pt.aimingsub
 	if not (pt.fireheld or pt.squidtoggle or p.exiting)
 	and (p.cmd.buttons & BT_FIRENORMAL)
+	and (sub_t ~= nil)
 		pt.aimingsub = true
 	else
 		pt.aimingsub = false

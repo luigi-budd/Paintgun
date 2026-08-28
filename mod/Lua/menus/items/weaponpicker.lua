@@ -155,11 +155,13 @@ ML.addMenu({
 				v.cachePatch(info.icon),
 				itrans
 			)
-			v.drawScaled((x + 4)*FU, (y + 4)*FU,
-				FU/16,
-				v.cachePatch("PTCLASS_"..CLASS2ICON[info.guntype]),
-				itrans
-			)
+			if CLASS2ICON[info.guntype] ~= nil
+				v.drawScaled((x + 4)*FU, (y + 4)*FU,
+					FU/16,
+					v.cachePatch("PTCLASS_"..CLASS2ICON[info.guntype]),
+					itrans
+				)
+			end
 			local sub_t = Paint.subs[info.subtype or ""]
 			if sub_t
 				v.drawScaled((x + (dimen - 4))*FU, (y + 4)*FU,
@@ -198,11 +200,13 @@ ML.addMenu({
 					v.cachePatch(wep.icon),
 					0
 				)
-				v.drawScaled((x + 4)*FU, (y + 4)*FU,
-					FU/16,
-					v.cachePatch("PTCLASS_"..CLASS2ICON[wep.guntype]),
-					0
-				)
+				if CLASS2ICON[wep.guntype] ~= nil
+					v.drawScaled((x + 4)*FU, (y + 4)*FU,
+						FU/16,
+						v.cachePatch("PTCLASS_"..CLASS2ICON[wep.guntype]),
+						0
+					)
+				end
 				local sub_t = Paint.subs[wep.subtype or ""]
 				if sub_t
 					v.drawScaled((x + (dimen - 4))*FU, (y + 4)*FU,
