@@ -38,12 +38,12 @@ Paint:registerWeapon({
 	h_spread = {4*FU, 4*FU},
 	v_spread = {4*FU, 4*FU},
 	spread_recovery = 0, -- how many tics to wait before recovering spread
-	spread_jumpspread = 7*FU, -- how many degrees does jump inaccuracy add?
+	spread_jumpspread = 6*FU, -- how many degrees does jump inaccuracy add?
 	spread_jump = 56, -- how many tics until jump spread decays?
 	spread_jumpchance = (FU * 50), -- set spread chance to this when jumping
 
 	spawnspeed = FixedMul(FixedMul(tofixed("0.945"), Paint.DU2FU), Paint.SIXTY2THIRTYFIVE),
-	str_tics = 8, -- straight state lasts this many tics
+	str_tics = 5, -- straight state lasts this many tics
 	str2brk_maxspeed = FixedMul(tofixed("0.9131"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
 	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
 	brk_gravity = tofixed("0.07"),
@@ -52,16 +52,16 @@ Paint:registerWeapon({
 	brk2fre_tics = 4, -- or when brake state lasts this many tics
 	fre_airresist = FU * 98/100,
 	fre_gravity = FixedMul(tofixed("0.016"), Paint.DU2FU),
-	crs_guideframe = 9, -- crosshair is placed at this frame in the shot's lifetime
+	crs_guideframe = 8, -- crosshair is placed at this frame in the shot's lifetime
 	
 	groupnum = 2,
 	groups = {
 		{
-			radius = FixedMul(tofixed("1.11"), Paint.DU2FU),
+			radius = FixedMul(tofixed("1.025"), Paint.DU2FU),
 			damage = 70*FU
 		},
 		{
-			radius = FixedMul(tofixed("3.47"), Paint.DU2FU),
+			radius = FixedMul(tofixed("3.385"), Paint.DU2FU),
 			damage = 50*FU
 		},
 	},
