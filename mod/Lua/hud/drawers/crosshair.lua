@@ -167,7 +167,7 @@ local function rangecaster(p,me,pt,cur_weapon, dualieflip, chargerdupe)
 	if (workray and workray.valid)
 		local ray = workray
 		local range = ray.range
-		local debugtrail = Paint.CV.debug_crosshair.value
+		local debugtrail = Paint.CV.debug_crosshair.value == 1
 		
 		local wep = Paint.weapons[ray.weapon_id]
 		local crsthinker
@@ -314,6 +314,7 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		ray.finalpos.z = ray.z + FixedMul(range, aimvec.z)
 		ray.range = range
 		ray.baseangle = angle
+		ray.turret = pt.turretmode
 		
 		ray.radius = FixedMul(mobjinfo[MT_PAINT_SHOT].radius, ray.scale)
 		ray.height = FixedMul(mobjinfo[MT_PAINT_SHOT].height, ray.scale)
@@ -362,6 +363,7 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		local accurate = Paint.CV.directhit_crosshair.value == 1
 		local range = ray.range
 		local br = ray.radius + 16*ray.scale
+		local debugtrail = Paint.CV.debug_crosshair.value == 2
 		
 		local wep = Paint.weapons[ray.weapon_id]
 		local crsthinker
@@ -413,6 +415,23 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 					if crsthinker(p,pt,cur_weapon, ray)
 						break
 					end
+				end
+				
+				if debugtrail
+					local g = P_SpawnMobjFromMobj(ray, 0,0,0,MT_THOK)
+					g.scale = $ / 4
+					g.fuse = 1
+					g.tics = 1
+					g.frame = $ &~FF_TRANSMASK
+					g.alpha = FU * 3/4
+					if (ray.s_state == SS_STRAIGHT)
+						g.color = SKINCOLOR_EMERALD
+					elseif (ray.s_state == SS_BRAKE)
+						g.color = SKINCOLOR_RED
+					else
+						g.color = SKINCOLOR_YELLOW
+					end
+					P_SetOrigin(g, g.x,g.y,g.z)
 				end
 			end
 		else
