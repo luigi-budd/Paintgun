@@ -1199,6 +1199,10 @@ addHook("TouchSpecial",function(splat,mo)
 		friendly = Paint:mobjsOnTeam(mo, p.mo)
 	end
 	
+	if (p.pflags & PF_TAGIT) and (leveltime <= CV.FindVar("hidetime").value * TR)
+		return nope(splat,mo)
+	end
+	
 	if friendly
 		Paint:setPlayerInInk(targp, Paint.ININK_FRIENDLY)
 	elseif (pnt.inink ~= Paint.ININK_FRIENDLY) -- stepping in friendly ink should have precedence over enemy ink
