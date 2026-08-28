@@ -105,6 +105,7 @@ addHook("HUD",function(v,p,cam)
 	end
 	
 	local clrmp
+	local oclrmp
 	if danger
 		clrmp = v.getColormap(TC_DEFAULT, SKINCOLOR_CARBON)
 	else
@@ -121,8 +122,10 @@ addHook("HUD",function(v,p,cam)
 		end
 		
 		clrmp = v.getColormap(TC_DEFAULT, clr)
+		oclrmp = v.getColormap(TC_DEFAULT, ColorOpposite(clr), nil)
 	end
 	
+	local shielded = (p.powers[pw_shield] & SH_NOSTACK)
 	local maxwidth = 90*FU
 	local hp = pt.hp
 	if (p.playerstate == PST_DEAD) then hp = 0; end
@@ -146,9 +149,22 @@ addHook("HUD",function(v,p,cam)
 		local sinoff = abs(sin(FixedAngle((leveltime+i*4)*FU*4)))/2
 		HUD.drawSplashBG(v, x+xoff, y + i*FU, 
 			ox+xoff,oy + i*FU,
-			clamp(0, width + sinoff - xoff, maxwidth - woff),
+			clamp(0, (shielded and maxwidth or width) + sinoff - xoff, maxwidth - woff),
 			FU, flags, clrmp, true
 		)
+	end
+	if (shielded)
+		for i = 0,9
+			local xoff = (i == 0 or i == 9) and FU or 0
+			local woff = xoff and 2*FU or 0
+			
+			local sinoff = abs(sin(FixedAngle((leveltime+i*4)*FU*4)))/2
+			HUD.drawSplashBG(v, x+xoff, y + i*FU, 
+				ox+xoff + 16*FU, oy + i*FU + 16*FU,
+				clamp(0, width + sinoff - xoff, maxwidth - woff),
+				FU, flags, oclrmp, true
+			)
+		end
 	end
 	
 	if danger
@@ -159,7 +175,7 @@ addHook("HUD",function(v,p,cam)
 	else
 		drawFontString(v,
 			x + maxwidth - 4*FU, y + FU,
-			string.format("%d | %d", hp/FU, 100), flags, FU
+			string.format("%d | %d", (hp/FU) + (shielded and 100 or 0), 100), flags, FU
 		)
 	end
 	

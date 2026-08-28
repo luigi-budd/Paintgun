@@ -67,7 +67,8 @@ for i = 0,12
 	-- 9 - 12: wall/object collision splat sounds 
 	sfxinfo[freeslot("sfx_p_sp"..i)] = {
 		caption = "Splatter",
-		flags = SF_NOINTERRUPT
+		flags = SF_NOINTERRUPT|SF_TOTALLYSINGLE,
+		priority = 0,
 	}
 end
 sfxinfo[freeslot("sfx_pt_noi")].caption = "Low ink!"
