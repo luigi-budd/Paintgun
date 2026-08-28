@@ -1034,11 +1034,6 @@ addHook("PlayerThink",function(p)
 				p.cmd.buttons = $ &~BT_ATTACK
 			end
 		end
-		print("firing",
-			p.cmd.buttons & BT_ATTACK,
-			pt.fireheld,
-			pt.firequeued
-		)
 		
 		if pt.firewait == 1
 			justpressedfire = true
@@ -1851,14 +1846,14 @@ addHook("PlayerThink",function(p)
 	if not pt.charge
 		pt.chargetics = 0
 	end
-	print("lag", pt.firewait, pt.endlag, pt.cooldown, "firerate = "..cur_weapon:get(pt,"firerate"))
+	--print("lag", pt.firewait, pt.endlag, pt.cooldown, "firerate = "..cur_weapon:get(pt,"firerate"))
 	
 	-- handle dodge rolls
 	local dd = pt.dodgeroll
 	if (cur_weapon.guntype == WPT_DUALIES)
 	or (cur_weapon.guntype == WPT_KATANA)
 		local inpain = (P_PlayerInPain(p) or me.state == S_PLAY_PAIN or (not me.health))
-		if dd.tics and not inpain
+		if dd.tics and not inpain and not (pt.disable.main)
 			local frac = FU - FixedDiv(dd.tics*FU, cur_weapon:get(pt,"dodgelength")*FU)
 			--frac = ease.outsine($ * 3/4, 0, FU)
 			P_TryMove(me,
@@ -1923,7 +1918,9 @@ addHook("PlayerThink",function(p)
 				pt.turretmode = false
 				P_MovePlayer(p)
 				
-				Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+				if not (pt.disable.main)
+					Paint:fireWeapon(p, cur_weapon, fireangle, p.aiming, spread, true)
+				end
 				pt.charge = 0
 				pt.firequeued = false
 				pt.nofiring = true
