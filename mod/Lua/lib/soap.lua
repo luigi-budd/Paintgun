@@ -141,6 +141,11 @@ rawset(_G, "Paint_canHurtPlayer", function(p1,p2,nobs)
 			return false
 		end
 		
+		-- no way bro
+		if (p1.spectator or p2.spectator)
+			return false
+		end
+		
 		--battlemod parrying
 		/*
 		if (p2.guard and p2.guard == 1)
