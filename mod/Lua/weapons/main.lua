@@ -549,8 +549,9 @@ function Paint:aimProjectile(p, proj, angle, aiming, dospread, mom_vec, dualiefl
 	local me = p.mo
 	local pt = p.paint
 	local weap = self.weapons[pt.weapon_id]
+	local gravflip = P_MobjFlip(me)
 	
-	aiming = $ + FixedAngle(weap:get(pt,"naturalaiming",crosshair))
+	aiming = $ + FixedAngle(weap:get(pt,"naturalaiming",crosshair))*gravflip
 	hsprd = $ or 0
 	vsprd = $ or 0
 	local speed = FixedMul(weap:get(pt,"spawnspeed",crosshair), proj.scale)

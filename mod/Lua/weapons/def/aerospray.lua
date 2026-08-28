@@ -28,8 +28,8 @@ Paint:registerWeapon({
 	shotscale = FU*3/4,
 	
 	spawnspeed = FixedMul(tofixed("2.266"), Paint.DU2FU), -- 2.266 splat3 distance units
-	str_tics = 3, -- straight state lasts this many tics
-	str2brk_maxspeed = FixedMul(tofixed("1.9513"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
+	str_tics = 4, -- straight state lasts this many tics
+	str2brk_maxspeed = FixedMul(tofixed("1.493"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
 	fre_gravity = FixedMul(tofixed("0.016"), Paint.DU2FU),
 	crs_guideframe = 8, -- crosshair is placed at this frame in the shot's lifetime
 

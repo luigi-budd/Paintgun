@@ -301,11 +301,14 @@ local function raycaster(p,me,pt, cur_weapon, dualieflip)
 		or (cur_weapon.guntype == WPT_KATANA)
 			weaponoffset[1],weaponoffset[2] = 0,0
 		end
+		local aimoffset_vec = SphereToCartesian(angle,CMD_AIMING)
+		local aimoffset_dist = 5 * me.scale
 		P_SetOrigin(ray,
-			me.x + weaponoffset[1],
-			me.y + weaponoffset[2],
-			ray.z
+			me.x + weaponoffset[1] + FixedMul(aimoffset_dist, aimoffset_vec.x),
+			me.y + weaponoffset[2] + FixedMul(aimoffset_dist, aimoffset_vec.y),
+			ray.z + FixedMul(aimoffset_dist, aimoffset_vec.z)
 		)
+		
 		ray.finalpos = Paint:aimProjectile(p,ray, angle, CMD_AIMING, false,nil,dualieflip, true)
 		ray.origin = {x = me.x, y = me.y, z = ray.z}
 		local aimvec = SphereToCartesian(angle, CMD_AIMING)
