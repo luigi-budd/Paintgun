@@ -1016,6 +1016,22 @@ addHook("MobjMoveCollide",function(shot,mo)
 			P_RemoveMobj(shot)
 			return
 		end
+		return
+	end
+	
+	-- map deco?
+	if (mo.flags & (MF_SOLID|MF_SHOOTABLE) == MF_SOLID)
+		HitSplat(shot)
+		splattersound(shot, true)
+		if shot.blastertype
+			BlasterFieldHit(shot)
+			ExplodeShot(shot)
+			P_KillMobj(shot)
+			return
+		else
+			P_RemoveMobj(shot)
+		end
+		return
 	end
 end,MT_PAINT_SHOT)
 

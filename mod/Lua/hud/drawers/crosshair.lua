@@ -275,6 +275,14 @@ local function directhit_blockmap(ray, mo)
 		ray.momx,ray.momy,ray.momz = 0,0,0
 		ray.fuse = 1
 		ray.hit = true
+		return
+	end
+	
+	if (mo.flags & (MF_SOLID|MF_SHOOTABLE) == MF_SOLID)
+		ray.momx,ray.momy,ray.momz = 0,0,0
+		ray.fuse = 1
+		ray.hit = true
+		return
 	end
 end
 local function raycaster(p,me,pt, cur_weapon, dualieflip)
