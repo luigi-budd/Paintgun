@@ -388,6 +388,7 @@ function Paint:initPlayer(p)
 		
 		hitlist = {},
 		hittime = 0,
+		killer = nil,
 		
 		active = true,
 		
@@ -465,7 +466,7 @@ function Paint:resetPlayer(p)
 	pt.wasdeployed = false
 	pt.shieldjustbroke = false
 	pt.shieldjustregened = false
-
+	
 	pt.teammates = nil
 	Paint:setTeammates()
 end

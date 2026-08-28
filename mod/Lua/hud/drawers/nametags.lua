@@ -57,6 +57,11 @@ addHook("HUD",function(v,p,cam)
 			table.insert(tmp, {play = v, dist = dist, id = #v, friendly = Paint:mobjsOnTeam(p.realmo, v.realmo)})
 		end
 	end
+	if (pt.killer and pt.killer.valid and pt.killer.playerstate == PST_LIVE)
+	and (p.deadtimer > TR)
+		table.insert(tmp, {play = pt.killer, dist = R_PointToDist(pt.killer.mo.x, pt.killer.mo.y), id = #v, friendly = Paint:mobjsOnTeam(p.realmo, pt.killer.realmo), clr = Paint:getPlayerColor(pt.killer)})
+	end
+	
 	for k,v in ipairs(HUD.memory.killtags)
 		if v.play == p then continue end
 		table.insert(tmp, {play = v.play, dist = R_PointToDist(v.pos.x, v.pos.y), tag = true,
@@ -98,7 +103,7 @@ addHook("HUD",function(v,p,cam)
 		local wvmap = vmap
 		local wcmap = cmap
 		local wacmap = acmap
-		if (va.tag)
+		if (va.clr ~= nil)
 			wvmap = skincolors[va.clr].chatcolor
 			wcmap = v.getStringColormap(wvmap)
 			wacmap = v.getColormap(TC_DEFAULT, va.clr)

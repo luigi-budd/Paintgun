@@ -82,11 +82,54 @@ end)
 local cv_camdist = CV_FindVar("cam_dist")
 local cv_camheight = CV_FindVar("cam_height")
 local cv_camrotate = CV_FindVar("cam_rotate")
+local cv_fov = CV_FindVar("fov")
 local sidefrac = 0
 local idletime = 0
 local twodanim = 0
 local blockingmobjs = {}
 local movewasblocked = false
+local killcamfrac = 0
+local killcam_start
+local killcam_startang = {ang = 0, aim = 0}
+local function KillcamThinker(p)
+	local pt = p.paint
+	if not (pt) then return end
+	local kl = pt.killer
+	if not (kl and kl.valid) then return end
+	
+	if killcamfrac == 0
+		killcam_start = Vec3.MobjPosToVec(cammo)
+		killcam_startang.ang = ANGLETURN
+		killcam_startang.aim = AIMING
+	end
+	killcamfrac = P_Lerp(FU/7, $, FU)
+	
+	local focusPos = Vec3.MobjPosToVec(kl.mo)
+	focusPos.z = clamp(kl.mo.floorz, $, kl.mo.ceilingz)
+	
+	local xydist = 330*FU
+	local zdist = 330*FU
+	
+	local destVec = Vec3.SphereToCartesian(ANGLE_225, 0) * xydist
+	destVec.z = zdist
+	
+	local finalPos = focusPos + destVec
+	finalPos.z = clamp(kl.mo.floorz, $, kl.mo.ceilingz - 64*FU)
+	
+	local realfinalPos = Vec3.New(
+		P_Lerp(killcamfrac, killcam_start.x, finalPos.x),
+		P_Lerp(killcamfrac, killcam_start.y, finalPos.y),
+		P_Lerp(killcamfrac, killcam_start.z, finalPos.z)
+	)
+	local ha,va = R_PointTo3DAngles(finalPos.x, finalPos.y, finalPos.z, kl.mo.x, kl.mo.y, kl.mo.z)
+	realfinalPos:ToMobjPos(cammo, true, false)
+	ANGLETURN = P_Lerp(killcamfrac, killcam_startang.ang, ha)
+	ANGLETURN2 = ANGLETURN
+	AIMING = P_Lerp(killcamfrac, killcam_startang.aim, va)
+	p.fovadd = FixedMul((50*FU) - cv_fov.value, killcamfrac)
+	pt.fovadd = 0
+end
+
 rawset(_G, "ExactoCam_Thinker", function(p, camera)
 	--if leveltime == 0 then return end
 	if not (p and p.valid) then return end
@@ -314,6 +357,7 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 	
 	-- invisicam
 	if (p.playerstate == PST_LIVE)
+		killcamfrac = 0
 		Vec3.ToMobjPos(adjustVec + shiftVec, cammo, true, false)
 		
 		local checkplayers = (gametyperules & GTR_FRIENDLY) == 0
@@ -422,36 +466,13 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 			end
 		end
 	else
-		updateangles = false
+		updateangles = p.deadtimer > TR
 		
-		-- TODO: killcam
-		/*
-		local ha,va = R_PointTo3DAngles(cammo.x,cammo.y,cammo.z, focusPos.x,focusPos.y,focusPos.z)
-		ANGLETURN2 = ha
-		
-		local aim = AngleFixed(va)
-		if aim > 180*FU then aim = -(360*FU - $); end
-		if aim > 50*FU and aim < 180*FU
-			aim = 50*FU
-		elseif aim < -50*FU
-			aim = -50*FU
+		if p.deadtimer > TR
+			KillcamThinker(p)
+		else
+			killcamfrac = 0
 		end
-		AIMING = FixedAngle(aim)
-		
-		camdist = $ * 3/2
-		if (focusPos.z > me.floorz)
-			local dist = R_PointTo3DDist(cammo.x,cammo.y,cammo.z, focusPos.x,focusPos.y,focusPos.z)
-			if dist > camdist
-				local adjust = dist - camdist
-				local moveVec = Vec3.SphereToCartesian(ha,va) * adjust
-				moveVec:ToMobjPos(cammo, false, false)
-			else
-				local adjust = (dist - camdist) / 5
-				local moveVec = Vec3.SphereToCartesian(ha,va) * adjust
-				moveVec:ToMobjPos(cammo, false, false)
-			end
-		end
-		*/
 	end
 	
 	-- P_TeleportCameraMove(camera, cammo.x, cammo.y, cammo.z)

@@ -272,6 +272,7 @@ BP.doInkTank = function(p)
 		tn.fuse = -1
 		tn.tics = -1
 		tn.dispoffset = 10
+		tn.origoffset = tn.dispoffset
 		tn.radius = 2*me.scale
 		tn.height = 4*me.scale
 		tn.dontdrawforviewmobj = me
@@ -283,6 +284,7 @@ BP.doInkTank = function(p)
 		mid.fuse = -1
 		mid.tics = -1
 		mid.dispoffset = 8
+		mid.origoffset = mid.dispoffset
 		mid.radius = 2*me.scale
 		mid.height = 4*me.scale
 		mid.dontdrawforviewmobj = me
@@ -298,6 +300,7 @@ BP.doInkTank = function(p)
 		back.fuse = -1
 		back.tics = -1
 		back.dispoffset = 7
+		back.origoffset = back.dispoffset
 		back.radius = 2*me.scale
 		back.height = 4*me.scale
 		back.dontdrawforviewmobj = me
@@ -310,6 +313,7 @@ BP.doInkTank = function(p)
 		line.fuse = -1
 		line.tics = -1
 		line.dispoffset = 11
+		line.origoffset = line.dispoffset
 		line.radius = 2*me.scale
 		line.height = 4*me.scale
 		line.dontdrawforviewmobj = me
@@ -366,6 +370,7 @@ BP.doInkTank = function(p)
 		tank.sparkfx.flags2 = ($ &~MF2_DONTDRAW)|(hide and MF2_DONTDRAW or 0)
 	end
 	tank.renderflags = ($&~RF_ALWAYSONTOP)|((p == displayplayer) and RF_ALWAYSONTOP or 0)
+	tank.dispoffset = (p == displayplayer) and tank.origoffset or 0
 	
 	local back = tank.tracer
 	back.angle = tank.angle
@@ -384,6 +389,7 @@ BP.doInkTank = function(p)
 	else
 		back.frame = ($ &~FF_FRAMEMASK)|6
 	end
+	back.dispoffset = (p == displayplayer) and back.origoffset or 0
 	
 	local mid = tank.target
 	mid.angle = tank.angle
@@ -403,6 +409,7 @@ BP.doInkTank = function(p)
 	mid.destscale = me.scale
 	mid.scalespeed = mid.destscale + 1
 	mid.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
+	mid.dispoffset = (p == displayplayer) and mid.origoffset or 0
 	--mid.alpha = me.alpha
 	
 	local line = tank.linemobj
@@ -423,6 +430,7 @@ BP.doInkTank = function(p)
 	line.scalespeed = line.destscale + 1
 	line.eflags = ($ &~MFE_VERTICALFLIP)|(me.eflags & MFE_VERTICALFLIP)
 	line.renderflags = ($&~RF_ALWAYSONTOP)|((p == displayplayer) and RF_ALWAYSONTOP or 0)
+	line.dispoffset = (p == displayplayer) and line.origoffset or 0
 	
 	tank.pitch,tank.roll = 0,0
 	back.pitch,back.roll = 0,0
@@ -2369,6 +2377,7 @@ end)
 addHook("PlayerSpawn",function(p)
 	if not p.paint then return end
 	Paint:resetPlayer(p)
+	p.paint.killer = nil
 end)
 
 addHook("MapLoad",function()
@@ -2500,7 +2509,7 @@ addHook("PostThinkFrame", do
 		end
 		
 		local dead = not (me and me.valid and me.health)
-		if dead
+		if dead and (p.deadtimer <= TR)
 			p.fovadd = 0
 		end
 		p.fovadd = $ + pt.fovadd

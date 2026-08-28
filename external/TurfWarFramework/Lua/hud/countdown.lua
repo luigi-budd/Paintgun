@@ -43,10 +43,12 @@ return function(v)
 	local x = 160*FU
 	local y = 80*FU
 	
+	v.dointerp(150 + number)
 	v.drawScaled(x,y, scale,
 		v.cachePatch("PTCOUNT_"..(number)),
 		V_ADD|fade
 	)
+	v.dointerp(false)
 	
 	animation = $ - 1
 end

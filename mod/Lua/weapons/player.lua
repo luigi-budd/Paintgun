@@ -265,6 +265,10 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	Paint.inkShockVFX(me, 72*FU, deathcolor, nil,nil, states[S_PAINT_SHOCK].var1 * 8/11)
 	Paint.explosionVFX(me, irad, nil, deathcolor)
 	pt.fovadd = 20*FU
+	
+	if not (me.health)
+		pt.killer = source_player
+	end
 end
 
 function Paint:checkBulletParams(me, pt, shot, damage)
