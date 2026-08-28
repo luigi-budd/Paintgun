@@ -694,3 +694,14 @@ addHook("NetVars",function(n)
 	TurfWar.gotflags = n($)
 end)
 
+local addedmv = false
+addHook("AddonLoaded",do
+	if addedmv then return end
+	if not (MapVote and MapVote.RegisterGametype) then return end
+	
+	MapVote.RegisterGametype(GT_TURFWAR, "Team Paintball", 0, 0, TOL_PAINTGUN, TOL_MATCH)
+	MapVote.RegisterGametype(GT_FFATURFWAR, "FFA Paintball", 0, 0, TOL_PAINTGUN, TOL_MATCH)
+	MapVote.RegisterGametype(GT_CTFTURFWAR, "CTF Paintball", 0, 0, TOL_CTFTURFWAR, TOL_MATCH)
+	
+	addedmv = true
+end)
