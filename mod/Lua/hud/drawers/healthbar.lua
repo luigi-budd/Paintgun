@@ -116,6 +116,9 @@ addHook("HUD",function(v,p,cam)
 				clr = skincolor_blueteam
 			end
 		end
+		if (p.pflags & PF_TAGIT)
+			clr = SKINCOLOR_TOPAZ
+		end
 		
 		clrmp = v.getColormap(TC_DEFAULT, clr)
 	end
@@ -159,5 +162,13 @@ addHook("HUD",function(v,p,cam)
 			string.format("%d | %d", hp/FU, 100), flags, FU
 		)
 	end
+	
+	if (p.pflags & PF_TAGIT)
+		v.drawString(x, y + 12*FU, "IT!",
+			flags|V_ALLOWLOWERCASE,
+			"thin-fixed"
+		)
+	end
+	
 	v.dointerp(false)
 end,"game")

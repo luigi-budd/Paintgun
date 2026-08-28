@@ -467,9 +467,13 @@ addHook("PlayerThink",function(p)
 			and (me.state ~= S_PLAY_DEAD or me.state ~= S_PLAY_DRWN)
 				me.state = S_PLAY_DEAD
 			end
-			Paint:resetPlayer(p)
+			
 			if (me and me.valid)
 				me.spriteyscale = FU
+				if not (me.paint_alreadyreset)
+					Paint:resetPlayer(p)
+					me.paint_alreadyreset = true
+				end
 			end
 		end
 		return
@@ -540,6 +544,12 @@ addHook("PlayerThink",function(p)
 	and (leveltime >= cv_hidetime.value*TR)
 		pt.disable.main = true
 		pt.disable.sub = true
+	end
+	if (gametyperules & GTR_TAG)
+		me.color = Paint:getPlayerColor(p)
+		if (p.pflags & PF_TAGIT == 0)
+			pt.inktank = 100*FU
+		end
 	end
 	if (p.exiting)
 		pt.disable.swimming = true

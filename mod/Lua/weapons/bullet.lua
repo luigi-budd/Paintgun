@@ -1146,15 +1146,20 @@ addHook("PostThinkFrame",do
 		-- splat did not merge into another one
 		if (splat and splat.valid) and (src_player and src_player.valid)
 			AddTurfPoints(src_player, 1)
+			table.insert(src_player.paint.paintsplats, splat)
 		end
 	end
 	for k,splat in ipairs(justspawned_papers)
 		if not (splat and splat.valid) then continue end
+		local src_player = splat.tracer_player
 		local search_rad = splat.radius * 2
 		searchBlockmap("objects", CheckPaperMerging, splat,
 			splat.x - search_rad, splat.x + search_rad,
 			splat.y - search_rad, splat.y + search_rad
 		)
+		if (splat and splat.valid) and (src_player and src_player.valid)
+			table.insert(src_player.paint.paintsplats, splat)
+		end
 	end
 	
 	justspawned_splats = {}

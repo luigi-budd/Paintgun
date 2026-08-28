@@ -167,6 +167,7 @@ Paint:registerSubWeapon({
 		bomb.paint_hp = bomb.paint_maxhp
 		bomb.paint_team = bomb.tracer_player.ctfteam
 		bomb.paint_mechanical = true
+		bomb.paint_checkteams = true
 		bomb.flags = $|MF_SHOOTABLE
 		bomb.takis_flingme = true
 		return true

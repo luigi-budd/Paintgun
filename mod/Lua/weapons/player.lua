@@ -176,6 +176,12 @@ function Paint:killPlayer(p, shot, source_player, inf)
 		P_DamageMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf, DMG_INSTAKILL)
 		p.pflags = $|PF_TAGIT &~PF_GAMETYPEOVER
 		Paint:setTeammates()
+		
+		-- uuuuuuuuuuuuuuuuuuuuuuuuuugh!
+		local clr = Paint:getPlayerColor(p)
+		for _, sp in ipairs(pt.paintsplats)
+			if sp and sp.valid then sp.color = clr; end
+		end
 	else
 		P_KillMobj(me, shot, (source_player and source_player.valid) and source_player.mo or inf)
 	end
@@ -363,6 +369,9 @@ function Paint:playHurtSound(p)
 end
 
 function Paint:getPlayerColor(p)
+	if (gametyperules & GTR_TAG)
+		return ((p.pflags & PF_TAGIT) and SKINCOLOR_TOPAZ or SKINCOLOR_SEAFOAM)
+	end
 	if G_GametypeHasTeams()
 		return (p.ctfteam == 1 and skincolor_redteam or skincolor_blueteam)
 	end

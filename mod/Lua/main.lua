@@ -258,6 +258,9 @@ function Paint:initPlayer(p)
 			swimming = false,
 		},
 		
+		-- for tag,, UGH!!
+		paintsplats = {},
+		
 		jumpheld = 0,
 		spinheld = 0,
 		fireheld = 0,
@@ -442,6 +445,13 @@ function Paint:resetPlayer(p)
 	pt.squidanim = 0
 	pt.squidlag = 0
 	pt.squidhidetoggle = false
+	
+	for i = #pt.paintsplats, 1, -1
+		local sp = pt.paintsplats[i]
+		if not (sp and sp.valid)
+			table.remove(pt.paintsplats, i)
+		end
+	end
 	
 	pt.teammates = nil
 	Paint:setTeammates()
