@@ -1203,6 +1203,8 @@ addHook("TouchSpecial",function(splat,mo)
 		Paint:setPlayerInInk(targp, Paint.ININK_FRIENDLY)
 	elseif (pnt.inink ~= Paint.ININK_FRIENDLY) -- stepping in friendly ink should have precedence over enemy ink
 		if pnt.hp >= MIN_INK_HP
+		-- no passive damage, but the slowdown is still applied
+		and not (p.powers[pw_flashing])
 			Paint:damagePlayer(targp, splat, p, FixedDiv(18*FU, TR*FU), nil, true)
 			pnt.hp = max($, MIN_INK_HP)
 		end
