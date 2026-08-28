@@ -117,7 +117,7 @@ local function AddTurfPoints(p, points)
 	p.paint.turfpoints = $ + points
 	if (p.paint.turfpoints % 4 == 1)
 	and not (gametyperules & (GTR_TAG|GTR_HIDEFROZEN) == (GTR_TAG|GTR_HIDEFROZEN))
-		P_AddPlayerScore(p, points)
+		P_AddPlayerScore(p, points * 3)
 	end
 end
 

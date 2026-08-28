@@ -37,10 +37,11 @@ return function(v,p)
 		workscore = p.score
 	end
 	if workscore < p.score
-		workscore = $ + 1
+		workscore = $ + 1 + abs(p.score / 100)
 	elseif workscore > p.score
-		workscore = $ - 1
+		workscore = $ - 1 - abs(p.score / 100)
 	end
+	workscore = min($, p.score)
 	v.drawString(320 - 6, 6, (workscore).."p", V_SNAPTOTOP|V_SNAPTORIGHT|V_ALLOWLOWERCASE, "thin-right")
 	
 	/*
