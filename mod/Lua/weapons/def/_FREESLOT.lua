@@ -7,6 +7,7 @@ dofile("weapons/def/splat_dualies.lua")
 dofile("weapons/def/brella.lua")
 dofile("weapons/def/undercover_brella.lua")
 dofile("weapons/def/splatana_wiper.lua")
+dofile("weapons/def/52gal.lua")
 
 dofile("weapons/def/ZE2/accelring.lua")
 
