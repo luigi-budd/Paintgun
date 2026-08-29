@@ -131,14 +131,12 @@ TurfWar.registerGamemode(GT_CTFTURFWAR, {
 	tol = TOL_CTFPAINTGUN|TOL_CTF,
 	minplayers = 4,
 	overtimewhen = function()
-		local old = TurfWar.old
-		
-		local picked = (redscore ~= 0) and (bluescore ~= 0)
-		if old.alphaobj_picked or old.bravoobj_picked
-		and not picked
-			picked = true
+		-- if a team is about to score, keep the timer running
+		if P_IsFlagAtBase(MT_REDFLAG) ~= P_IsFlagAtBase(MT_BLUEFLAG)
+			return true
 		end
-		return picked
+		
+		return false
 	end
 })
 TurfWar.registerGamemode(GT_TAGTURFWAR, {
