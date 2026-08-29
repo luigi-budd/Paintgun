@@ -36,10 +36,12 @@ return function(v,p)
 		workmap = gamemap
 		workscore = p.score
 	end
+	
+	local diffinc = abs(p.score - workscore)/100
 	if workscore < p.score
-		workscore = $ + 1 + abs(p.score / 100)
+		workscore = $ + 1 + diffinc
 	elseif workscore > p.score
-		workscore = $ - 1 - abs(p.score / 100)
+		workscore = $ - 1 - diffinc
 	end
 	workscore = min($, p.score)
 	v.drawString(320 - 6, 6, (workscore).."p", V_SNAPTOTOP|V_SNAPTORIGHT|V_ALLOWLOWERCASE, "thin-right")
