@@ -1,10 +1,7 @@
-local MYVERSION = 204
-local ADDHOOK = true
+local MYVERSION = 206
 if rawget(_G, "ExactoCam_Version")
 	if ExactoCam_Version == MYVERSION then return end
-	
-	ADDHOOK = (ExactoCam_Version < MYVERSION)
-	if not ADDHOOK then return end
+	if (ExactoCam_Version > MYVERSION) then return end
 end
 rawset(_G,"ExactoCam_Version", MYVERSION)
 local TR = TICRATE
@@ -93,9 +90,9 @@ local killcam_start
 local killcam_startang = {ang = 0, aim = 0}
 local function KillcamThinker(p)
 	local pt = p.paint
-	if not (pt) then return end
+	if not (pt) then return false end
 	local kl = pt.killer
-	if not (kl and kl.valid) then return end
+	if not (kl and kl.valid) then return false end
 	
 	if killcamfrac == 0
 		killcam_start = Vec3.MobjPosToVec(cammo)
@@ -128,9 +125,13 @@ local function KillcamThinker(p)
 	AIMING = P_Lerp(killcamfrac, killcam_startang.aim, va)
 	p.fovadd = FixedMul((50*FU) - cv_fov.value, killcamfrac)
 	pt.fovadd = 0
+	
+	return true
 end
 
 rawset(_G, "ExactoCam_Thinker", function(p, camera)
+	if ExactoCam_Version > MYVERSION then return end
+	
 	--if leveltime == 0 then return end
 	if not (p and p.valid) then return end
 	local me = p.realmo
@@ -466,10 +467,10 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 			end
 		end
 	else
-		updateangles = p.deadtimer > TR
+		updateangles = false
 		
 		if p.deadtimer > TR
-			KillcamThinker(p)
+			updateangles = KillcamThinker(p)
 		else
 			killcamfrac = 0
 		end
@@ -490,9 +491,7 @@ rawset(_G, "ExactoCam_Thinker", function(p, camera)
 	end
 end)
 
-if ADDHOOK
-	addHook("PostThinkFrame",do
-		if (gamestate ~= GS_LEVEL) then return end
-		ExactoCam_Thinker(displayplayer, camera)
-	end)
-end
+addHook("PostThinkFrame",do
+	if (gamestate ~= GS_LEVEL) then return end
+	ExactoCam_Thinker(displayplayer, camera)
+end)

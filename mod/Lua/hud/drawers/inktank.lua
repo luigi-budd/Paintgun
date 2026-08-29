@@ -8,6 +8,8 @@ addHook("HUD",function(v,p,cam)
 	if not Paint:playerIsActive(p) then return end
 	local pt = p.paint
 	
+	if pt.disable.inktank then return end
+	
 	if not cam.chase
 		local strength = FU
 		local speed = 14*FU

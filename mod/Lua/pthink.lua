@@ -558,6 +558,7 @@ addHook("PlayerThink",function(p)
 		me.color = Paint:getPlayerColor(p)
 		if (p.pflags & PF_TAGIT == 0)
 			pt.inktank = 100*FU
+			pt.disable.inktank = true
 		end
 	end
 	if (p.exiting)
