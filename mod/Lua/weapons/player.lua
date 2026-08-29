@@ -100,7 +100,10 @@ function Paint:checkWipeout()
 		disadvantage = false
 		imwiped = false
 	end
-
+	
+	if (disadvantage == Paint.lastwipedteam and abs(Paint.wipeouttic - leveltime) <= 10*TR) then return end
+	
+	Paint.lastwipedteam = disadvantage
 	if disadvantage
 		S_StartSound(nil, sfx_pwip_d)
 	else
@@ -115,7 +118,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	local pt = p.paint
 	local me = p.mo
 	
-	if (p.pflags & (PF_TAGIT|PF_GAMETYPEOVER))
+	if (p.pflags & (PF_GAMETYPEOVER))
 		return
 	end
 
@@ -330,6 +333,11 @@ function Paint:damagePlayer(p, shot, source_player, damage, inf, noassists) -- m
 	if (source_player and source_player.valid)
 		if (gametype == GT_COOP)
 			damage = $ / 10
+		-- hiders can damage seekers
+		elseif (gametyperules & GTR_TAG)
+			if (p.pflags & PF_TAGIT) and (source_player.pflags & PF_TAGIT == 0)
+				damage = $ / 18
+			end
 		end
 		
 		if noassists

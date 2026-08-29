@@ -185,6 +185,10 @@ rawset(_G, "Paint_canHurtPlayer", function(p1,p2,nobs)
 		and (p2.pflags & PF_TAGIT == p1.pflags & PF_TAGIT))
 			allowhurt = false
 		end
+		
+		if (p1.pflags & PF_TAGIT == 0 and p2.pflags & PF_TAGIT)
+			allowhurt = true
+		end
 	end
 	
 	if G_GametypeHasTeams()
