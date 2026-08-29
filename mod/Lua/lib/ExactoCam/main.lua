@@ -61,7 +61,15 @@ addHook("PlayerCmd",function(p,cmd)
 	
 	ANGLETURN = cmd.angleturn<<16
 	ANGLETURN2 = ANGLETURN
-	AIMING = cmd.aiming<<16
+
+	local aim = AngleFixed(cmd.aiming<<16)
+	if aim > 180*FU then aim = -(360*FU - $); end
+	if aim > 70*FU and aim < 180*FU
+		aim = 70*FU
+	elseif aim < -70*FU
+		aim = -70*FU
+	end
+	AIMING = FixedAngle(aim)
 	
 	if (p.realmo.flags2 & MF2_TWOD or twodlevel)
 		if cmd.sidemove == 0
