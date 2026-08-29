@@ -24,6 +24,7 @@ Paint:registerWeapon({
 	falloffdamage = 30*FU,
 	fallofftime = 9,
 	weightclass = WEI_MID,
+	shootspeed = FixedDiv(tofixed("0.06"), Paint.SPLAT2WALKSPEED),
 	
 	startlag = 2,
 	endlag = 2,

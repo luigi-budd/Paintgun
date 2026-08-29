@@ -95,6 +95,7 @@ rawset(_G, "TR", TICRATE)
 rawset(_G,"Paint",{})
 
 Paint.wipeouttic = -1
+Paint.lastwipedteam = -1
 Paint.alphateam = {}
 Paint.bravoteam = {}
 addHook("ThinkFrame",do
@@ -328,7 +329,7 @@ function Paint:initPlayer(p)
 		-- brella stuff
 		shield = nil, -- shield mobj for brellas
 		shieldwait = 0, -- dont deploy for this long
-		shieldlag = Paint.CANOPY_ANIM, -- keep deployed for this long
+		shieldlag = 0, -- keep deployed for this long
 		shieldregen = 0, -- timer until regen
 		shieldtime = 0, -- timer until canopy release
 		shieldlost = false, -- lost is only used when you shoot off the canopy, not when it is destroyed
@@ -503,7 +504,7 @@ Paint.DU2FU = 46*FU
 Paint.SIXTY2THIRTYFIVE = tofixed("1.71428")
 
 -- splat 3's is 0.95999998 which is basically 0.96
-Paint.SPLAT2WALKSPEED = tofixed("0.96")
+Paint.SPLAT2WALKSPEED = tofixed("0.096")
 
 dofile("cvars/main.lua")
 dofile("lib/lib.lua")
@@ -518,5 +519,4 @@ addHook("NetVars",function(n)
 	Paint.modes = n($)
 	Paint.alphateam = n($)
 	Paint.bravoteam = n($)
-	Paint.wipeouttic = n($)
 end)

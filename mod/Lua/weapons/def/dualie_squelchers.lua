@@ -31,7 +31,7 @@ Paint:registerWeapon({
 	damage = 25*FU,
 	guntype = WPT_DUALIES,
 	lifespan = 4,
-	shootspeed = FU*78/100,
+	shootspeed = FixedDiv(tofixed("0.072"), Paint.SPLAT2WALKSPEED),
 	falloffdamage = 14*FU,
 	fallofftime = 6,
 	-- a bit lower than splat3's since the higher

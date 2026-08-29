@@ -40,7 +40,7 @@ Paint:registerWeapon({
 	firerate = 8,
 	endlag = 11,
 	tapfire = true,
-	shootspeed = FU * 3/5,
+	shootspeed = FixedDiv(tofixed("0.0945"), Paint.SPLAT2WALKSPEED),
 	spread_jumpspread = 0,
 	spread_jump = 0,
 	spread_jumpchance = 0,

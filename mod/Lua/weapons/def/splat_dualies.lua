@@ -23,7 +23,7 @@ Paint:registerWeapon({
 	damage = 30*FU,
 	guntype = WPT_DUALIES,
 	lifespan = 4,
-	shootspeed = FU*80/100,
+	shootspeed = FixedDiv(tofixed("0.08"), Paint.SPLAT2WALKSPEED),
 	falloffdamage = 15*FU,
 	fallofftime = 4,
 	inkcost = (FU*72/100),

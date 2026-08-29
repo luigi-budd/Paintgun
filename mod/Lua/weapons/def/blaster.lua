@@ -23,7 +23,7 @@ Paint:registerWeapon({
 	range = 400*FU,
 	damage = 125*FU,
 	firerate = 28,
-	shootspeed = tofixed("0.45"),
+	shootspeed = FixedDiv(tofixed("0.045"), Paint.SPLAT2WALKSPEED),
 	startlag = 7,
 	endlag = 14,
 	lifespan = 6,

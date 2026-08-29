@@ -124,7 +124,7 @@ local weapon_meta = {
 	startlag = 0,
 	endlag = 0,
 	squidlag = 0, -- wait this many frames before being able to swim
-	shootspeed = FU*78/100, --how much to slow down when shooting
+	shootspeed = FixedDiv(tofixed("0.072"), Paint.SPLAT2WALKSPEED), -- how much to slow down while shooting
 	inertia = false,
 	tapfire = false,
 	
@@ -317,7 +317,7 @@ local weapon_meta = {
 	deployend = Paint.CANOPY_ANIM, -- use endlag if nil
 	deploydelay = 11, -- hold fire for this long before deploying
 	releasetime = 64, -- wait this long AFTER deploying the canopy to release it
-	shieldingspeed = (FU*78/100)*7/10, -- `shootspeed` but for when you shield
+	shielingspeed = FixedDiv(tofixed("0.055"), Paint.SPLAT2WALKSPEED), -- `shootspeed` but for when you shield
 	readysound = nil,
 	deploysound = nil,
 	stowsound = nil,
@@ -346,7 +346,7 @@ local weapon_meta = {
 	nocanopy = false, -- brella has no canopy (grizzco brella)
 	localalpha = FU, -- also undercover brella
 	
-	--splatana-specific
+	--splatana specific
 	/*
 		[GROUP INFO]
 		offset = fixed_t,
@@ -389,7 +389,7 @@ local weapon_meta = {
 	crs_sections = 3, -- how many bars to draw on the crosshair
 	crs_chargingsections = 4,
 	crs_chargedguideframe = 14,
-	charging_shootspeed = FU * 3/5,
+	charging_shootspeed = FixedDiv(tofixed("0.0945"), Paint.SPLAT2WALKSPEED),
 	vshotstate = nil, -- only the center hitbox gets a visual for vslashes
 	
 	--roller-brush-specific

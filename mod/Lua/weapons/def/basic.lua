@@ -12,6 +12,7 @@ Paint:registerWeapon({
 	v_spread = {3*FU, 3*FU},
 	damage = 36*FU,
 	weightclass = WEI_MID,
+	shootspeed = FixedDiv(tofixed("0.072"), Paint.SPLAT2WALKSPEED),
 	
 	inkcost = FU * 92/100,
 	

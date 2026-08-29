@@ -42,7 +42,7 @@ Paint:registerWeapon({
 	damage = MIN_DAMAGE,
 	guntype = WPT_BRELLA,
 	firerate = TR/2,
-	shootspeed = tofixed("0.45"),
+	shootspeed = FixedDiv(tofixed("0.065"), Paint.SPLAT2WALKSPEED),
 	inkcost = tofixed("5.00"),
 	inkdelay = TR,
 	dragmul = FU*58/100,

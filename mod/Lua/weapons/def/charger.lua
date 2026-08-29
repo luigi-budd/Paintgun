@@ -17,7 +17,7 @@ Paint:registerWeapon({
 	dropoff = 0,
 	damage = 40*FU, -- damage here is the minimum damage
 	firerate = 4,
-	shootspeed = FU/6,
+	shootspeed = FixedDiv(tofixed("0.02"), Paint.SPLAT2WALKSPEED),
 	weightclass = WEI_MID,
 	
 	inkcost = 18*FU,
