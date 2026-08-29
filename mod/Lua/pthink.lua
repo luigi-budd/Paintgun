@@ -168,8 +168,11 @@ BP.doWeaponMobj = function(p,me,pt, cur_weapon, fireangle, dualieflip, reset_int
 		
 		pt.swinganim = $ - 1
 	elseif (cur_weapon.guntype == WPT_KATANA)
-		local progress = FixedDiv(pt.charge, cur_weapon:get(pt,"chargetime"))
-		fireangle = $ + FixedAngle(50*FU - 80*progress)
+		local progress = 0
+		if cur_weapon:get(pt,"chargetime") > 0
+			progress = FixedDiv(pt.charge, cur_weapon:get(pt,"chargetime"))
+			fireangle = $ + FixedAngle(50*FU - 80*progress)
+		end
 		
 		if progress
 			local swipestate = cur_weapon:get(pt,"weaponstate_swipe")
@@ -1798,7 +1801,7 @@ addHook("PlayerThink",function(p)
 			
 			local charging_sound = cur_weapon:get(pt,"charging_sound")
 			local slow_charging_sound = cur_weapon:get(pt,"slow_charging_sound")
-			if firing and (pt.fireheld >= min_charge_time)
+			if firing and (pt.fireheld >= min_charge_time) and (charge_time > 0)
 				local lowink = (pt.inktank - pt.inkqueue <= 0) or (pt.inktank < cur_weapon:get(pt, "v_inkcost")+1)
 				local slowcharge = lowink
 				
@@ -1840,8 +1843,11 @@ addHook("PlayerThink",function(p)
 				pt.firequeued = false
 				pt.nofiring = true
 				
-				pt.charge = min($, charge_time)
-				pt.maxchargeshot = pt.charge >= charge_time
+				if charge_time > 0
+					pt.charge = min($, charge_time)
+					pt.maxchargeshot = pt.charge >= charge_time
+				end
+				
 				if (pt.forwardmove >= 40)
 				and pt.maxchargeshot
 				and P_IsObjectOnGround(me)

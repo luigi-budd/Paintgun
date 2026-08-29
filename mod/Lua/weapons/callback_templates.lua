@@ -128,50 +128,52 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 	
 	local side = angle + ANGLE_90
 	local groups = wep:get(pt,"groups")
-	for i = 1, wep:get(pt,"groupnum")
-		local info = groups[i]
-		
-		local p_rad = FixedMul(info.radius, baseproj.scale)
-		local p_hei = FixedMul(info.height, baseproj.scale)
-		local offset = FixedMul(info.offset, baseproj.scale) + p_rad
-		
-		for j = -1,1, 2
-			local proj = Paint:fireWeapon(p,wep, angle, aiming, false, true)
-			if not (proj and proj.valid) then continue end
-			proj.fired_at = leveltime
-			proj.radius = p_rad
-			proj.height = p_hei
-			proj.totaldamage = maxdamage
-			proj.damage = baseproj.damage
+	if tonumber(wep:get(pt,"groupnum")) ~= nil
+		for i = 1, wep:get(pt,"groupnum")
+			local info = groups[i]
 			
-			proj.momx = baseproj.momx
-			proj.momy = baseproj.momy
-			proj.momz = baseproj.momz
-			proj.groupmembers = {baseproj}
-			if info.state ~= nil
-				proj.state = info.state
-			end
-			-- the projectile on the left is mirrored
-			proj.mirrored = j == 1
+			local p_rad = FixedMul(info.radius, baseproj.scale)
+			local p_hei = FixedMul(info.height, baseproj.scale)
+			local offset = FixedMul(info.offset, baseproj.scale) + p_rad
 			
-			if vertical
-				local dist = (offset * j)
-				local zoff = FixedMul(cos(aiming), dist)
-				P_SetOrigin(proj,
-					newpos.x - FixedMul(FixedMul(sin(aiming), dist), cos(angle)),
-					newpos.y - FixedMul(FixedMul(sin(aiming), dist), sin(angle)),
-					newpos.z + (baseproj.height - proj.height)/2 + zoff
-				)
-			else
-				proj.spriteyoffset = -(baseproj.height - proj.height)/2
-				P_SetOrigin(proj,
-					newpos.x + P_ReturnThrustX(nil,side, offset * j),
-					newpos.y + P_ReturnThrustY(nil,side, offset * j),
-					newpos.z + (baseproj.height - proj.height)/2
-				)
+			for j = -1,1, 2
+				local proj = Paint:fireWeapon(p,wep, angle, aiming, false, true)
+				if not (proj and proj.valid) then continue end
+				proj.fired_at = leveltime
+				proj.radius = p_rad
+				proj.height = p_hei
+				proj.totaldamage = maxdamage
+				proj.damage = baseproj.damage
+				
+				proj.momx = baseproj.momx
+				proj.momy = baseproj.momy
+				proj.momz = baseproj.momz
+				proj.groupmembers = {baseproj}
+				if info.state ~= nil
+					proj.state = info.state
+				end
+				-- the projectile on the left is mirrored
+				proj.mirrored = j == 1
+				
+				if vertical
+					local dist = (offset * j)
+					local zoff = FixedMul(cos(aiming), dist)
+					P_SetOrigin(proj,
+						newpos.x - FixedMul(FixedMul(sin(aiming), dist), cos(angle)),
+						newpos.y - FixedMul(FixedMul(sin(aiming), dist), sin(angle)),
+						newpos.z + (baseproj.height - proj.height)/2 + zoff
+					)
+				else
+					proj.spriteyoffset = -(baseproj.height - proj.height)/2
+					P_SetOrigin(proj,
+						newpos.x + P_ReturnThrustX(nil,side, offset * j),
+						newpos.y + P_ReturnThrustY(nil,side, offset * j),
+						newpos.z + (baseproj.height - proj.height)/2
+					)
+				end
+				table.insert(baseproj.groupmembers, proj)
+				table.insert(spawned, proj)
 			end
-			table.insert(baseproj.groupmembers, proj)
-			table.insert(spawned, proj)
 		end
 	end
 	

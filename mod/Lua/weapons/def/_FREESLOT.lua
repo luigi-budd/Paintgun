@@ -10,5 +10,6 @@ dofile("weapons/def/splatana_wiper.lua")
 dofile("weapons/def/52gal.lua")
 
 dofile("weapons/def/ZE2/accelring.lua")
+dofile("weapons/def/ZE2/fist.lua")
 
 dofile("weapons/def/special/rainmaker.lua")

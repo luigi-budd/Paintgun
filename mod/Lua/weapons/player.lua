@@ -128,10 +128,12 @@ function Paint:killPlayer(p, shot, source_player, inf)
 		pt.hp = 100*FU
 		S_StartSound(me, sfx_pt_al)
 		p.powers[pw_shield] = 0
-		p.powers[pw_flashing] = TR*3/2
+		if (gametype == GT_COOP)
+			p.powers[pw_flashing] = TR*3/2
+		end
 		
 		if (p == displayplayer or p == secondarydisplayplayer)
-			P_StartQuake(15*FU, TR/2)
+			P_StartQuake(8*FU, TR/2)
 		end
 		Paint.HUD:painSurge(p)
 		
