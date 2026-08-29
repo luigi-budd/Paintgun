@@ -11,7 +11,8 @@ Paint:registerWeapon({
 	spread_jumpspread = tofixed("11.66") - hsprd,
 	v_spread = {3*FU, 3*FU},
 	damage = 36*FU,
-
+	weightclass = WEI_MID,
+	
 	inkcost = FU * 92/100,
 	
 	weaponstate = S_PAINT_GUN,

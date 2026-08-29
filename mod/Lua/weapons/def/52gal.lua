@@ -23,6 +23,7 @@ Paint:registerWeapon({
 	damage = 52*FU,
 	falloffdamage = 30*FU,
 	fallofftime = 9,
+	weightclass = WEI_MID,
 	
 	startlag = 2,
 	endlag = 2,

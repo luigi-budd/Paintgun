@@ -31,6 +31,7 @@ Paint:registerWeapon({
 	neverspreadonground = true,
 	shotstate = S_PAINT_SHOT_BIG,
 	dropoff = 0,
+	weightclass = WEI_MID,
 	
 	inkcost = 10*FU,
 	inkdelay = 33,

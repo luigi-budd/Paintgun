@@ -48,6 +48,7 @@ Paint:registerWeapon({
 	dragmul = FU*58/100,
 	tapfire = false,
 	capdamage = true,
+	weightclass = WEI_MID,
 	
 	startlag = 5,
 	endlag = 12,
@@ -87,19 +88,18 @@ Paint:registerWeapon({
 			numprojs = 4
 		}
 	},
-	geo_rangemul = tofixed("0.4234"),
 	
 	-- brellas... DONT... use bulletsimple..... :scream:
 	-- this is close enough to how the brella was before
 	spawnspeed = FixedMul(tofixed("2.6"), Paint.DU2FU), -- 2.266 splat3 distance units
-	str_tics = 3, -- straight state lasts this many tics
+	str_tics = 2, -- straight state lasts this many tics
 	str2brk_maxspeed = FixedMul(tofixed("1.652"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
-	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
+	-- brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
 	brk_gravity = FixedMul(tofixed("0.06"), Paint.DU2FU),
 	brk2fre_minz = FixedMul(tofixed("-0.15"), Paint.DU2FU), -- go to free when momz is below this
 	brk2fre_minxy = FixedMul(tofixed("0.2355"), Paint.DU2FU), -- or go to free when xyspeed is below this
 	brk2fre_tics = 4, -- or when brake state lasts this many tics
-	fre_airresist = FU * 98/100,
+	-- fre_airresist = FU * 98/100,
 	fre_gravity = FixedMul(tofixed("0.016"), Paint.DU2FU),
 	crs_guideframe = 4, -- crosshair is placed at this frame in the shot's lifetime
 

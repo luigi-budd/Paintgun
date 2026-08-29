@@ -93,6 +93,16 @@ rawset(_G, "WPT_KATANA",  11) -- x
 
 rawset(_G, "WPT_SPECIAL",  12)
 
+-- weapon weight classes
+rawset(_G, "WEI_LIGHT", 1)
+rawset(_G, "WEI_MID",   2)
+rawset(_G, "WEI_HEAVY", 3)
+Paint.WEI_MULS = {
+	[WEI_LIGHT] = tofixed("1.08333"),
+	[WEI_MID]   = FU,
+	[WEI_HEAVY] = tofixed("0.91666"),
+}
+
 -- shot states
 rawset(_G, "SS_STRAIGHT", 1)
 rawset(_G, "SS_BRAKE", 2)
@@ -124,6 +134,8 @@ local weapon_meta = {
 	shotscale = FU, -- visual scale
 	shotstate = nil, -- leave nil for mobjinfo[shottype].spawnstate
 	shotstretch = true, -- stretch shots when theyre in straight state
+	
+	weightclass = WEI_MID,
 	
 	guntype = WPT_SHOOTER,
 	handoffset = 16 * FU,
@@ -322,10 +334,10 @@ local weapon_meta = {
 	shieldregen = 150*FU, -- heal this much hp per second
 	shieldrecover = 5*TR + (TR/2), -- wait this much before "respawning" the shield (either launched or destroyed)
 	shieldlifetime = 5*TR, -- released canopies last for this long
-	shieldspeed = FixedMul(tofixed("0.226"), Paint.DU2FU), -- released canopies travel this fast
+	shieldspeed = FixedMul(tofixed("0.132"), Paint.DU2FU), -- released canopies travel this fast
 	shieldsound = nil, -- released canopies repeat this sound
 	shieldrelease = 64, -- release canopies this many tics after opening
-	shieldinkuse = FixedDiv(20*FU, 64*FU),
+	shieldinkuse = FixedDiv(20*FU, TR*FU),
 	shieldspan = 60*FU, -- how wide half the canopy is, for protecting against bombs
 	inkdelay_held = 12, -- set inkdelay to this when HOLDING a canopy, but not releasing it
 	inkdelay_release = 2*TR, -- set inkdelay to this when RELEASING a canopy

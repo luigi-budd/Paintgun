@@ -18,6 +18,7 @@ Paint:registerWeapon({
 	damage = 40*FU, -- damage here is the minimum damage
 	firerate = 4,
 	shootspeed = FU/6,
+	weightclass = WEI_MID,
 	
 	inkcost = 18*FU,
 	firewithnoink = true,

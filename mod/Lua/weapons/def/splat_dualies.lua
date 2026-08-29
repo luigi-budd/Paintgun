@@ -28,6 +28,7 @@ Paint:registerWeapon({
 	fallofftime = 4,
 	inkcost = (FU*72/100),
 	firerate = 2,
+	weightclass = WEI_MID,
 	
 	spawnspeed = FixedMul(tofixed("2.37"), Paint.DU2FU), -- 2.266 splat3 distance units
 	str_tics = 3, -- straight state lasts this many tics

@@ -2182,6 +2182,8 @@ addHook("PlayerThink",function(p)
 		p.normalspeed = $ * 8/10
 		p.acceleration = $ * 3/4
 	end
+	-- weight class
+	p.normalspeed = FixedMul($, Paint.WEI_MULS[cur_weapon.weightclass])
 	
 	pt.lastslowdown = doslowdown
 	

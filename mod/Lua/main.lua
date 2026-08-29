@@ -502,6 +502,9 @@ Paint.DU2FU = 46*FU
 -- multiply by 1.71428 to get 1/60 -> 1/35
 Paint.SIXTY2THIRTYFIVE = tofixed("1.71428")
 
+-- splat 3's is 0.95999998 which is basically 0.96
+Paint.SPLAT2WALKSPEED = tofixed("0.96")
+
 dofile("cvars/main.lua")
 dofile("lib/lib.lua")
 dofile("weapons/main.lua")

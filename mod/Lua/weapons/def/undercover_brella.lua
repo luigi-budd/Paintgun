@@ -53,6 +53,7 @@ Paint:registerWeapon({
 	dragmul = FU*58/100,
 	tapfire = false,
 	capdamage = true,
+	weightclass = WEI_LIGHT,
 	
 	firerate = 14,
 	startlag = 5,

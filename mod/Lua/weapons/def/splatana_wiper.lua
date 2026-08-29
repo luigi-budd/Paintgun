@@ -51,6 +51,7 @@ Paint:registerWeapon({
 	swipeangleoffset = 180*FU,
 	shotstate = S_PAINT_HSLASH_C,
 	vshotstate = S_PAINT_HSLASH_V,
+	weightclass = WEI_LIGHT,
 	
 	chargetime = 8*FU, -- takes 8 tics to fully charge
 	mincharge = 4,

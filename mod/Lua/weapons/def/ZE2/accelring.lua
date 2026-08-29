@@ -34,6 +34,7 @@ Paint:registerWeapon({
 	shotstretch = false,
 	shotstate = S_ZE2_ACCEL_FIRED,
 	tapfire = true,
+	weightclass = WEI_MID,
 	
 	startlag = 7,
 	endlag = 14,
