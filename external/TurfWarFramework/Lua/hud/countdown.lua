@@ -1,15 +1,40 @@
 local animation = 0
 local lastnumber = 11
 local ANIM_START = TR - 2
+local hidingalpha = 20
 
+local cv_hidetime = CV_FindVar("hidetime")
 return function(v)
 	if TurfWar.time == TurfWar.const.NOTIMER then return end
-	if not (TurfWar.time > 0
-	and TurfWar.time < 10*TR)
-		return
+	
+	local hidetime = false
+	local roundtimer = TurfWar.time
+	local docountdown = true
+	if not (TurfWar.time > 0 and TurfWar.time < 10*TR)
+		docountdown = false
+	end
+	if ((gametyperules & GTR_TAG) and cv_hidetime.value)
+		local remaining = (cv_hidetime.value*TR - leveltime)
+		docountdown = remaining < 10*TR and remaining > 0
+		if docountdown
+			roundtimer = (cv_hidetime.value*TR - leveltime)
+			hidetime = true
+		end
 	end
 	
-	local number = (TurfWar.time/TR) + 1
+	if hidetime
+		hidingalpha = max($ - 1, 0)
+	else
+		hidingalpha = min($ + 7, 20)
+	end
+	if hidingalpha ~= 20 and (hidingalpha / 2 ~= 10)
+		local trans = (hidingalpha / 2) << V_ALPHASHIFT
+		v.drawString(160, 40, "Hiding ends in:", V_ALLOWLOWERCASE|V_ADD|trans|V_GRAYMAP, "thin-center")
+	end
+	
+	if not docountdown then return end
+	
+	local number = (roundtimer/TR) + 1
 	if lastnumber ~= number
 		animation = ANIM_START
 		

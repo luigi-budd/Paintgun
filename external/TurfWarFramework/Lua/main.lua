@@ -62,6 +62,16 @@ G_AddGametype({
     headercolor = 164,
 	description = "Free-for-all"
 })
+G_AddGametype({
+    name = "Tag Paintball",
+    identifier = "TAGTURFWAR",
+    typeoflevel = TOL_PAINTGUN|TOL_MATCH,
+    rules = GTR_TAG|GTR_SPECTATORS|GTR_STARTCOUNTDOWN|GTR_BLINDFOLDED|GTR_DEATHMATCHSTARTS|GTR_SPAWNINVUL|GTR_RESPAWNDELAY,
+    intermissiontype = int_match,
+    headercolor = 164,
+	description = "Tag"
+})
+
 freeslot("TOL_CTFPAINTGUN")
 G_AddGametype({
     name = "CTF Paintball",
@@ -84,6 +94,7 @@ local gamemode_t = {
 	pointlimit = 0,
 	
 	allowovertime = false,
+	overtimewhen = nil, -- function
 	allowpinchmusic = true,
 	dieinwater = true,
 	
@@ -118,6 +129,22 @@ TurfWar.registerGamemode(GT_CTFTURFWAR, {
 	allowovertime = true,
 	allowpinchmusic = false,
 	tol = TOL_CTFPAINTGUN|TOL_CTF,
+	minplayers = 4,
+	overtimewhen = function()
+		local old = TurfWar.old
+		
+		local picked = (redscore ~= 0) and (bluescore ~= 0)
+		if old.alphaobj_picked or old.bravoobj_picked
+		and not picked
+			picked = true
+		end
+		return picked
+	end
+})
+TurfWar.registerGamemode(GT_TAGTURFWAR, {
+	name = "Tag Paintgun",
+	starttime = 4*60*TR,
+	--allowovertime = true,
 	minplayers = 4,
 })
 
@@ -430,22 +457,17 @@ addHook("ThinkFrame",do
 	end
 	
 	if TurfWar.time ~= TurfWar.const.NOTIMER
-		if TurfWar.gamemodes[gametype].allowovertime and G_GametypeHasTeams()
-		and (redscore == bluescore)
+		local overtimefunc = TurfWar.gamemodes[gametype].overtimewhen
+		
+		if TurfWar.gamemodes[gametype].allowovertime
 		and TurfWar.time == 1
-			local picked = (redscore ~= 0) and (bluescore ~= 0)
-			if old.alphaobj_picked or old.bravoobj_picked
-			and not picked
-				picked = true
-			end
-			
-			if picked
+			if (overtimefunc ~= nil) and (overtimefunc() == true)
 				TurfWar.overtime = true
 				S_StartSound(nil, sfx_p_over)
 			end
 		end
 		if TurfWar.overtime
-		and (redscore ~= bluescore)
+		and (overtimefunc ~= nil and overtimefunc() == false)
 			TurfWar.overtime = false
 			TurfWar.time = 1
 		end
@@ -701,6 +723,7 @@ addHook("AddonLoaded",do
 	
 	MapVote.RegisterGametype(GT_TURFWAR, "Team Paintball", 0, 0, TOL_PAINTGUN, TOL_MATCH)
 	MapVote.RegisterGametype(GT_FFATURFWAR, "FFA Paintball", 0, 0, TOL_PAINTGUN, TOL_MATCH)
+	MapVote.RegisterGametype(GT_TAGTURFWAR, "Tag Paintball", 0, 0, TOL_PAINTGUN, TOL_MATCH)
 	MapVote.RegisterGametype(GT_CTFTURFWAR, "CTF Paintball", 0, 0, TOL_CTFTURFWAR, TOL_CTF)
 	
 	addedmv = true

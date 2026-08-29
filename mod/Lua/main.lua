@@ -111,6 +111,13 @@ addHook("ThinkFrame",do
 	end
 end)
 
+--  Might as well! Lol!
+addHook("MapLoad",function()
+	if not (gametyperules & GTR_TAG) then return end
+	skincolor_redteam = SKINCOLOR_TOPAZ
+	skincolor_blueteam = SKINCOLOR_SEAFOAM
+end)
+
 function Paint:setTeammates()
 	if (gametype == GT_COOP)
 		local player_list = {}
@@ -193,14 +200,14 @@ function Paint:setTeammates()
 end
 function Paint:countTeams()
 	local count = {alpha = 0, bravo = 0}
-	if not G_GametypeHasTeams() then return count; end
+	if not (G_GametypeHasTeams() or (gametyperules & GTR_TAG)) then return count; end
 
 	for play in players.iterate
 		if play.spectator then continue end
 		if not play.paint then continue end
-		if play.ctfteam == 1
+		if (play.ctfteam == 1 or (play.pflags & PF_TAGIT))
 			count.alpha = $ + 1
-		else
+		elseif (play.ctfteam == 2 or (play.pflags & PF_TAGIT == 0))
 			count.bravo = $ + 1
 		end
 	end

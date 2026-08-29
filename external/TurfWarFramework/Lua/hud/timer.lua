@@ -66,7 +66,7 @@ return function(v)
 		v.drawString(x, y, str, flags|cmap|V_ALLOWLOWERCASE, "thin-center")
 	end
 	
-	if G_GametypeHasTeams()
+	if (G_GametypeHasTeams() or (gametyperules & GTR_TAG))
 		local count = Paint:countTeams()
 		local width = 26
 		local height = 6
