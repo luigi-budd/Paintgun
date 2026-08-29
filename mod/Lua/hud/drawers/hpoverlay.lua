@@ -1,5 +1,6 @@
 local HUD = Paint.HUD
 local FRAMETIME = 0
+local DEATHFRAC = 0
 
 addHook("HUD",function(v,p,cam)
 	local me = p.mo
@@ -14,11 +15,20 @@ addHook("HUD",function(v,p,cam)
 	local hp = pt.hp
 	if (p.playerstate ~= PST_LIVE)
 		hp = 0
+		if p.deadtimer > TR and (pt.killer and pt.killer.valid)
+			DEATHFRAC = P_Lerp(FU/7, $, FU)
+		end
+	else
+		DEATHFRAC = 0
 	end
 	if (me.paint_overlayhp ~= nil)
 		hp = me.paint_overlayhp
 	end
 	if hp >= 100*FU then return end
+	
+	if DEATHFRAC ~= 0
+		hp = 30*DEATHFRAC
+	end
 
 	-- draw the stuff
 	local fadeprogress = ease.linear(FixedDiv(hp, 100*FU), FU, 0)

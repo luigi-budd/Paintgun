@@ -342,7 +342,7 @@ function Paint:damagePlayer(p, shot, source_player, damage, inf, noassists) -- m
 		-- hiders can damage seekers
 		elseif (gametyperules & GTR_TAG)
 			if (p.pflags & PF_TAGIT) and (source_player.pflags & PF_TAGIT == 0)
-				damage = $ / 18
+				damage = $ / 9
 			end
 		end
 		
