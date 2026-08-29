@@ -45,9 +45,9 @@ local sub_meta = {
 	guidedrot = false,
 	inertia = true,
 	
-	inner_radius = 175*FU,
+	inner_radius = FixedMul(tofixed("3.6"), Paint.DU2FU),
 	inner_damage = 180*FU,
-	outer_radius = 290*FU,
+	outer_radius = FixedMul(tofixed("7"), Paint.DU2FU),
 	outer_damage = 30*FU,
 	quakeforce = 10*FU,
 	
@@ -1024,9 +1024,12 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 		if momzadd < 0 then momzadd = 0; end
 		bomb.momz = $ + momzadd
 		
+		/*
+		-- this doesnt feel too nice with kb+m play
 		local sidefact = FixedDiv(pt.fixed_smove, 50*FU)
 		local sideangle = FixedAngle(15 * sidefact)
 		P_InstaThrust(bomb, angle - sideangle, R_PointToDist2(0,0, bomb.momx,bomb.momy))
+		*/
 		
 		local backfact = FixedDiv(pt.fixed_fmove, 50*FU)
 		if backfact > 0 then backfact = 0; end

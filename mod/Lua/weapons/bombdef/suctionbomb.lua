@@ -18,9 +18,9 @@ Paint:registerSubWeapon({
 
 	fuse = 2*TR,
 	
-	inner_radius = 210*FU,
+	inner_radius = FixedMul(tofixed("4.6"), Paint.DU2FU),
 	inner_damage = 180*FU,
-	outer_radius = 340*FU,
+	outer_radius = FixedMul(tofixed("8"), Paint.DU2FU),
 	outer_damage = 30*FU,
 	quakeforce = 12*FU,
 	guidedrot = true,

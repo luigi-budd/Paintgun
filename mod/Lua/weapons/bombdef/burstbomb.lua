@@ -18,9 +18,9 @@ Paint:registerSubWeapon({
 	
 	inkcost = 45*FU,
 	
-	inner_radius = 60*FU,
+	inner_radius = FixedMul(tofixed("2.8"), Paint.DU2FU),
 	inner_damage = 35*FU,
-	outer_radius = 143*FU,
+	outer_radius = FixedMul(tofixed("4"), Paint.DU2FU),
 	outer_damage = 25*FU,
 	quakeforce = 3*FU,
 })

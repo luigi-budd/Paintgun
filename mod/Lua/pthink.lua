@@ -2445,7 +2445,7 @@ addHook("MapLoad",function()
 	end
 end)
 
-local move_lerp = FU / 3
+local move_lerp = FU / 6
 addHook("PreThinkFrame",do setalpha = false; for p in players.iterate
 	local me = p.mo
 	local pt = p.paint
