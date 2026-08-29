@@ -248,6 +248,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	end
 	
 	local irad = 170*FU
+	local offset = P_RandomRange(0,2)
 	for i = 1,32
 		local ha = FixedAngle(P_RandomRange(0,36) * 10*FU)
 		local va = FixedAngle(P_RandomRange(0,36) * 10*FU)
@@ -263,6 +264,9 @@ function Paint:killPlayer(p, shot, source_player, inf)
 		s.rollangle = va
 		s.translation = "AllWhite"
 		s.renderflags = $|RF_ALWAYSONTOP
+		local rand = P_RandomRange(-3,5)
+		s.tics = $ + offset + rand
+		s.anim_duration = $ + offset + rand
 	end
 	S_StartSound(me, sfx_pt_ow1)
 	S_StartSound(me, sfx_pt_ow1)

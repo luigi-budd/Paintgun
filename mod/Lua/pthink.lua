@@ -559,6 +559,7 @@ addHook("PlayerThink",function(p)
 		if (p.pflags & PF_TAGIT == 0)
 			pt.inktank = 100*FU
 			pt.disable.inktank = true
+			pt.disable.sub = true
 		end
 	end
 	if (p.exiting)
@@ -2327,53 +2328,55 @@ addHook("PlayerThink",function(p)
 			end
 			
 			-- enemy ink vfx
-			local clr
-			if (pt.paintoverlay and pt.paintoverlay.valid)
-				clr = pt.paintoverlay.color
-			else
-				clr = ColorOpposite(Paint:getPlayerColor(p))
-			end
-			
-			local off = 8*FU
-			local blob = makeBlob(p,me,pt, 0,0)
-			blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
-			blob.color = clr
-			P_SetOrigin(blob, me.x, me.y, blob.z)
-			
-			P_SetOrigin(blob,
-				me.x + P_RandomFixedRange(-off, off),
-				me.y + P_RandomFixedRange(-off, off),
-				blob.z
-			)
-			
-			local ang = FixedAngle(360 * P_RandomFixed())
-			P_SetObjectMomZ(blob, P_RandomRange(1,4)*FU)
-			P_Thrust(blob,ang, P_RandomFixedRange(-me.scale, -2*me.scale))
-			
-			if (leveltime % 2 == 0)
-				local angstep = (360 / 12)*FU
-				local dist = FixedDiv(me.radius, me.scale) + 4*FU
-				for i = 0,11
-					local fa = ang + FixedAngle(angstep * i)
-					local splash = P_SpawnMobjFromMobj(me,
-						P_ReturnThrustX(nil, fa, dist),
-						P_ReturnThrustY(nil, fa, dist),
-						2*FU, MT_PARTICLE
-					)
-					P_SetOrigin(splash, splash.x,splash.y, me.floorz)
-					splash.state = S_PAINT_SPLASH2
-					splash.color = clr
-					splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
-					P_SetScale(splash, splash.scale / 2, true)
-					local rand = P_RandomRange(0,2)
-					splash.frame = $ + rand
-					splash.tics = $ - rand
-					P_Thrust(splash, fa, 2*me.scale)
+			if P_IsObjectOnGround(me)
+				local clr
+				if (pt.paintoverlay and pt.paintoverlay.valid)
+					clr = pt.paintoverlay.color
+				else
+					clr = ColorOpposite(Paint:getPlayerColor(p))
 				end
+				
+				local off = 8*FU
+				local blob = makeBlob(p,me,pt, 0,0)
+				blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
+				blob.color = clr
+				P_SetOrigin(blob, me.x, me.y, blob.z)
+				
+				P_SetOrigin(blob,
+					me.x + P_RandomFixedRange(-off, off),
+					me.y + P_RandomFixedRange(-off, off),
+					blob.z
+				)
+				
+				local ang = FixedAngle(360 * P_RandomFixed())
+				P_SetObjectMomZ(blob, P_RandomRange(1,4)*FU)
+				P_Thrust(blob,ang, P_RandomFixedRange(-me.scale, -2*me.scale))
+				
+				if (leveltime % 2 == 0)
+					local angstep = (360 / 12)*FU
+					local dist = FixedDiv(me.radius, me.scale) + 4*FU
+					for i = 0,11
+						local fa = ang + FixedAngle(angstep * i)
+						local splash = P_SpawnMobjFromMobj(me,
+							P_ReturnThrustX(nil, fa, dist),
+							P_ReturnThrustY(nil, fa, dist),
+							2*FU, MT_PARTICLE
+						)
+						P_SetOrigin(splash, splash.x,splash.y, me.floorz)
+						splash.state = S_PAINT_SPLASH2
+						splash.color = clr
+						splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+						P_SetScale(splash, splash.scale / 2, true)
+						local rand = P_RandomRange(0,2)
+						splash.frame = $ + rand
+						splash.tics = $ - rand
+						P_Thrust(splash, fa, 2*me.scale)
+					end
+				end
+				
+				blob.destscale = 0
+				blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
 			end
-			
-			blob.destscale = 0
-			blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
 		else
 			S_StopSoundByID(me,sfx_pt_ow2)
 		end
