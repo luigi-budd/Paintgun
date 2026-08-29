@@ -656,6 +656,9 @@ addHook("PreThinkFrame", do
 end)
 
 Paint.bulletSimpleState = function(shot)
+	local secgrav = P_GetMobjGravity(shot)
+	local gravmul = abs(FixedDiv(secgrav, -shot.scale/2))
+	
 	local state = shot.s_state
 	if state == SS_STRAIGHT
 		if shot.lifespan >= shot.str_tics
@@ -672,7 +675,7 @@ Paint.bulletSimpleState = function(shot)
 		shot.momx = FixedMul($, resist)
 		shot.momy = FixedMul($, resist)
 		shot.momz = FixedMul($, resist)
-		shot.momz = $ - (shot.brk_gravity * P_MobjFlip(shot))
+		shot.momz = $ - FixedMul(shot.brk_gravity * P_MobjFlip(shot), gravmul)
 		if (shot.momz*P_MobjFlip(shot) <= shot.brk2fre_minz)
 		and (
 			(R_PointToDist2(0,0, shot.momx,shot.momy) <= shot.brk2fre_minxy)
@@ -686,7 +689,7 @@ Paint.bulletSimpleState = function(shot)
 		shot.momx = FixedMul($, resist)
 		shot.momy = FixedMul($, resist)
 		shot.momz = FixedMul($, resist)
-		shot.momz = $ - (shot.fre_gravity * P_MobjFlip(shot))
+		shot.momz = $ - FixedMul(shot.fre_gravity * P_MobjFlip(shot), gravmul)
 	end
 end
 
