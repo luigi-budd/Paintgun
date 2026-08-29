@@ -11,7 +11,10 @@ local function isFriendlyFire(p1,p2)
 	elseif G_TagGametype()
 		return (p1.pflags & PF_TAGIT) == (p2.pflags & PF_TAGIT)
 	end
-	return CV.FindVar("friendlyfire").value == 0
+	if (gametyperules & GTR_FRIENDLY)
+		return CV.FindVar("friendlyfire").value == 0
+	end
+	return false -- eh we're probably good here
 end
 Paint.isFriendlyFire = isFriendlyFire
 
@@ -189,7 +192,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	
 	if not Paint.isFriendlyFire(p,source_player)
 		--CONS_Printf(sorp, "\x82Killed "..p.name.."!")
-		if source_player and source_player.valid
+		if (source_player and source_player.valid)
 			if not (gametyperules & (GTR_TAG|GTR_HIDEFROZEN))
 				P_AddPlayerScore(source_player, 110)
 			end
