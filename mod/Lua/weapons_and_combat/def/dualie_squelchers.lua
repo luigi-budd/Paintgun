@@ -64,6 +64,7 @@ Paint:registerWeapon({
 	weaponstate = S_PAINT_GUN_DUAL_R,
 	weaponstate_scale = FU*6/10,
 	dualie_weaponstate = S_PAINT_GUN_DUAL_L,
+	dodgeslide = true,
 	
 	abilitywrap = Paint.wtemplate_dualies,
 	sounds = {

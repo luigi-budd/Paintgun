@@ -2210,6 +2210,10 @@ addHook("PlayerThink",function(p)
 		elseif pt.firewait or dd.getup or inpain or pt.turretmode
 			p.pflags = $|PF_FULLSTASIS
 			p.jumpfactor = 0
+			if (cur_weapon:get(pt,"dodgeslide"))
+				p.pflags = $ &~PF_STASIS
+				p.normalspeed = $ / 2
+			end
 			
 			local redid = false
 			if not (pt.firewait > cur_weapon:get(pt,"dodgelength"))
