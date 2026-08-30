@@ -1218,10 +1218,10 @@ addHook("TouchSpecial",function(splat,mo)
 	local p = splat.tracer_player
 	local friendly = false
 
-	if not (p and p.valid)
+	if not (p and p.valid and p.realmo and p.realmo.valid)
 		friendly = Paint:mobjsOnTeam(mo, splat)
 	else
-		friendly = Paint:mobjsOnTeam(mo, p.mo)
+		friendly = Paint:mobjsOnTeam(mo, p.realmo)
 	end
 	
 	if (p and p.valid) and (p.pflags & PF_TAGIT) and (leveltime <= CV.FindVar("hidetime").value * TR)
@@ -1272,10 +1272,10 @@ addHook("TouchSpecial",function(splat,mo)
 	local p = splat.tracer_player
 	local friendly = false
 
-	if not (p and p.valid)
+	if not (p and p.valid and p.realmo and p.realmo.valid)
 		friendly = Paint:mobjsOnTeam(mo, splat)
 	else
-		friendly = Paint:mobjsOnTeam(mo, p.mo)
+		friendly = Paint:mobjsOnTeam(mo, p.realmo)
 	end
 	
 	if friendly
