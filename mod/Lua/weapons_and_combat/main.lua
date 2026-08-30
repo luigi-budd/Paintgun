@@ -1,5 +1,5 @@
-dofile("weapons/bullet.lua")
-dofile("weapons/bomb.lua")
+dofile("weapons_and_combat/bullet.lua")
+dofile("weapons_and_combat/bomb.lua")
 
 for i = 0,6
 	sfxinfo[freeslot("sfx_p_s0_"..i)].caption = "Paint fired"
@@ -1044,8 +1044,8 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 	return bomb
 end
 
-dofile("weapons/helpers.lua")
-dofile("weapons/templates.lua")
-dofile("weapons/callback_templates.lua")
-dofile("weapons/def/_FREESLOT.lua")
-dofile("weapons/bombdef/_FREESLOT.lua")
+dofile("weapons_and_combat/helpers.lua")
+dofile("weapons_and_combat/templates.lua")
+dofile("weapons_and_combat/callback_templates.lua")
+dofile("weapons_and_combat/def/_FREESLOT.lua")
+dofile("weapons_and_combat/bombdef/_FREESLOT.lua")

@@ -243,7 +243,7 @@ end
 function Paint:initPlayer(p)
 	p.paint = {
 		player = p,
-		team = 0,
+		team = false,
 		
 		weapon_id = "",
 		weaponmobj = nil,
@@ -514,10 +514,10 @@ Paint.SIXTY2THIRTYFIVE = tofixed("1.71428")
 -- splat 3's is 0.95999998 which is basically 0.96
 Paint.SPLAT2WALKSPEED = tofixed("0.096")
 
-dofile("cvars/main.lua")
+dofile("console/cvars.lua")
 dofile("lib/lib.lua")
-dofile("weapons/main.lua")
-dofile("weapons/player.lua")
+dofile("weapons_and_combat/main.lua")
+dofile("weapons_and_combat/player.lua")
 dofile("hud/main.lua")
 dofile("auxiliary.lua")
 dofile("enemy.lua")

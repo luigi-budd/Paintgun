@@ -36,7 +36,10 @@ addHook("HUD",function(v,p,cam)
 		v.drawString(160 - 60, 194, " - Inventory", V_ALLOWLOWERCASE|flags, "small-thin")
 	end
 	
-	local sub_t = Paint.subs[Paint.weapons[pt.weapon_id].subtype or ""]
+	local sub_t
+	if Paint.weapons[pt.weapon_id] ~= nil and Paint.weapons[pt.weapon_id].subtype
+		sub_t = Paint.subs[Paint.weapons[pt.weapon_id].subtype]
+	end
 	if sub_t
 		x = $ - (80 * subscale)/2
 		v.drawScaled(x,y,subscale, v.cachePatch("PTSUB_BG"), flags)

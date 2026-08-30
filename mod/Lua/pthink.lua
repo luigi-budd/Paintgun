@@ -465,6 +465,747 @@ local function makeBlob(p,me,pt, rad,hei)
 	return blob
 end
 
+local easing = ease.inquad
+BP.doSwimForm = function(p)
+	local pt = p.paint
+	local me = p.realmo
+	local cur_weapon = Paint.weapons[pt.weapon_id]
+	local sub_t
+	if (cur_weapon)
+		sub_t = Paint.subs[cur_weapon.subtype]
+	end
+	local skin = skins[p.skin]
+
+	local clrstr = clrstr_lut[Paint:getPlayerColor(p)]
+	if clrstr == nil
+		clrstr_lut[Paint:getPlayerColor(p)] = ("~%.3d"):format(skincolors[Paint:getPlayerColor(p)].ramp[6])
+	end
+	
+	local standing_pic,standing_sector = Paint.CheckFloorPic(me, true)
+	if P_IsObjectOnGround(me)
+	and standing_pic == clrstr
+		Paint:setPlayerInInk(p, Paint.ININK_FRIENDLY)
+	end
+	
+	p.shieldscale = skin.shieldscale
+	pt.squidtoggle = false
+	do -- swim stuff
+		-- in hide and seek
+		if (gametyperules & (GTR_TAG|GTR_HIDEFROZEN) == (GTR_TAG|GTR_HIDEFROZEN))
+		and (p.pflags & PF_TAGIT == 0)
+			local cv_hidetime = CV.FindVar("hidetime")
+			
+			if leveltime >= cv_hidetime.value*TR
+			and not pt.hidenseekon
+				pt.hidenseekon = true
+				pt.squidhidetoggle = (p.cmd.buttons & BT_SPIN == BT_SPIN)
+			elseif leveltime < cv_hidetime.value*TR
+				pt.hidenseekon = false
+			end
+			
+			if pt.hidenseekon
+				if (pt.spinheld == 1)
+					pt.squidhidetoggle = not $
+				end
+				if pt.squidhidetoggle
+					p.cmd.buttons = $|BT_SPIN
+				else
+					p.cmd.buttons = $ &~BT_SPIN
+				end
+			end
+		else
+			pt.hidenseekon = false
+		end
+		
+		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
+		local oldclimbing = (pt.hidden and pt.wallink)
+		pt.hidden = false
+		
+		if (p.cmd.buttons & BT_SPIN)
+		and not ((pt.endlag or pt.shieldlag or pt.firewait /*or pt.cooldown*/ or pt.justfired or (pt.charge ~= 0))
+		/*or (pt.cooldown)*/)
+		and (p.charability2 == CA2_SQUIDFORM)
+		and not (pt.dodgeroll.tics or pt.dodgeroll.getup)
+		and not (pt.squidlag)
+		and not (pt.fireheld > 1)
+		and not (pt.disable.swimming)
+			if not pt.wasinsquid
+				S_StartSound(me,sfx_pt_tos)
+			end
+			
+			pt.squidtoggle = true
+			pt.squidtime = min($ + 1, MAX_SQUIDTIME)
+			local frac = (FU/MAX_SQUIDTIME)*pt.squidtime
+			--me.height = easing(frac, $, 22*me.scale)
+			me.spriteyscale = easing(frac, FU, maxsquish)
+			--pt.fireheld = 0
+			--p.cmd.buttons = $ &~BT_ATTACK
+			pt.waskatanacharging = false
+			pt.wasinsquid = true
+		else
+			if pt.wasinsquid
+				S_StartSound(me,sfx_pt_toh)
+				if pt.storedcharge
+					S_StartSound(nil, sfx_pt_kth, p)
+					pt.charge = pt.storedcharge
+					pt.store_lag = cur_weapon:get(pt,"storagelag")
+					pt.store_firelag = cur_weapon:get(pt,"storagelaserlag")
+					
+					pt.storedcharge = 0
+					pt.store_time = 0
+				end
+				pt.nofiring = false
+			end
+			S_StopSoundByID(me,sfx_pt_swm)
+			
+			local frac = FU - (FU/MAX_SQUIDTIME)*pt.squidtime
+			--me.height = easing(frac, 22*me.scale, $)
+			me.spriteyscale = easing(frac, maxsquish, FU)
+			pt.squidtime = max($ - 1, 0)
+			pt.wasinsquid = false
+		end
+		if pt.squidlag then pt.squidlag = $ - 1; end
+		pt.justfired = false
+		
+		local dostoreaura = false
+		p.charflags = ($ &~(SF_NOSKID|SF_NOJUMPSPIN))|(skin.flags & (SF_NOSKID|SF_NOJUMPSPIN))
+		p.normalspeed = BP.BASE_NSPEED
+		p.thrustfactor = skin.thrustfactor
+		p.accelstart = skin.accelstart
+		p.acceleration = skin.acceleration
+		p.jumpfactor = BP.BASE_JUMPF
+		
+		local wallangle = me.angle - ANGLE_90
+		if (pt.squidtime >= MAX_SQUIDTIME)
+			local touchingwall = false
+			if (p.lastlinehit ~= -1)
+			and (pt.wallink and not P_IsObjectOnGround(me))
+				local line = lines[p.lastlinehit]
+				local ox,oy = P_ClosestPointOnLine(me.x,me.y, line)
+				wallangle = R_PointToAngle2(
+					line.v1.x, line.v1.y, line.v2.x, line.v2.y
+				) - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1)
+				wallangle = $ - ANGLE_90 -- lol
+				
+				if R_PointToDist2(me.x + me.momx, me.y + me.momy, ox,oy) <= me.radius + 12*me.scale
+					touchingwall = true
+					local ang = R_PointToAngle2(me.x + me.momx, me.y + me.momy, ox,oy)
+					if abs(ang) ~= ANGLE_45
+						P_Thrust(me,
+							ang,
+							me.scale / 8
+						)
+					end
+				end
+			end
+			local wallclimb = (pt.wallink and (p.powers[pw_pushing] or touchingwall))
+			
+			p.charflags = $|SF_NOSKID
+			if (pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me))
+			or wallclimb
+				Paint.HUD:musicLerp(p, 30, FU/2)
+				if (FixedHypot(FixedHypot(me.momx,me.momy),me.momz) <= 6*FU)
+					local sfx = P_RandomRange(sfx_pt_b0, sfx_pt_b4)
+					local chance = P_RandomChance(FU/2)
+					if not (S_SoundPlaying(me, sfx_pt_b0)
+						or S_SoundPlaying(me, sfx_pt_b1)
+						or S_SoundPlaying(me, sfx_pt_b2)
+						or S_SoundPlaying(me, sfx_pt_b3)
+						or S_SoundPlaying(me, sfx_pt_b4)
+					) and (chance) and (pt.squididle >= TR/3) then
+						local vol = (p == displayplayer) and (255/4) or (255/11)
+						S_StartSoundAtVolume(me, sfx, vol)
+					end
+					pt.squididle = min($ + 1, TR/2)
+				elseif pt.squididle
+					pt.squididle = $ - 1
+				end
+				
+				me.flags2 = $|MF2_DONTDRAW
+				pt.hidden = true
+				p.shieldscale = 0
+				pt.squidanim = TR/2
+				p.pflags = $ &~(PF_SPINNING)
+				if (me.state == S_PLAY_ROLL)
+					me.state = S_PLAY_WALK
+					P_MovePlayer(p)
+				end
+				
+				p.normalspeed = BP.SWIM_NSPEED
+				p.thrustfactor = $*6/4
+				if pt.substrafe 
+					p.accelstart = $ * 4
+					p.acceleration = $ * 2
+				elseif (wallclimb and not P_IsObjectOnGround(me))
+					p.accelstart = 0
+					p.acceleration = 0
+				end
+				
+				me.friction = FixedMul($, FU*97/100)
+				if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
+					local fric = FU * 9/10
+					me.momx = FixedMul($, fric)
+					me.momy = FixedMul($, fric)
+				end
+			else
+				p.normalspeed = $/3
+				--- yyyyyyup
+				S_StopSoundByID(me, sfx_pt_b0)
+				S_StopSoundByID(me, sfx_pt_b1)
+				S_StopSoundByID(me, sfx_pt_b2)
+				S_StopSoundByID(me, sfx_pt_b3)
+				S_StopSoundByID(me, sfx_pt_b4)
+			end
+			
+			if wallclimb
+				if not (pt.wasclimbing) and me.last_speed
+					P_SetObjectMomZ(me,FixedDiv(me.last_speed,me.scale)/2,true)
+				end
+				
+				if (p.cmd.forwardmove > 0)
+					P_SetObjectMomZ(me, p.normalspeed/28, true)
+				elseif (me.momz * P_MobjFlip(me) < 0)
+					me.momz = $ + P_GetMobjGravity(me)/2
+				end
+				if (p.cmd.sidemove ~= 0)
+					local frac = FixedDiv(p.cmd.sidemove*FU, 50*FU)
+					P_Thrust(me, wallangle, FixedMul(me.scale, frac))
+				end
+				
+				if (pt.jumpheld == 1)
+					P_SetObjectMomZ(me, 3*FU, true)
+					S_StartSound(me, sfx_pt_ijm, p)
+					pt.spreadjump = cur_weapon:get(pt,"spread_jump")
+				end
+				
+				me.momz = FixedMul($, FU*98/100)
+				pt.wasclimbing = true
+				p.pflags = $ &~PF_STARTJUMP
+			else
+				if pt.wasclimbing
+					me.momz = $/3
+				end
+				pt.wasclimbing = false
+			end
+			
+			if pt.hidden
+				p.pflags = $|PF_INVIS
+				
+				local cando = true
+				if (wallclimb and not (p.cmd.forwardmove > 0 or p.cmd.sidemove ~= 0))
+					cando = false
+				end
+				if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 12*me.scale)
+				and cando
+					p.pflags = $ &~PF_INVIS
+					if not S_SoundPlaying(me, sfx_pt_swm)
+						S_StartSoundAtVolume(me,sfx_pt_swm,255/2)
+					end
+					local off = 8*FU
+					local blob = makeBlob(p,me,pt, 0,0)
+					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
+					P_SetOrigin(blob, me.x, me.y, blob.z)
+					
+					if (pt.wasclimbing)
+						local v_ang = FixedAngle(P_RandomFixedRange(-25*FU,25*FU))
+						local xydisp = P_RandomFixedRange(-off, off)
+						P_SetOrigin(blob,
+							me.x + P_ReturnThrustX(nil, wallangle, xydisp),
+							me.y + P_ReturnThrustY(nil, wallangle, xydisp),
+							blob.z + P_RandomFixedRange(-off, off)
+						)
+						
+						local v_speed = P_RandomRange(5,10)*me.scale
+						P_Thrust(blob,wallangle - ANGLE_90, -P_RandomRange(1,3)*me.scale)
+						P_Thrust(blob,wallangle, FixedMul(v_speed, sin(v_ang)) )
+						blob.momz = $ + me.momz/2
+						
+						if (leveltime % 2 == 0)
+							local angstep = (60 / 4)*FU
+							local dist = FixedDiv(me.radius, me.scale) + 4*FU
+							for i = -4, 4
+								local va = ANGLE_90 + FixedAngle(angstep * i)
+								local xydist = FixedMul(cos(va), dist)
+								local splash = P_SpawnMobjFromMobj(me,
+									P_ReturnThrustX(nil, wallangle, xydist),
+									P_ReturnThrustY(nil, wallangle, xydist),
+									FixedMul(sin(va), dist), MT_PARTICLE
+								)
+								P_SetOrigin(splash, splash.x,splash.y,splash.z)
+								splash.state = S_PAINT_SPLASH2
+								splash.color = Paint:getPlayerColor(p)
+								splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+								P_SetScale(splash, splash.scale / 2, true)
+								local rand = P_RandomRange(0,2)
+								splash.frame = $ + rand
+								splash.tics = $ - rand
+								
+								splash.momx = me.momx * 3/4
+								splash.momy = me.momy * 3/4
+								splash.momz = me.momz / 2
+							end
+						end
+					else
+						P_SetOrigin(blob,
+							me.x + P_RandomFixedRange(-off, off),
+							me.y + P_RandomFixedRange(-off, off),
+							blob.z
+						)
+						
+						local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomFixedRange(-25*FU,25*FU))
+						P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
+						P_Thrust(blob,ang, -P_RandomRange(6,15)*me.scale)
+						
+						blob.momx = $ + me.momx
+						blob.momy = $ + me.momy
+						
+						if (leveltime % 2 == 0)
+							local angstep = (60 / 4)*FU
+							local dist = FixedDiv(me.radius, me.scale) + 4*FU
+							for i = -4, 4
+								local fa = ang + FixedAngle(angstep * i)
+								local splash = P_SpawnMobjFromMobj(me,
+									P_ReturnThrustX(nil, fa, dist),
+									P_ReturnThrustY(nil, fa, dist),
+									2*FU, MT_PARTICLE
+								)
+								P_SetOrigin(splash, splash.x,splash.y, me.floorz)
+								splash.state = S_PAINT_SPLASH2
+								splash.color = Paint:getPlayerColor(p)
+								splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+								P_SetScale(splash, splash.scale / 2, true)
+								local rand = P_RandomRange(0,2)
+								splash.frame = $ + rand
+								splash.tics = $ - rand
+								
+								splash.momx = me.momx * 3/4
+								splash.momy = me.momy * 3/4
+							end
+							
+							if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 20*me.scale)
+								local range = 128
+								local wind = P_SpawnMobjFromMobj(me,
+									P_RandomRange(-range, range)*FU,
+									P_RandomRange(-range, range)*FU,
+									P_RandomRange(0, range)*FU,
+									MT_THOK
+								)
+								wind.blendmode = AST_ADD
+								wind.renderflags = RF_SEMIBRIGHT|RF_PAPERSPRITE
+								wind.sprite = SPR_RAIN
+								wind.rollangle = ANGLE_90
+								wind.angle = R_PointToAngle2(0,0,me.momx,me.momy)
+								wind.drawonlyforplayer = p
+							end
+						end
+					end
+					
+					blob.destscale = 0
+					blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
+				else
+					S_StopSoundByID(me,sfx_pt_swm)
+				end
+				
+				if (pt.hp ~= 100*FU)
+					local rad = FixedDiv(me.radius,me.scale)/FU
+					local blob = makeBlob(p,me,pt, rad,0)
+					blob.fuse = TR/2
+					blob.scale = $/2
+					blob.destscale = me.scale
+					blob.scalespeed = FixedDiv(blob.destscale - blob.scale, blob.fuse*FU)
+					blob.color = (pt.paintoverlay and pt.paintoverlay.valid) and pt.paintoverlay.color or ColorOpposite(Paint:getPlayerColor(p))
+				end
+				
+				local angle,thrust = Paint.slopeInfluence(me,p, {
+					allowstand = true, allowmult = true
+				})
+				if angle ~= nil
+					P_Thrust(me,angle,-thrust)
+				end
+			else
+				S_StopSoundByID(me,sfx_pt_swm)
+				p.pflags = $ &~PF_INVIS
+			end
+			pt.wallink = max($ - 1, 0)
+			
+			if pt.storedcharge and cur_weapon
+				dostoreaura = true
+				
+				local maxtime = cur_weapon:get(pt,"storagetime")
+				pt.store_time = $ + 1
+				if pt.store_time >= maxtime
+				or not ((p.cmd.buttons & BT_ATTACK) or waspressingattack)
+					pt.storedcharge = 0
+				end
+			else
+				pt.store_time = 0
+			end
+		else
+			pt.wallink = 0
+			pt.squididle = 0
+			p.pflags = $ &~PF_INVIS
+			
+			if pt.wasclimbing
+				me.momz = $/3
+			end
+			pt.wasclimbing = false
+			--- yyyyyyup
+			S_StopSoundByID(me, sfx_pt_b0)
+			S_StopSoundByID(me, sfx_pt_b1)
+			S_StopSoundByID(me, sfx_pt_b2)
+			S_StopSoundByID(me, sfx_pt_b3)
+			S_StopSoundByID(me, sfx_pt_b4)
+		end
+		if me.last_hidden ~= pt.hidden
+		and me.last_hidden ~= nil
+			if not ((pt.wasclimbing or pt.wallink) or oldclimbing)
+				local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
+				P_SetOrigin(splash, splash.x,splash.y, me.floorz)
+				splash.state = S_PAINT_SPLASH
+				splash.color = Paint:getPlayerColor(p)
+				splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+				P_SetScale(splash, splash.scale + P_RandomFixed()/2, true)
+			end
+			S_StartSound(me, sfx_splish)
+		end
+		me.last_hidden = pt.hidden
+		me.last_speed = FixedHypot(me.momx,me.momy)
+		if dostoreaura and cur_weapon
+			local aura = pt.store_aura
+			if not (aura and aura.valid)
+				local g = P_SpawnMobjFromMobj(me, 0,0,2*FU, MT_PARTICLE)
+				g.sprite = SPR_PAINT_MISC
+				g.frame = 32|FF_FULLBRIGHT|FF_ADD
+				g.renderflags = $|RF_NOCOLORMAPS
+				pt.store_aura = g
+				aura = g
+			end
+			
+			aura.angle = wallangle
+			local maxtime = cur_weapon:get(pt,"storagetime")
+			if (pt.hidden)
+				aura.renderflags = $|RF_FLOORSPRITE
+				if (pt.wallink and not P_IsObjectOnGround(me))
+					aura.renderflags = $|RF_PAPERSPRITE &~RF_FLOORSPRITE
+				end
+			else
+				aura.renderflags = $ &~(RF_FLOORSPRITE|RF_PAPERSPRITE)
+			end
+			aura.color = Paint:getPlayerColor(p)
+			if pt.store_time > maxtime - TR/2
+				aura.alpha = FU - FixedDiv((pt.store_time - (maxtime - TR/2))*FU, (TR/2)*FU)
+			end
+			P_MoveOrigin(aura, me.x + me.momx, me.y + me.momy, me.z + me.momz + (6*me.scale))
+		elseif (pt.store_aura and pt.store_aura.valid)
+			P_RemoveMobj(pt.store_aura)
+			pt.store_aura = nil
+		end
+		
+		if pt.inink == Paint.ININK_ENEMY
+			p.normalspeed = $ * 3/5
+		end
+		if (pt.squidanim)
+			me.colorized = true
+			pt.squidanim = $ - 1
+			if pt.squidanim == 0
+				local rad = FixedDiv(me.radius,me.scale)/FU
+				local hei = FixedDiv(me.height,me.scale)/FU
+				for i = 0,15
+					local blob = makeBlob(p,me,pt, rad,hei)
+					local ang = R_PointToAngle2(blob.x,blob.y, me.x,me.y)
+					P_SetObjectMomZ(blob, P_RandomRange(2,6)*FU)
+					P_Thrust(blob,ang, -P_RandomRange(1,3)*me.scale)
+					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
+					blob.destscale = 0
+					blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
+				end
+				me.colorized = false
+			end
+		end
+	end
+
+	pt.fastrefill = false
+	if pt.inkdelay
+		if not pt.fireheld
+			pt.inkdelay = $ - 1
+		end
+		pt.oldinkanim = ease.linear(FU - FixedDiv(pt.inkdelay*FU, (pt.maxinkdelay or 1)*FU), pt.oldinktank, pt.inktank)
+	elseif pt.inktank ~= 100*FU
+	and not pt.fireheld
+	and not pt.inkqueue
+		pt.maxinkdelay = 0
+		local oldtank = pt.inktank
+		if pt.hidden
+			pt.inktank = $ + fast_ink_refill_rate
+			pt.fastrefill = true
+		else
+			pt.inktank = $ + ink_refill_rate
+		end
+		if sub_t ~= nil
+			if oldtank < sub_t:get(pt,"inkcost")
+			and pt.inktank >= sub_t:get(pt,"inkcost")
+				S_StartSound(nil, sfx_pt_srd, p)
+				pt.justrestored = true
+			end
+		end
+		pt.inktank = min($, 100*FU)
+	end
+end
+
+-- handles anglestanding and movement and stuff
+BP.handleMovement = function(p)
+	local me = p.realmo
+	local pt = p.paint
+	local cur_weapon = Paint.weapons[pt.weapon_id]
+	
+	if (p.gotflag)
+		p.normalspeed = $ * 8/10
+		p.acceleration = $ * 3/4
+	end
+
+	-- weight class
+	if cur_weapon
+		p.normalspeed = FixedMul($, Paint.WEI_MULS[cur_weapon.weightclass])
+	end
+
+	if pt.anglefix
+	or (pt.firewait or pt.shieldlag)
+	or (pt.store_lag)
+		p.drawangle = me.paint_fireangle
+		if pt.anglefix
+			pt.anglefix = $ - 1
+		end
+		if pt.anglefix == 0
+			pt.anglestand = p.drawangle
+			if me.paint_wasslowturning
+				pt.anglestand = pt.prevangle
+			end
+		end
+	elseif p.panim == PA_IDLE
+	and not pt.aimingsub
+	and not ((me.skin == "pointy" or me.skin == "fluffy") and p.cc_neckenabled)
+		-- anglestand
+		p.drawangle = pt.anglestand
+	else
+		pt.anglestand = p.drawangle
+	end
+
+	if not P_IsObjectOnGround(me)
+	and FixedHypot(me.momx,me.momy) > FixedMul(p.normalspeed, me.scale)
+		local speed = FixedHypot(me.momx,me.momy)
+		local div = 18*FU
+		
+		local newspeed = speed - FixedDiv(speed - FixedMul(p.normalspeed, me.scale),div)
+		me.momx = FixedMul(FixedDiv(me.momx,speed), newspeed)
+		me.momy = FixedMul(FixedDiv(me.momy,speed), newspeed)
+	end
+	
+
+end
+
+-- Danger!, inink behavior, and assist hitlist
+BP.handleHealth = function(p)
+	local me = p.realmo
+	local pt = p.paint
+
+	do
+		local fastdanger = false
+		if pt.hp ~= 100*FU
+		and (pt.timetoheal <= 0)
+			local hpinc = 0
+			if pt.inink == Paint.ININK_FRIENDLY
+			and (FixedHypot(me.momx,me.momy) < 5*me.scale)
+			and pt.hidden
+				hpinc = 8*FU
+			elseif pt.inink ~= Paint.ININK_ENEMY
+				hpinc = FixedDiv(12*FU + FU/2, TR*FU)
+			end
+			if pt.brokenarmor
+				if hpinc == 8*FU
+					fastdanger = true
+				end
+				hpinc = 0
+			end
+			
+			pt.hp = min($ + hpinc, 100*FU)
+		end
+		
+		if pt.brokenarmor
+			if fastdanger
+				pt.armorregen = $ - FixedDiv(100*FU, Paint.DANGER_TIME_FAST*FU)
+			else
+				pt.armorregen = $ - FixedDiv(100*FU, Paint.DANGER_TIME*FU)
+			end
+			
+			-- insta-regen cases
+			if (p.powers[pw_shield])
+				p.powers[pw_shield] = 0
+				pt.armorregen = 0
+			end
+			if (p.last_starpostnum ~= nil)
+			and (p.starpostnum > p.last_starpostnum)
+				pt.armorregen = 0
+			end
+			
+			if (leveltime % 2)
+				local s = P_SpawnMobjFromMobj(me, 0,0,
+					P_RandomFixedRange(0, FixedDiv(me.height,me.scale)),
+					MT_PARTICLE
+				)
+				s.color = P_RandomRange(SKINCOLOR_SALMON, SKINCOLOR_KETCHUP)
+				s.blendmode = AST_ADD
+				s.spritexscale = $ / 8
+				s.spriteyscale = s.spritexscale
+				P_SetScale(s, s.scale * 4, true)
+				s.flags = $ &~(MF_NOCLIPTHING|MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT)
+				P_SetObjectMomZ(s, P_RandomFixedRange(1*FU, 5*FU))
+				s.angle = FixedAngle(P_RandomFixedRange(0,360*FU))
+				P_Thrust(s, s.angle, P_RandomFixedRange(1*FU, 10*FU))
+				s.angle = $ + ANGLE_90
+				
+				s.prevmomz = s.momz
+				s.fuse = TR / 2
+				s.rang = FixedAngle(P_RandomFixedRange(0,90*FU))
+				s.rroll = FixedAngle(P_RandomFixedRange(-30*FU,30*FU))
+				s.state = S_PAINT_BROKEARMOR
+			end
+			do
+				local rad = FixedDiv(me.radius, me.scale) * 3/4
+				local hei = FixedDiv(me.height,me.scale)
+				local s = P_SpawnMobjFromMobj(me,
+					P_RandomFixedRange(-rad, rad),
+					P_RandomFixedRange(-rad, rad),
+					hei/2 + P_RandomFixedRange(-hei/5, hei/5),
+					MT_PARTICLE
+				)
+				s.color = P_RandomRange(SKINCOLOR_SALMON, SKINCOLOR_KETCHUP)
+				s.blendmode = AST_ADD
+				s.spritexscale = $ / P_RandomRange(2,4)
+				s.spriteyscale = s.spritexscale
+				
+				s.fuse = 3
+				s.state = S_THOK
+			end
+			
+			if pt.armorregen <= 0
+				pt.brokenarmor = false
+				S_StartSound(me, sfx_pt_ag)
+				me.paint_barmor = 6
+				me.paint_barmor_hp = pt.hp
+				me.paint_overlayhp = pt.hp
+				pt.hp = 100*FU
+				
+				local ov = P_SpawnMobjFromMobj(me, 0,0,0, MT_PAINT_GUN)
+				ov.target = me
+				ov.state = mobjinfo[MT_MSSHIELD_FRONT].spawnstate
+				ov.colorized = true
+				ov.color = SKINCOLOR_GOLDENROD
+				ov.blendmode = AST_ADD
+				ov.scale = $ * 2
+				ov.fuse = TR / 2
+				ov.destscale = 0
+				ov.scalespeed = FixedDiv(ov.scale, ov.fuse*FU)
+			end
+			p.normalspeed = $ / 3
+		end
+		if me.paint_barmor ~= nil
+			me.paint_overlayhp = ease.outquad(
+				FU - ((FU/6) * me.paint_barmor),
+				me.paint_barmor_hp, pt.hp
+			)
+			me.paint_barmor = $ - 1
+			if me.paint_barmor <= 0
+				me.paint_barmor = nil
+				me.paint_overlayhp = nil
+			end
+		end
+		p.last_starpostnum = p.starpostnum
+		
+		pt.timetoheal = max($-1,0)
+		
+		if pt.inink ~= 0
+			me.spriteyoffset = ease.linear(FU/6, $, -(pt.inink == Paint.ININK_ENEMY and 9 or 4)*FU)
+		else
+			me.spriteyoffset = ease.linear(FU/6, $, 0)
+		end
+		
+		if pt.inink == Paint.ININK_ENEMY
+			if not S_SoundPlaying(me, sfx_pt_ow2)
+				S_StartSoundAtVolume(me, sfx_pt_ow2, (p == displayplayer) and 255 or 255/2)
+			end
+			if (p == displayplayer or p == secondarydisplayplayer)
+				P_StartQuake(FU*3/2, 2)
+			end
+			
+			-- enemy ink vfx
+			if P_IsObjectOnGround(me)
+				local clr
+				if (pt.paintoverlay and pt.paintoverlay.valid)
+					clr = pt.paintoverlay.color
+				else
+					clr = ColorOpposite(Paint:getPlayerColor(p))
+				end
+				
+				local off = 8*FU
+				local blob = makeBlob(p,me,pt, 0,0)
+				blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
+				blob.color = clr
+				P_SetOrigin(blob, me.x, me.y, blob.z)
+				
+				P_SetOrigin(blob,
+					me.x + P_RandomFixedRange(-off, off),
+					me.y + P_RandomFixedRange(-off, off),
+					blob.z
+				)
+				
+				local ang = FixedAngle(360 * P_RandomFixed())
+				P_SetObjectMomZ(blob, P_RandomRange(1,4)*FU)
+				P_Thrust(blob,ang, P_RandomFixedRange(-me.scale, -2*me.scale))
+				
+				if (leveltime % 2 == 0)
+					local angstep = (360 / 12)*FU
+					local dist = FixedDiv(me.radius, me.scale) + 4*FU
+					for i = 0,11
+						local fa = ang + FixedAngle(angstep * i)
+						local splash = P_SpawnMobjFromMobj(me,
+							P_ReturnThrustX(nil, fa, dist),
+							P_ReturnThrustY(nil, fa, dist),
+							2*FU, MT_PARTICLE
+						)
+						P_SetOrigin(splash, splash.x,splash.y, me.floorz)
+						splash.state = S_PAINT_SPLASH2
+						splash.color = clr
+						splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+						P_SetScale(splash, splash.scale / 2, true)
+						local rand = P_RandomRange(0,2)
+						splash.frame = $ + rand
+						splash.tics = $ - rand
+						P_Thrust(splash, fa, 2*me.scale)
+					end
+				end
+				
+				blob.destscale = 0
+				blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
+			end
+		else
+			S_StopSoundByID(me,sfx_pt_ow2)
+		end
+		
+		if pt.inktime
+			pt.inktime = $ - 1
+		else
+			pt.inink = 0
+		end
+	end
+	
+	if (pt.hittime)
+		pt.hittime = $ - 1
+		if pt.hittime == 0
+			pt.hitlist = {}
+		end
+	end
+end
+
 local cv_hidetime = CV.FindVar("hidetime")
 addHook("PlayerThink",function(p)
 	local me = p.mo
@@ -507,6 +1248,7 @@ addHook("PlayerThink",function(p)
 	end
 	local pt = p.paint
 	local skin = skins[p.skin]
+	local team = Paint.teams[pt.team] -- can be nil!
 	
 	if (not Paint:isMode()
 	and not CV.paintguns.value)
@@ -563,6 +1305,14 @@ addHook("PlayerThink",function(p)
 			pt.inktank = 100*FU
 			pt.disable.inktank = true
 			pt.disable.sub = true
+		end
+	end
+	if team ~= nil
+		if team:get(pt, "color") ~= nil
+			me.color = Paint:getPlayerColor(p)
+		end
+		if team.thinker ~= nil
+			team.thinker(p)
 		end
 	end
 	if (p.exiting)
@@ -668,6 +1418,17 @@ addHook("PlayerThink",function(p)
 			P_RemoveMobj(wepmo)
 			pt.weaponmobjdupe = nil
 		end
+
+		if not p.exiting
+			if (pt.buttons & BT_JUMP)
+				pt.jumpheld = $ + 1
+			else
+				pt.jumpheld = 0
+			end
+		else
+			pt.jumpheld = 0
+		end
+		BP.doSwimForm(p)
 		return
 	end
 	local sub_t = Paint.subs[cur_weapon.subtype]
@@ -1115,455 +1876,8 @@ addHook("PlayerThink",function(p)
 	end
 	
 	-- squid form / swim form
-	local clrstr = clrstr_lut[Paint:getPlayerColor(p)]
-	if clrstr == nil
-		clrstr_lut[Paint:getPlayerColor(p)] = ("~%.3d"):format(skincolors[Paint:getPlayerColor(p)].ramp[6])
-	end
-	
-	local standing_pic,standing_sector = Paint.CheckFloorPic(me, true)
-	if P_IsObjectOnGround(me)
-	and standing_pic == clrstr
-		Paint:setPlayerInInk(p, Paint.ININK_FRIENDLY)
-	end
-	
-	p.shieldscale = skin.shieldscale
-	pt.squidtoggle = false
-	do -- swim stuff
-		-- in hide and seek
-		if (gametyperules & (GTR_TAG|GTR_HIDEFROZEN) == (GTR_TAG|GTR_HIDEFROZEN))
-		and (p.pflags & PF_TAGIT == 0)
-			local cv_hidetime = CV.FindVar("hidetime")
-			
-			if leveltime >= cv_hidetime.value*TR
-			and not pt.hidenseekon
-				pt.hidenseekon = true
-				pt.squidhidetoggle = (p.cmd.buttons & BT_SPIN == BT_SPIN)
-			elseif leveltime < cv_hidetime.value*TR
-				pt.hidenseekon = false
-			end
-			
-			if pt.hidenseekon
-				if (pt.spinheld == 1)
-					pt.squidhidetoggle = not $
-				end
-				if pt.squidhidetoggle
-					p.cmd.buttons = $|BT_SPIN
-				else
-					p.cmd.buttons = $ &~BT_SPIN
-				end
-			end
-		else
-			pt.hidenseekon = false
-		end
-		
-		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
-		local easing = ease.inquad
-		local oldclimbing = (pt.hidden and pt.wallink)
-		pt.hidden = false
-		
-		if (p.cmd.buttons & BT_SPIN)
-		and not ((pt.endlag or pt.shieldlag or pt.firewait /*or pt.cooldown*/ or pt.justfired or (pt.charge ~= 0))
-		/*or (pt.cooldown)*/)
-		and (p.charability2 == CA2_SQUIDFORM)
-		and not (pt.dodgeroll.tics or pt.dodgeroll.getup)
-		and not (pt.squidlag)
-		and not (pt.fireheld > 1)
-		and not (pt.disable.swimming)
-			if not pt.wasinsquid
-				S_StartSound(me,sfx_pt_tos)
-			end
-			
-			pt.squidtoggle = true
-			pt.squidtime = min($ + 1, MAX_SQUIDTIME)
-			local frac = (FU/MAX_SQUIDTIME)*pt.squidtime
-			--me.height = easing(frac, $, 22*me.scale)
-			me.spriteyscale = easing(frac, FU, maxsquish)
-			--pt.fireheld = 0
-			--p.cmd.buttons = $ &~BT_ATTACK
-			pt.waskatanacharging = false
-			pt.wasinsquid = true
-		else
-			if pt.wasinsquid
-				S_StartSound(me,sfx_pt_toh)
-				if pt.storedcharge
-					S_StartSound(nil, sfx_pt_kth, p)
-					pt.charge = pt.storedcharge
-					pt.store_lag = cur_weapon:get(pt,"storagelag")
-					pt.store_firelag = cur_weapon:get(pt,"storagelaserlag")
-					
-					pt.storedcharge = 0
-					pt.store_time = 0
-				end
-				pt.nofiring = false
-			end
-			S_StopSoundByID(me,sfx_pt_swm)
-			
-			local frac = FU - (FU/MAX_SQUIDTIME)*pt.squidtime
-			--me.height = easing(frac, 22*me.scale, $)
-			me.spriteyscale = easing(frac, maxsquish, FU)
-			pt.squidtime = max($ - 1, 0)
-			pt.wasinsquid = false
-		end
-		if pt.squidlag then pt.squidlag = $ - 1; end
-		pt.justfired = false
-		
-		local dostoreaura = false
-		p.charflags = ($ &~(SF_NOSKID|SF_NOJUMPSPIN))|(skin.flags & (SF_NOSKID|SF_NOJUMPSPIN))
-		p.normalspeed = BP.BASE_NSPEED
-		p.thrustfactor = skin.thrustfactor
-		p.accelstart = skin.accelstart
-		p.acceleration = skin.acceleration
-		p.jumpfactor = BP.BASE_JUMPF
-		
-		local wallangle = me.angle - ANGLE_90
-		if (pt.squidtime >= MAX_SQUIDTIME)
-			local touchingwall = false
-			if (p.lastlinehit ~= -1)
-			and (pt.wallink and not P_IsObjectOnGround(me))
-				local line = lines[p.lastlinehit]
-				local ox,oy = P_ClosestPointOnLine(me.x,me.y, line)
-				wallangle = R_PointToAngle2(
-					line.v1.x, line.v1.y, line.v2.x, line.v2.y
-				) - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1)
-				wallangle = $ - ANGLE_90 -- lol
-				
-				if R_PointToDist2(me.x + me.momx, me.y + me.momy, ox,oy) <= me.radius + 12*me.scale
-					touchingwall = true
-					local ang = R_PointToAngle2(me.x + me.momx, me.y + me.momy, ox,oy)
-					if abs(ang) ~= ANGLE_45
-						P_Thrust(me,
-							ang,
-							me.scale / 8
-						)
-					end
-				end
-			end
-			local wallclimb = (pt.wallink and (p.powers[pw_pushing] or touchingwall))
-			
-			p.charflags = $|SF_NOSKID
-			if (pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me))
-			or wallclimb
-				Paint.HUD:musicLerp(p, 30, FU/2)
-				if (FixedHypot(FixedHypot(me.momx,me.momy),me.momz) <= 6*FU)
-					local sfx = P_RandomRange(sfx_pt_b0, sfx_pt_b4)
-					local chance = P_RandomChance(FU/2)
-					if not (S_SoundPlaying(me, sfx_pt_b0)
-						or S_SoundPlaying(me, sfx_pt_b1)
-						or S_SoundPlaying(me, sfx_pt_b2)
-						or S_SoundPlaying(me, sfx_pt_b3)
-						or S_SoundPlaying(me, sfx_pt_b4)
-					) and (chance) and (pt.squididle >= TR/3) then
-						local vol = (p == displayplayer) and (255/4) or (255/11)
-						S_StartSoundAtVolume(me, sfx, vol)
-					end
-					pt.squididle = min($ + 1, TR/2)
-				elseif pt.squididle
-					pt.squididle = $ - 1
-				end
-				
-				me.flags2 = $|MF2_DONTDRAW
-				pt.hidden = true
-				p.shieldscale = 0
-				pt.squidanim = TR/2
-				p.pflags = $ &~(PF_SPINNING)
-				if (me.state == S_PLAY_ROLL)
-					me.state = S_PLAY_WALK
-					P_MovePlayer(p)
-				end
-				
-				p.normalspeed = BP.SWIM_NSPEED
-				p.thrustfactor = $*6/4
-				if pt.substrafe 
-					p.accelstart = $ * 4
-					p.acceleration = $ * 2
-				elseif (wallclimb and not P_IsObjectOnGround(me))
-					p.accelstart = 0
-					p.acceleration = 0
-				end
-				
-				me.friction = FixedMul($, FU*97/100)
-				if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
-					local fric = FU * 9/10
-					me.momx = FixedMul($, fric)
-					me.momy = FixedMul($, fric)
-				end
-			else
-				p.normalspeed = $/3
-				--- yyyyyyup
-				S_StopSoundByID(me, sfx_pt_b0)
-				S_StopSoundByID(me, sfx_pt_b1)
-				S_StopSoundByID(me, sfx_pt_b2)
-				S_StopSoundByID(me, sfx_pt_b3)
-				S_StopSoundByID(me, sfx_pt_b4)
-			end
-			
-			if wallclimb
-				if not (pt.wasclimbing) and me.last_speed
-					P_SetObjectMomZ(me,FixedDiv(me.last_speed,me.scale)/2,true)
-				end
-				
-				if (p.cmd.forwardmove > 0)
-					P_SetObjectMomZ(me, p.normalspeed/28, true)
-				elseif (me.momz * P_MobjFlip(me) < 0)
-					me.momz = $ + P_GetMobjGravity(me)/2
-				end
-				if (p.cmd.sidemove ~= 0)
-					local frac = FixedDiv(p.cmd.sidemove*FU, 50*FU)
-					P_Thrust(me, wallangle, FixedMul(me.scale, frac))
-				end
-				
-				if (pt.jumpheld == 1)
-					P_SetObjectMomZ(me, 3*FU, true)
-					S_StartSound(me, sfx_pt_ijm, p)
-					pt.spreadjump = cur_weapon:get(pt,"spread_jump")
-				end
-				
-				me.momz = FixedMul($, FU*98/100)
-				pt.wasclimbing = true
-				p.pflags = $ &~PF_STARTJUMP
-			else
-				if pt.wasclimbing
-					me.momz = $/3
-				end
-				pt.wasclimbing = false
-			end
-			
-			if pt.hidden
-				p.pflags = $|PF_INVIS
-				
-				local cando = true
-				if (wallclimb and not (p.cmd.forwardmove > 0 or p.cmd.sidemove ~= 0))
-					cando = false
-				end
-				if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 12*me.scale)
-				and cando
-					p.pflags = $ &~PF_INVIS
-					if not S_SoundPlaying(me, sfx_pt_swm)
-						S_StartSoundAtVolume(me,sfx_pt_swm,255/2)
-					end
-					local off = 8*FU
-					local blob = makeBlob(p,me,pt, 0,0)
-					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
-					P_SetOrigin(blob, me.x, me.y, blob.z)
-					
-					if (pt.wasclimbing)
-						local v_ang = FixedAngle(P_RandomFixedRange(-25*FU,25*FU))
-						local xydisp = P_RandomFixedRange(-off, off)
-						P_SetOrigin(blob,
-							me.x + P_ReturnThrustX(nil, wallangle, xydisp),
-							me.y + P_ReturnThrustY(nil, wallangle, xydisp),
-							blob.z + P_RandomFixedRange(-off, off)
-						)
-						
-						local v_speed = P_RandomRange(5,10)*me.scale
-						P_Thrust(blob,wallangle - ANGLE_90, -P_RandomRange(1,3)*me.scale)
-						P_Thrust(blob,wallangle, FixedMul(v_speed, sin(v_ang)) )
-						blob.momz = $ + me.momz/2
-						
-						if (leveltime % 2 == 0)
-							local angstep = (60 / 4)*FU
-							local dist = FixedDiv(me.radius, me.scale) + 4*FU
-							for i = -4, 4
-								local va = ANGLE_90 + FixedAngle(angstep * i)
-								local xydist = FixedMul(cos(va), dist)
-								local splash = P_SpawnMobjFromMobj(me,
-									P_ReturnThrustX(nil, wallangle, xydist),
-									P_ReturnThrustY(nil, wallangle, xydist),
-									FixedMul(sin(va), dist), MT_PARTICLE
-								)
-								P_SetOrigin(splash, splash.x,splash.y,splash.z)
-								splash.state = S_PAINT_SPLASH2
-								splash.color = Paint:getPlayerColor(p)
-								splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
-								P_SetScale(splash, splash.scale / 2, true)
-								local rand = P_RandomRange(0,2)
-								splash.frame = $ + rand
-								splash.tics = $ - rand
-								
-								splash.momx = me.momx * 3/4
-								splash.momy = me.momy * 3/4
-								splash.momz = me.momz / 2
-							end
-						end
-					else
-						P_SetOrigin(blob,
-							me.x + P_RandomFixedRange(-off, off),
-							me.y + P_RandomFixedRange(-off, off),
-							blob.z
-						)
-						
-						local ang = R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomFixedRange(-25*FU,25*FU))
-						P_SetObjectMomZ(blob, P_RandomRange(1,3)*FU)
-						P_Thrust(blob,ang, -P_RandomRange(6,15)*me.scale)
-						
-						blob.momx = $ + me.momx
-						blob.momy = $ + me.momy
-						
-						if (leveltime % 2 == 0)
-							local angstep = (60 / 4)*FU
-							local dist = FixedDiv(me.radius, me.scale) + 4*FU
-							for i = -4, 4
-								local fa = ang + FixedAngle(angstep * i)
-								local splash = P_SpawnMobjFromMobj(me,
-									P_ReturnThrustX(nil, fa, dist),
-									P_ReturnThrustY(nil, fa, dist),
-									2*FU, MT_PARTICLE
-								)
-								P_SetOrigin(splash, splash.x,splash.y, me.floorz)
-								splash.state = S_PAINT_SPLASH2
-								splash.color = Paint:getPlayerColor(p)
-								splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
-								P_SetScale(splash, splash.scale / 2, true)
-								local rand = P_RandomRange(0,2)
-								splash.frame = $ + rand
-								splash.tics = $ - rand
-								
-								splash.momx = me.momx * 3/4
-								splash.momy = me.momy * 3/4
-							end
-							
-							if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 20*me.scale)
-								local range = 128
-								local wind = P_SpawnMobjFromMobj(me,
-									P_RandomRange(-range, range)*FU,
-									P_RandomRange(-range, range)*FU,
-									P_RandomRange(0, range)*FU,
-									MT_THOK
-								)
-								wind.blendmode = AST_ADD
-								wind.renderflags = RF_SEMIBRIGHT|RF_PAPERSPRITE
-								wind.sprite = SPR_RAIN
-								wind.rollangle = ANGLE_90
-								wind.angle = R_PointToAngle2(0,0,me.momx,me.momy)
-								wind.drawonlyforplayer = p
-							end
-						end
-					end
-					
-					blob.destscale = 0
-					blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
-				else
-					S_StopSoundByID(me,sfx_pt_swm)
-				end
-				
-				if (pt.hp ~= 100*FU)
-					local rad = FixedDiv(me.radius,me.scale)/FU
-					local blob = makeBlob(p,me,pt, rad,0)
-					blob.fuse = TR/2
-					blob.scale = $/2
-					blob.destscale = me.scale
-					blob.scalespeed = FixedDiv(blob.destscale - blob.scale, blob.fuse*FU)
-					blob.color = (pt.paintoverlay and pt.paintoverlay.valid) and pt.paintoverlay.color or ColorOpposite(Paint:getPlayerColor(p))
-				end
-				
-				local angle,thrust = Paint.slopeInfluence(me,p, {
-					allowstand = true, allowmult = true
-				})
-				if angle ~= nil
-					P_Thrust(me,angle,-thrust)
-				end
-			else
-				S_StopSoundByID(me,sfx_pt_swm)
-				p.pflags = $ &~PF_INVIS
-			end
-			pt.wallink = max($ - 1, 0)
-			
-			if pt.storedcharge
-				dostoreaura = true
-				
-				local maxtime = cur_weapon:get(pt,"storagetime")
-				pt.store_time = $ + 1
-				if pt.store_time >= maxtime
-				or not ((p.cmd.buttons & BT_ATTACK) or waspressingattack)
-					pt.storedcharge = 0
-				end
-			else
-				pt.store_time = 0
-			end
-		else
-			pt.wallink = 0
-			pt.squididle = 0
-			p.pflags = $ &~PF_INVIS
-			
-			if pt.wasclimbing
-				me.momz = $/3
-			end
-			pt.wasclimbing = false
-			--- yyyyyyup
-			S_StopSoundByID(me, sfx_pt_b0)
-			S_StopSoundByID(me, sfx_pt_b1)
-			S_StopSoundByID(me, sfx_pt_b2)
-			S_StopSoundByID(me, sfx_pt_b3)
-			S_StopSoundByID(me, sfx_pt_b4)
-		end
-		if me.last_hidden ~= pt.hidden
-		and me.last_hidden ~= nil
-			if not ((pt.wasclimbing or pt.wallink) or oldclimbing)
-				local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
-				P_SetOrigin(splash, splash.x,splash.y, me.floorz)
-				splash.state = S_PAINT_SPLASH
-				splash.color = Paint:getPlayerColor(p)
-				splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
-				P_SetScale(splash, splash.scale + P_RandomFixed()/2, true)
-			end
-			S_StartSound(me, sfx_splish)
-		end
-		me.last_hidden = pt.hidden
-		me.last_speed = FixedHypot(me.momx,me.momy)
-		if dostoreaura
-			local aura = pt.store_aura
-			if not (aura and aura.valid)
-				local g = P_SpawnMobjFromMobj(me, 0,0,2*FU, MT_PARTICLE)
-				g.sprite = SPR_PAINT_MISC
-				g.frame = 32|FF_FULLBRIGHT|FF_ADD
-				g.renderflags = $|RF_NOCOLORMAPS
-				pt.store_aura = g
-				aura = g
-			end
-			
-			aura.angle = wallangle
-			local maxtime = cur_weapon:get(pt,"storagetime")
-			if (pt.hidden)
-				aura.renderflags = $|RF_FLOORSPRITE
-				if (pt.wallink and not P_IsObjectOnGround(me))
-					aura.renderflags = $|RF_PAPERSPRITE &~RF_FLOORSPRITE
-				end
-			else
-				aura.renderflags = $ &~(RF_FLOORSPRITE|RF_PAPERSPRITE)
-			end
-			aura.color = Paint:getPlayerColor(p)
-			if pt.store_time > maxtime - TR/2
-				aura.alpha = FU - FixedDiv((pt.store_time - (maxtime - TR/2))*FU, (TR/2)*FU)
-			end
-			P_MoveOrigin(aura, me.x + me.momx, me.y + me.momy, me.z + me.momz + (6*me.scale))
-		elseif (pt.store_aura and pt.store_aura.valid)
-			P_RemoveMobj(pt.store_aura)
-			pt.store_aura = nil
-		end
-		
-		if pt.inink == Paint.ININK_ENEMY
-			p.normalspeed = $ * 3/5
-		end
-		if (pt.squidanim)
-			me.colorized = true
-			pt.squidanim = $ - 1
-			if pt.squidanim == 0
-				local rad = FixedDiv(me.radius,me.scale)/FU
-				local hei = FixedDiv(me.height,me.scale)/FU
-				for i = 0,15
-					local blob = makeBlob(p,me,pt, rad,hei)
-					local ang = R_PointToAngle2(blob.x,blob.y, me.x,me.y)
-					P_SetObjectMomZ(blob, P_RandomRange(2,6)*FU)
-					P_Thrust(blob,ang, -P_RandomRange(1,3)*me.scale)
-					blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
-					blob.destscale = 0
-					blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
-				end
-				me.colorized = false
-			end
-		end
-	end
-	
+	BP.doSwimForm(p)
+
 	if pt.store_lag
 		pt.fireheld = max($, 1)
 		p.cmd.buttons = $|BT_ATTACK
@@ -1593,34 +1907,7 @@ addHook("PlayerThink",function(p)
 	if pt.store_firelag
 		pt.store_firelag = $ - 1
 	end
-	
-	pt.fastrefill = false
-	if pt.inkdelay
-		if not pt.fireheld
-			pt.inkdelay = $ - 1
-		end
-		pt.oldinkanim = ease.linear(FU - FixedDiv(pt.inkdelay*FU, (pt.maxinkdelay or 1)*FU), pt.oldinktank, pt.inktank)
-	elseif pt.inktank ~= 100*FU
-	and not pt.fireheld
-	and not pt.inkqueue
-		pt.maxinkdelay = 0
-		local oldtank = pt.inktank
-		if pt.hidden
-			pt.inktank = $ + fast_ink_refill_rate
-			pt.fastrefill = true
-		else
-			pt.inktank = $ + ink_refill_rate
-		end
-		if sub_t ~= nil
-			if oldtank < sub_t:get(pt,"inkcost")
-			and pt.inktank >= sub_t:get(pt,"inkcost")
-				S_StartSound(nil, sfx_pt_srd, p)
-				pt.justrestored = true
-			end
-		end
-		pt.inktank = min($, 100*FU)
-	end
-	
+		
 	pt.justcharged = false
 	pt.inkqueue = 0
 	if not pt.squidtoggle
@@ -2125,27 +2412,6 @@ addHook("PlayerThink",function(p)
 		doslowdown = true
 		pt.endlag = $ - 1
 	end
-	if pt.anglefix
-	or (pt.firewait or pt.shieldlag)
-	or (pt.store_lag)
-		p.drawangle = fireangle
-		if pt.anglefix
-			pt.anglefix = $ - 1
-		end
-		if pt.anglefix == 0
-			pt.anglestand = p.drawangle
-			if wasslowturning
-				pt.anglestand = pt.prevangle
-			end
-		end
-	elseif p.panim == PA_IDLE
-	and not pt.aimingsub
-	and not ((me.skin == "pointy" or me.skin == "fluffy") and p.cc_neckenabled)
-		-- anglestand
-		p.drawangle = pt.anglestand
-	else
-		pt.anglestand = p.drawangle
-	end
 	if (pt.spreadcooldown)
 		pt.spreadcooldown = $ - 1
 	else
@@ -2154,6 +2420,8 @@ addHook("PlayerThink",function(p)
 	if (pt.hidden)
 		doslowdown = false
 	end
+	me.paint_wasslowturning = wasslowturning
+	me.paint_fireangle = fireangle
 	pt.prevangle = fireangle
 	
 	if (cur_weapon.guntype == WPT_KATANA)
@@ -2185,222 +2453,9 @@ addHook("PlayerThink",function(p)
 			me.state = S_PLAY_STND
 		end
 	end
-	if (p.gotflag)
-		p.normalspeed = $ * 8/10
-		p.acceleration = $ * 3/4
-	end
-	-- weight class
-	p.normalspeed = FixedMul($, Paint.WEI_MULS[cur_weapon.weightclass])
-	
+
 	pt.lastslowdown = doslowdown
 	
-	if not P_IsObjectOnGround(me)
-	and FixedHypot(me.momx,me.momy) > FixedMul(p.normalspeed, me.scale)
-		local speed = FixedHypot(me.momx,me.momy)
-		local div = 18*FU
-		
-		local newspeed = speed - FixedDiv(speed - FixedMul(p.normalspeed, me.scale),div)
-		me.momx = FixedMul(FixedDiv(me.momx,speed), newspeed)
-		me.momy = FixedMul(FixedDiv(me.momy,speed), newspeed)
-	end
-	
-	do
-		local fastdanger = false
-		if pt.hp ~= 100*FU
-		and (pt.timetoheal <= 0)
-			local hpinc = 0
-			if pt.inink == Paint.ININK_FRIENDLY
-			and (FixedHypot(me.momx,me.momy) < 5*me.scale)
-			and pt.hidden
-				hpinc = 8*FU
-			elseif pt.inink ~= Paint.ININK_ENEMY
-				hpinc = FixedDiv(12*FU + FU/2, TR*FU)
-			end
-			if pt.brokenarmor
-				if hpinc == 8*FU
-					fastdanger = true
-				end
-				hpinc = 0
-			end
-			
-			pt.hp = min($ + hpinc, 100*FU)
-		end
-		
-		if pt.brokenarmor
-			if fastdanger
-				pt.armorregen = $ - FixedDiv(100*FU, Paint.DANGER_TIME_FAST*FU)
-			else
-				pt.armorregen = $ - FixedDiv(100*FU, Paint.DANGER_TIME*FU)
-			end
-			
-			-- insta-regen cases
-			if (p.powers[pw_shield])
-				p.powers[pw_shield] = 0
-				pt.armorregen = 0
-			end
-			if (p.last_starpostnum ~= nil)
-			and (p.starpostnum > p.last_starpostnum)
-				pt.armorregen = 0
-			end
-			
-			if (leveltime % 2)
-				local s = P_SpawnMobjFromMobj(me, 0,0,
-					P_RandomFixedRange(0, FixedDiv(me.height,me.scale)),
-					MT_PARTICLE
-				)
-				s.color = P_RandomRange(SKINCOLOR_SALMON, SKINCOLOR_KETCHUP)
-				s.blendmode = AST_ADD
-				s.spritexscale = $ / 8
-				s.spriteyscale = s.spritexscale
-				P_SetScale(s, s.scale * 4, true)
-				s.flags = $ &~(MF_NOCLIPTHING|MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT)
-				P_SetObjectMomZ(s, P_RandomFixedRange(1*FU, 5*FU))
-				s.angle = FixedAngle(P_RandomFixedRange(0,360*FU))
-				P_Thrust(s, s.angle, P_RandomFixedRange(1*FU, 10*FU))
-				s.angle = $ + ANGLE_90
-				
-				s.prevmomz = s.momz
-				s.fuse = TR / 2
-				s.rang = FixedAngle(P_RandomFixedRange(0,90*FU))
-				s.rroll = FixedAngle(P_RandomFixedRange(-30*FU,30*FU))
-				s.state = S_PAINT_BROKEARMOR
-			end
-			do
-				local rad = FixedDiv(me.radius, me.scale) * 3/4
-				local hei = FixedDiv(me.height,me.scale)
-				local s = P_SpawnMobjFromMobj(me,
-					P_RandomFixedRange(-rad, rad),
-					P_RandomFixedRange(-rad, rad),
-					hei/2 + P_RandomFixedRange(-hei/5, hei/5),
-					MT_PARTICLE
-				)
-				s.color = P_RandomRange(SKINCOLOR_SALMON, SKINCOLOR_KETCHUP)
-				s.blendmode = AST_ADD
-				s.spritexscale = $ / P_RandomRange(2,4)
-				s.spriteyscale = s.spritexscale
-				
-				s.fuse = 3
-				s.state = S_THOK
-			end
-			
-			if pt.armorregen <= 0
-				pt.brokenarmor = false
-				S_StartSound(me, sfx_pt_ag)
-				me.paint_barmor = 6
-				me.paint_barmor_hp = pt.hp
-				me.paint_overlayhp = pt.hp
-				pt.hp = 100*FU
-				
-				local ov = P_SpawnMobjFromMobj(me, 0,0,0, MT_PAINT_GUN)
-				ov.target = me
-				ov.state = mobjinfo[MT_MSSHIELD_FRONT].spawnstate
-				ov.colorized = true
-				ov.color = SKINCOLOR_GOLDENROD
-				ov.blendmode = AST_ADD
-				ov.scale = $ * 2
-				ov.fuse = TR / 2
-				ov.destscale = 0
-				ov.scalespeed = FixedDiv(ov.scale, ov.fuse*FU)
-			end
-			p.normalspeed = $ / 3
-		end
-		if me.paint_barmor ~= nil
-			me.paint_overlayhp = ease.outquad(
-				FU - ((FU/6) * me.paint_barmor),
-				me.paint_barmor_hp, pt.hp
-			)
-			me.paint_barmor = $ - 1
-			if me.paint_barmor <= 0
-				me.paint_barmor = nil
-				me.paint_overlayhp = nil
-			end
-		end
-		p.last_starpostnum = p.starpostnum
-		
-		pt.timetoheal = max($-1,0)
-		
-		if pt.inink ~= 0
-			me.spriteyoffset = ease.linear(FU/6, $, -(pt.inink == Paint.ININK_ENEMY and 9 or 4)*FU)
-		else
-			me.spriteyoffset = ease.linear(FU/6, $, 0)
-		end
-		
-		if pt.inink == Paint.ININK_ENEMY
-			if not S_SoundPlaying(me, sfx_pt_ow2)
-				S_StartSoundAtVolume(me, sfx_pt_ow2, (p == displayplayer) and 255 or 255/2)
-			end
-			if (p == displayplayer or p == secondarydisplayplayer)
-				P_StartQuake(FU*3/2, 2)
-			end
-			
-			-- enemy ink vfx
-			if P_IsObjectOnGround(me)
-				local clr
-				if (pt.paintoverlay and pt.paintoverlay.valid)
-					clr = pt.paintoverlay.color
-				else
-					clr = ColorOpposite(Paint:getPlayerColor(p))
-				end
-				
-				local off = 8*FU
-				local blob = makeBlob(p,me,pt, 0,0)
-				blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
-				blob.color = clr
-				P_SetOrigin(blob, me.x, me.y, blob.z)
-				
-				P_SetOrigin(blob,
-					me.x + P_RandomFixedRange(-off, off),
-					me.y + P_RandomFixedRange(-off, off),
-					blob.z
-				)
-				
-				local ang = FixedAngle(360 * P_RandomFixed())
-				P_SetObjectMomZ(blob, P_RandomRange(1,4)*FU)
-				P_Thrust(blob,ang, P_RandomFixedRange(-me.scale, -2*me.scale))
-				
-				if (leveltime % 2 == 0)
-					local angstep = (360 / 12)*FU
-					local dist = FixedDiv(me.radius, me.scale) + 4*FU
-					for i = 0,11
-						local fa = ang + FixedAngle(angstep * i)
-						local splash = P_SpawnMobjFromMobj(me,
-							P_ReturnThrustX(nil, fa, dist),
-							P_ReturnThrustY(nil, fa, dist),
-							2*FU, MT_PARTICLE
-						)
-						P_SetOrigin(splash, splash.x,splash.y, me.floorz)
-						splash.state = S_PAINT_SPLASH2
-						splash.color = clr
-						splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
-						P_SetScale(splash, splash.scale / 2, true)
-						local rand = P_RandomRange(0,2)
-						splash.frame = $ + rand
-						splash.tics = $ - rand
-						P_Thrust(splash, fa, 2*me.scale)
-					end
-				end
-				
-				blob.destscale = 0
-				blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
-			end
-		else
-			S_StopSoundByID(me,sfx_pt_ow2)
-		end
-		
-		if pt.inktime
-			pt.inktime = $ - 1
-		else
-			pt.inink = 0
-		end
-	end
-	
-	if (pt.hittime)
-		pt.hittime = $ - 1
-		if pt.hittime == 0
-			pt.hitlist = {}
-		end
-	end
-
 	if (cur_weapon.callbacks and cur_weapon.callbacks.postthinker)
 		cur_weapon.callbacks.postthinker(p,pt, cur_weapon)
 	end
@@ -2439,6 +2494,12 @@ addHook("PlayerSpawn",function(p)
 	if not p.paint then return end
 	Paint:resetPlayer(p)
 	p.paint.killer = nil
+	
+	if TurfWar ~= nil and Paint:isMode()
+	and TurfWar.gamemodes[gametype].usecustomteams
+	and TurfWar.gamemodes[gametype].teamassigner ~= nil
+		TurfWar.gamemodes[gametype].teamassigner(p)
+	end
 end)
 
 addHook("MapLoad",function()
@@ -2664,6 +2725,9 @@ addHook("PostThinkFrame", do
 		end
 		
 		if not me.paint_inactive
+			BP.handleHealth(p)
+			BP.handleMovement(p)
+
 			if not pt.disable.inktank
 				BP.doInkTank(p)
 			end

@@ -98,6 +98,7 @@ local gamemode_t = {
 	allowpinchmusic = true,
 	dieinwater = true,
 	usecustomteams = false,
+	teamassigner = nil, -- function(player)
 	
 	nohud = false,
 }
@@ -715,6 +716,7 @@ addHook("NetVars",function(n)
 	TurfWar.gotflags = n($)
 end)
 
+/*
 local addedmv = false
 addHook("AddonLoaded",do
 	if addedmv then return end
@@ -727,3 +729,4 @@ addHook("AddonLoaded",do
 	
 	addedmv = true
 end)
+*/

@@ -1,23 +1,6 @@
 -- Player interactions and handlers
 local CV = Paint.CV
 
--- TODO: a weird and inconsistant mix of several of these types of functions
---		 are used all throughout the codebase... a more unified way to check for
---		 player-player, player-mobj, mobj-mobj "teamness" needs to be made
-local function isFriendlyFire(p1,p2)
-	if not (p1 and p1.valid and p2 and p2.valid) then return false; end
-	if G_GametypeHasTeams()
-		return p1.ctfteam == p2.ctfteam
-	elseif G_TagGametype()
-		return (p1.pflags & PF_TAGIT) == (p2.pflags & PF_TAGIT)
-	end
-	if (gametyperules & GTR_FRIENDLY)
-		return CV.FindVar("friendlyfire").value == 0
-	end
-	return false -- eh we're probably good here
-end
-Paint.isFriendlyFire = isFriendlyFire
-
 -- even if we're all dead, if the enemy wipes out, THAT should take priority,
 -- so dont show the disadvantage one when that happens
 function Paint:checkWipeout()
@@ -195,8 +178,7 @@ function Paint:killPlayer(p, shot, source_player, inf)
 	end
 	Paint:checkWipeout()
 	
-	if not Paint.isFriendlyFire(p,source_player)
-		--CONS_Printf(sorp, "\x82Killed "..p.name.."!")
+	if not Paint:isFriendlyFire(p,source_player)
 		if (source_player and source_player.valid)
 			if not (gametyperules & (GTR_TAG|GTR_HIDEFROZEN))
 				P_AddPlayerScore(source_player, 110)
@@ -390,6 +372,7 @@ function Paint:playHurtSound(p)
 end
 
 function Paint:getPlayerColor(p)
+	local pt = p.paint
 	if (gametyperules & GTR_TAG)
 		return ((p.pflags & PF_TAGIT) and SKINCOLOR_TOPAZ or SKINCOLOR_SEAFOAM)
 	end
@@ -398,6 +381,12 @@ function Paint:getPlayerColor(p)
 	end
 	if p.skincolor == SKINCOLOR_NONE
 		return SKINCOLOR_GREEN
+	end
+	if Paint:getPlayerTeam(p) ~= nil
+		local team = Paint.teams[pt.team]
+		if team:get(pt, "color") ~= nil
+			return team:get(pt, "color")
+		end
 	end
 	return p.skincolor
 end
@@ -596,45 +585,4 @@ function Paint:doDodgeRoll(p)
 	return true
 end
 
--- returns a players team (int), nil if there are no teams
-function Paint:getPlayerTeam(p)
-	if G_GametypeHasTeams()
-		return p.ctfteam
-	end
-	if Paint:isMode() and TurfWar ~= nil
-	and TurfWar.gamemodes[gametype].usecustomteams
-		return p.paint.team
-	end
-	return nil
-end
-
--- checks mo2 against mo1 if they are on the same team
-function Paint:mobjsOnTeam(mo1, mo2)
-	if not mo1 and mo1.valid then return false; end
-	if not (mo1.player and mo1.player.valid)
-		if (mo2.player and mo2.player.valid)
-			return mo1.color == self:getPlayerColor(mo2.player)
-		else
-			return mo1.color == mo2.color
-		end
-	elseif not (mo2.player and mo2.player.valid)
-		if (mo1.player and mo1.player.valid)
-			return mo2.color == self:getPlayerColor(mo1.player)
-		else
-			return mo2.color == mo1.color
-		end
-	end
-	if (mo1.player == mo2.player) then return true; end
-	if (gametyperules & GTR_FRIENDLY)
-		if CV.FindVar("friendlyfire").value
-			return false
-		end
-		return true
-	end
-	if (gametyperules & GTR_TAG)
-		return (mo1.player.pflags & PF_TAGIT) == (mo2.player.pflags & PF_TAGIT)
-	end
-	
-	if not G_GametypeHasTeams() then return false; end
-	return mo1.player.ctfteam == mo2.player.ctfteam
-end
+dofile("weapons_and_combat/teams.lua")

@@ -886,7 +886,7 @@ addHook("MobjThinker",function(shot)
 		local dp = displayplayer
 		if (dp and dp.valid and dp.mo and dp.mo.valid and not dp.spectator and dp.mo ~= shot.target and dp.playerstate == PST_LIVE)
 		and not whizzedthisframe
-			local friendly = Paint.isFriendlyFire(p, dp)
+			local friendly = Paint:isFriendlyFire(p, dp)
 			
 			if not shot.whizzed
 			and not friendly

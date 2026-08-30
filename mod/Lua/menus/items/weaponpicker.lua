@@ -8,9 +8,9 @@ COM_AddCommand("_paint_setinv", function(p, sig, item1, item2, item3)
 	if not pt then return end
 	local inv = pt.inventory
 	
-	inv.items[1] = item1
-	inv.items[2] = item2
-	inv.items[3] = item3
+	inv.items[1] = (item1 ~= "nil") and item1 or nil
+	inv.items[2] = (item2 ~= "nil") and item2 or nil
+	inv.items[3] = (item3 ~= "nil") and item3 or nil
 end)
 
 local CLASS2BIT = {
@@ -119,6 +119,7 @@ ML.addMenu({
 		local inv = menu.workinv
 		local curitems = {}
 		for i = 1, inv.slots
+			if inv.items[i] == nil then continue end
 			curitems[inv.items[i]] = true
 		end
 		
@@ -215,14 +216,15 @@ ML.addMenu({
 						0, v.getColormap(TC_DEFAULT, SKINCOLOR_PURPLE)
 					)
 				end
-				
-				if ML.mouseInZone(x*FU,y*FU, dimen*FU,dimen*FU, true)
+			end
+			if ML.mouseInZone(x*FU,y*FU, dimen*FU,dimen*FU, true)
+				if wep
 					hoveringname = wep.realname
-					
-					ML.client.canPressSomething = true
-					if (ML.client.mouseHeld == 1)
-						menu.curslot = i
-					end
+				end
+				
+				ML.client.canPressSomething = true
+				if (ML.client.mouseHeld == 1)
+					menu.curslot = i
 				end
 			end
 			
@@ -260,7 +262,7 @@ ML.addMenu({
 		
 		ML.client.commandbuffer = ("_paint_setinv %s %s %s %s"):format(
 			luasig,
-			minv.items[1], minv.items[2], minv.items[3]
+			tostring(minv.items[1]), tostring(minv.items[2]), tostring(minv.items[3])
 		)
 		ML.client.commandbufferwait = 3
 	end

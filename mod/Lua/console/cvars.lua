@@ -65,3 +65,5 @@ CV.healthbar = CV_RegisterVar({
 	flags = CV_SHOWMODIF,
 	PossibleValue = CV_OnOff 
 })
+
+dofile("console/commands.lua")
