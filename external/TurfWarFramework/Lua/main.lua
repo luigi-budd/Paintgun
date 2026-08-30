@@ -97,6 +97,7 @@ local gamemode_t = {
 	overtimewhen = nil, -- function
 	allowpinchmusic = true,
 	dieinwater = true,
+	usecustomteams = false,
 	
 	nohud = false,
 }

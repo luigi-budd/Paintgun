@@ -243,6 +243,7 @@ end
 function Paint:initPlayer(p)
 	p.paint = {
 		player = p,
+		team = 0,
 		
 		weapon_id = "",
 		weaponmobj = nil,

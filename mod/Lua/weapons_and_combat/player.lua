@@ -596,6 +596,18 @@ function Paint:doDodgeRoll(p)
 	return true
 end
 
+-- returns a players team (int), nil if there are no teams
+function Paint:getPlayerTeam(p)
+	if G_GametypeHasTeams()
+		return p.ctfteam
+	end
+	if Paint:isMode() and TurfWar ~= nil
+	and TurfWar.gamemodes[gametype].usecustomteams
+		return p.paint.team
+	end
+	return nil
+end
+
 -- checks mo2 against mo1 if they are on the same team
 function Paint:mobjsOnTeam(mo1, mo2)
 	if not mo1 and mo1.valid then return false; end
