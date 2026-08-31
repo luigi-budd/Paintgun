@@ -30,6 +30,7 @@ function Paint:registerTeam(props)
 	Paint.teams[props.id] = props
 end
 
+/*
 Paint:registerTeam({
 	id = "testteam",
 	color = SKINCOLOR_ORANGE,
@@ -42,6 +43,7 @@ Paint:registerTeam({
 		Paint:removeWeapon(p, 3)
 	end
 })
+*/
 
 -- set to false to remove a team
 function Paint:setPlayerTeam(p, teamname)
