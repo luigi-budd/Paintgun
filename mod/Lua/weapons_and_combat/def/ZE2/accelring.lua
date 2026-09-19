@@ -18,7 +18,7 @@ states[S_ZE2_ACCEL_FIRED] = {
 
 sfxinfo[freeslot("sfx_rs_cro")].caption = "Accel ring fires"
 
-local SPREAD = 12*FU
+local SPREAD = 6*FU
 Paint:registerWeapon({
 	realname = "Accel Ring",
 	icon = "PTMAIN_ACCELRING",
@@ -41,13 +41,14 @@ Paint:registerWeapon({
 	squidlag = 8,
 	shootspeed = tofixed("0.45"),
 	splatvolume = 255/4,
+	naturalaiming = 0,
 	
 	critsound = true,
 	shotsforcrit = 9,
 	
 	spawnspeed = 14*FU,
 	crs_guideframe = 16,
-	str_tics = 12, -- straight state lasts this many tics
+	str_tics = 9999, -- straight state lasts this many tics
 	str2brk_maxspeed = FixedMul(tofixed("1.652"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
 	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
 	brk_gravity = FixedMul(tofixed("0.06"), Paint.DU2FU),
@@ -62,7 +63,7 @@ Paint:registerWeapon({
 	v_spread = {3*FU, 3*FU},
 	neverspreadatall = true,
 	
-	inkcost = 100*FU / 8,
+	inkcost = 100*FU / 16,
 	inkdelay = TR / 2,
 	
 	spread_base = (FU * 6), -- chance to spread, similar to accelstart
