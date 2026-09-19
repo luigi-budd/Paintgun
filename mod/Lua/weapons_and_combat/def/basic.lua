@@ -5,7 +5,7 @@ Paint:registerWeapon({
 	icon = "PTMAIN_SSHOT",
 	
 	name = "basic",
-	subtype = "shotpot", --"suctionbomb",
+	subtype = "suctionbomb",
 	handoffset = 8*FU,
 	h_spread = {hsprd,hsprd},
 	spread_jumpspread = tofixed("11.66") - hsprd,

@@ -9,9 +9,10 @@ states[freeslot("S_PAINT_SUCTIONBOMB_W")] = {
 	sprite = SPR_PAINT_BOMB,
 	tics = -1,
 }
-
-sfxinfo[freeslot("sfx_pb_ht5")].caption = "Suction"
 */
+
+sfxinfo[freeslot("sfx_pb_sp0")].caption = "/"
+sfxinfo[freeslot("sfx_pb_sp1")].caption = "/"
 
 -- sprinkler phases
 Paint.SPN_DEPLOY = 0
@@ -93,6 +94,12 @@ local function pain_func(mo, inf,sor, damage)
 	mo.paint_hp = max($ - damage, 0)
 	if mo.paint_hp <= 0
 		mo.paint_destroyed = true
+		
+		local sfx = P_SpawnGhostMobj(mo)
+		sfx.fuse = TR
+		sfx.tics = sfx.fuse
+		sfx.flags2 = $|MF2_DONTDRAW
+		S_StartSound(sfx, sfx_pb_sp0)
 		return true
 	end
 	return false
@@ -118,6 +125,11 @@ Paint:registerSubWeapon({
 		if bomb.alreadyblocked then return true; end
 		if (bomb.tracer_player.submobj and bomb.tracer_player.submobj.valid)
 			P_KillMobj(bomb.tracer_player.submobj)
+			local sfx = P_SpawnGhostMobj(mo)
+			sfx.fuse = TR
+			sfx.tics = sfx.fuse
+			sfx.flags2 = $|MF2_DONTDRAW
+			S_StartSound(sfx, sfx_pb_sp0)
 		end
 		
 		bomb.alreadyblocked = true
@@ -181,6 +193,11 @@ Paint:registerSubWeapon({
 			and bomb.tracer_player.mo.health
 		)
 			P_KillMobj(bomb)
+			local sfx = P_SpawnGhostMobj(mo)
+			sfx.fuse = TR
+			sfx.tics = sfx.fuse
+			sfx.flags2 = $|MF2_DONTDRAW
+			S_StartSound(sfx, sfx_pb_sp0)
 			return
 		end
 		
@@ -193,6 +210,11 @@ Paint:registerSubWeapon({
 		if bomb.phase == Paint.SPN_DEPLOY
 			return
 		end
+		
+		if not S_SoundPlaying(bomb, sfx_pb_sp1)
+			S_StartSound(bomb, sfx_pb_sp1)
+		end
+		
 		local info = phasedata[bomb.phase]
 		
 		if not bomb.spraywait
@@ -263,15 +285,26 @@ Paint:registerSubWeapon({
 			proj.basedamage = proj.damage
 			proj.falloffdamage = cur_weapon["falloffdamage"]
 			
+			local ang = P_RandomFixedRange(10*FU, 45*FU) * (bomb.ceilingmode and -1 or 1)
 			local h_spread = 0
-			local v_spread = P_RandomFixedRange(10*FU, 45*FU) * (bomb.ceilingmode and -1 or 1)
-			v_spread = FixedAngle($)
+			local v_spread = 0
 			
 			if bomb.wallmode
 				angle = bomb.baseangle + ANGLE_90
+				proj.p_angle = angle
+				proj.angle = angle
+				proj.baseangle = angle
+				
 				aim = bomb.aiming + FixedAngle(180*FU * bomb.extravalue2)
-				h_spread,v_spread = -$2, $1
+				-- h_spread,v_spread = -$2, $1
+				
+				local sine = sin(aim)
+				local cosine = cos(aim)
+				h_spread = 0 - FixedMul(ang, sine)
+				v_spread = FixedMul(ang, sine) --+ FixedMul(ang, cosine)
 			end
+			h_spread = FixedAngle($)
+			v_spread = FixedAngle($)
 			
 			local aimvec = P_Vec3.SphereToCartesian(angle,aim)
 			local axis1 = RandomPerpendicular(aimvec)
