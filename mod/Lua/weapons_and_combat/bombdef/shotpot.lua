@@ -1,23 +1,4 @@
-/*
-states[freeslot("S_PAINT_SUCTIONBOMB_F")] = {
-	frame = 2|FF_SEMIBRIGHT,
-	sprite = SPR_PAINT_BOMB,
-	tics = -1,
-}
-states[freeslot("S_PAINT_SUCTIONBOMB_W")] = {
-	frame = 3|FF_SEMIBRIGHT,
-	sprite = SPR_PAINT_BOMB,
-	tics = -1,
-}
-
-sfxinfo[freeslot("sfx_pb_ht5")].caption = "Suction"
-*/
-
 -- sprinkler phases
-Paint.SPN_DEPLOY = 0
-Paint.SPN_HIGH   = 1
-Paint.SPN_MID    = 2
-Paint.SPN_LOW    = 3
 local phase2time = {
 	[Paint.SPN_DEPLOY] = TR/2,
 	[Paint.SPN_HIGH]   = 5*TR,
@@ -68,6 +49,7 @@ local function RandomPerpendicular(v)
     return v:Cross(up):Normalize()
 end
 
+/*
 Paint:registerWeapon({
 	name = "sprinkler_bullet",
 	hidden = true,
@@ -85,10 +67,11 @@ Paint:registerWeapon({
 	fre_gravity = FixedMul(tofixed("0.06"), Paint.DU2FU),
 	crs_guideframe = 8, -- crosshair is placed at this frame in the shot's lifetime
 })
+*/
 
 local function pain_func(mo, inf,sor, damage)
 	if mo.phase == nil then return end
-	if (mo.subtype ~= "sprinkler") then return end
+	if (mo.subtype ~= "shotpot") then return end
 	
 	mo.paint_hp = max($ - damage, 0)
 	if mo.paint_hp <= 0
@@ -99,9 +82,26 @@ local function pain_func(mo, inf,sor, damage)
 end
 addHook("ShouldDamage",pain_func, MT_PAINT_BOMB)
 
+Paint:registerWeapon({
+	name = "shotpot_bullet",
+	hidden = true,
+	damage = 10*FU,
+	falloffdamage = 5*FU,
+	
+	str_tics = 8, -- straight state lasts this many tics
+	str2brk_maxspeed = FixedMul(tofixed("1.493"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
+	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
+	brk_gravity = FixedMul(tofixed("0.07"), Paint.DU2FU),
+	brk2fre_minz = FixedMul(tofixed("-0.15"), Paint.DU2FU), -- go to free when momz is below this
+	brk2fre_minxy = FixedMul(tofixed("0.2355"), Paint.DU2FU), -- or go to free when xyspeed is below this
+	brk2fre_tics = 4, -- or when brake state lasts this many tics
+	fre_airresist = FU * 98/100,
+	fre_gravity = FixedMul(tofixed("0.06"), Paint.DU2FU),
+	crs_guideframe = 8, -- crosshair is placed at this frame in the shot's lifetime
+})
 Paint:registerSubWeapon({
 	realname = "Sprinkler",
-	name = "sprinkler",
+	name = "shotpot",
 	icon = "PTSUB_SPRINKLER",
 	spawnstate = S_PAINT_SUCTIONBOMB_W,
 
@@ -116,6 +116,25 @@ Paint:registerSubWeapon({
 	
 	blockedfunc = function(bomb, hitceiling, line)
 		if bomb.alreadyblocked then return true; end
+		if (line and line.valid)
+			/*
+			local line_ang = R_PointToAngle2(
+				line.v1.x, line.v1.y, line.v2.x, line.v2.y
+			) - ANGLE_90*(P_PointOnLineSide(bomb.x,bomb.y, line) and 1 or -1)
+			bomb.angle = line_ang
+			
+			local ox,oy = P_ClosestPointOnLine(bomb.x,bomb.y, line)
+			ox = $ + P_ReturnThrustX(nil, bomb.angle, -(bomb.radius + 2*bomb.scale))
+			oy = $ + P_ReturnThrustY(nil, bomb.angle, -(bomb.radius + 2*bomb.scale))
+			P_MoveOrigin(bomb, ox,oy, bomb.z)
+			bomb.state = S_PAINT_SUCTIONBOMB_W
+			*/
+			P_SlideMove(bomb)
+			return true
+		else
+			bomb.angle = $ + ANGLE_90
+		end
+		
 		if (bomb.tracer_player.submobj and bomb.tracer_player.submobj.valid)
 			P_KillMobj(bomb.tracer_player.submobj)
 		end
@@ -135,20 +154,7 @@ Paint:registerSubWeapon({
 		
 		bomb.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT
 		bomb.state = S_PAINT_SUCTIONBOMB_F
-		if (line and line.valid)
-			local line_ang = R_PointToAngle2(
-				line.v1.x, line.v1.y, line.v2.x, line.v2.y
-			) - ANGLE_90*(P_PointOnLineSide(bomb.x,bomb.y, line) and 1 or -1)
-			bomb.angle = line_ang
-			
-			local ox,oy = P_ClosestPointOnLine(bomb.x,bomb.y, line)
-			ox = $ + P_ReturnThrustX(nil, bomb.angle, -(bomb.radius + 2*bomb.scale))
-			oy = $ + P_ReturnThrustY(nil, bomb.angle, -(bomb.radius + 2*bomb.scale))
-			P_MoveOrigin(bomb, ox,oy, bomb.z)
-			bomb.state = S_PAINT_SUCTIONBOMB_W
-		else
-			bomb.angle = $ + ANGLE_90
-		end
+		
 		if hitceiling
 			bomb.renderflags = $|RF_VERTICALFLIP
 		end
@@ -198,40 +204,49 @@ Paint:registerSubWeapon({
 		if not bomb.spraywait
 			bomb.spraywait = info.spraytic
 			
-			local angle = bomb.angle + FixedAngle(180*FU * bomb.extravalue2)
-			local aim = 0
-			
-			if not bomb.wallmode
-				local sec = bomb.subsector.sector
-				local slope = sec.f_slope
-				if (bomb.ceilingmode)
-					slope = sec.c_slope
-				end
-				if slope
-					aim = FixedMul(slope.zangle, cos(angle))
-					if bomb.ceilingmode
-						aim = -$
-					end
-				end
-			end
-			
-			local speed = P_RandomFixedRange(info.speed_min, info.speed_max)
+			local speed = info.speed_max
 			local ox,oy,oz = 0,0,0
-			if (bomb.wallmode)
-				local dist = 22*FU
-				ox = P_ReturnThrustX(nil, bomb.baseangle + ANGLE_180, dist)
-				oy = P_ReturnThrustY(nil, bomb.baseangle + ANGLE_180, dist)
-			elseif not bomb.ceilingmode
+			if not bomb.ceilingmode
 				oz = 16*FU
 			end
 			
+			local p = bomb.tracer_player
+			local targ = nil
+			local lastdist = INT32_MAX
+			local searchdist = speed * 8
+			searchBlockmap("objects", function(ref, mo)
+				if not (mo and mo.valid) then return end
+				if not (mo.health) then return end
+				if (mo == p.mo) then return end
+				
+				local canhit = false
+				if Paint_canHurtEnemy(p, mo) or mo.type == MT_TNTBARREL
+					canhit = true
+				end
+				if mo.type == MT_PLAYER and Paint_canHurtPlayer(p, mo.player)
+					canhit = true
+				end
+				if not canhit then return end
+				
+				local distto = R_PointTo3DDist(bomb.x,bomb.y,bomb.z + FixedMul(oz, bomb.scale),
+					mo.x, mo.y, mo.z + mo.height / 2
+				)
+				if distto > lastdist then return end
+				targ = mo
+				lastdist = distto
+			end, bomb, bomb.x - searchdist, bomb.x + searchdist, bomb.y - searchdist, bomb.y + searchdist)
+			if not (targ and targ.valid) then return end
+			
+			local angle, aim = R_PointTo3DAngles(bomb.x,bomb.y,bomb.z + FixedMul(oz, bomb.scale),
+				targ.x, targ.y, targ.z + targ.height / 2
+			)
 			local proj = Paint.spawnBulletDrop(bomb, bomb.tracer_player, bomb.color,
 				0,0, speed,
 				nil,nil,nil, ox,oy,oz
 			)
 			proj.damage = 20*FU
 			proj.trail = false
-			proj.weapon_id = "sprinkler_bullet"
+			proj.weapon_id = "shotpot_bullet"
 			proj.hitlist = {}
 			proj.init = true
 			proj.target = bomb.tracer_player.realmo
@@ -243,7 +258,7 @@ Paint:registerSubWeapon({
 			proj.s_state = SS_STRAIGHT
 			proj.shotstretch = false
 			
-			local cur_weapon = Paint.weapons["sprinkler_bullet"]
+			local cur_weapon = Paint.weapons["shotpot_bullet"]
 			proj.str_tics			= cur_weapon["str_tics"]
 			proj.str2brk_maxspeed	= FixedMul(cur_weapon["str2brk_maxspeed"], proj.scale)
 			proj.brk_airresist		= cur_weapon["brk_airresist"]
@@ -263,15 +278,8 @@ Paint:registerSubWeapon({
 			proj.basedamage = proj.damage
 			proj.falloffdamage = cur_weapon["falloffdamage"]
 			
-			local h_spread = 0
-			local v_spread = P_RandomFixedRange(10*FU, 45*FU) * (bomb.ceilingmode and -1 or 1)
-			v_spread = FixedAngle($)
-			
-			if bomb.wallmode
-				angle = bomb.baseangle + ANGLE_90
-				aim = bomb.aiming + FixedAngle(180*FU * bomb.extravalue2)
-				h_spread,v_spread = -$2, $1
-			end
+			local h_spread = P_RandomFixedRange(-5*FU, 5*FU)
+			local v_spread = 0
 			
 			local aimvec = P_Vec3.SphereToCartesian(angle,aim)
 			local axis1 = RandomPerpendicular(aimvec)
@@ -281,6 +289,8 @@ Paint:registerSubWeapon({
 			proj.momx = FixedMul(speed, mom.x)
 			proj.momy = FixedMul(speed, mom.y)
 			proj.momz = FixedMul(speed, mom.z)
+			
+			S_StartSound(bomb, P_RandomRange(sfx_p_s1_0, sfx_p_s1_6))
 			
 			bomb.extravalue2 = 1 - $
 		else

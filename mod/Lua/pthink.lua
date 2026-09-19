@@ -1380,6 +1380,7 @@ addHook("PlayerThink",function(p)
 		local canswap = true
 		if ((pt.endlag or pt.shieldlag or pt.lastslowdown)
 		or (pt.turretmode or pt.dodgeroll.tics or pt.dodgeroll.getup))
+		or (pt.aimingsub)
 			canswap = false
 		end
 		

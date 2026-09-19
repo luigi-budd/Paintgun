@@ -943,6 +943,8 @@ function Paint:throwSub(p, wep, angle, aiming, aimline)
 	local me = p.realmo
 	local pt = p.paint
 	local sub_t = Paint.subs[wep.subtype]
+	if not sub_t then return end -- okay
+	
 	aiming = $ + FixedAngle(5*FU)
 	
 	if (pt.inktank < sub_t:get(pt,"inkcost") - 1)

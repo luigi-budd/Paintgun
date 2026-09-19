@@ -27,15 +27,6 @@ Paint:registerSubWeapon({
 	
 	blockedfunc = function(bomb, hitceiling, line)
 		if bomb.alreadyblocked then return true; end
-		bomb.alreadyblocked = true
-		bomb.nophysics = true
-		bomb.forcefuse = true
-		bomb.momx,bomb.momy,bomb.momz = 0,0,0
-		Paint:teamSound(bomb.tracer_player, bomb, sfx_pb_ht5, nil, sfx_pb_ht5)
-		S_StopSoundByID(bomb, sfx_pb_fly)
-		
-		bomb.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT
-		bomb.state = S_PAINT_SUCTIONBOMB_F
 		if (line and line.valid)
 			local line_ang = R_PointToAngle2(
 				line.v1.x, line.v1.y, line.v2.x, line.v2.y
@@ -50,6 +41,15 @@ Paint:registerSubWeapon({
 		else
 			bomb.angle = $ + ANGLE_90
 		end
+		bomb.alreadyblocked = true
+		bomb.nophysics = true
+		bomb.forcefuse = true
+		bomb.momx,bomb.momy,bomb.momz = 0,0,0
+		Paint:teamSound(bomb.tracer_player, bomb, sfx_pb_ht5, nil, sfx_pb_ht5)
+		S_StopSoundByID(bomb, sfx_pb_fly)
+		
+		bomb.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT
+		bomb.state = S_PAINT_SUCTIONBOMB_F
 		if hitceiling
 			bomb.renderflags = $|RF_VERTICALFLIP
 		end
