@@ -124,12 +124,12 @@ Paint:registerSubWeapon({
 	blockedfunc = function(bomb, hitceiling, line)
 		if bomb.alreadyblocked then return true; end
 		if (bomb.tracer_player.submobj and bomb.tracer_player.submobj.valid)
-			P_KillMobj(bomb.tracer_player.submobj)
-			local sfx = P_SpawnGhostMobj(mo)
+			local sfx = P_SpawnGhostMobj(bomb.tracer_player.submobj)
 			sfx.fuse = TR
 			sfx.tics = sfx.fuse
 			sfx.flags2 = $|MF2_DONTDRAW
 			S_StartSound(sfx, sfx_pb_sp0)
+			P_KillMobj(bomb.tracer_player.submobj)
 		end
 		
 		bomb.alreadyblocked = true
@@ -192,12 +192,12 @@ Paint:registerSubWeapon({
 			and bomb.tracer_player.mo and bomb.tracer_player.mo.valid
 			and bomb.tracer_player.mo.health
 		)
-			P_KillMobj(bomb)
-			local sfx = P_SpawnGhostMobj(mo)
+			local sfx = P_SpawnGhostMobj(bomb)
 			sfx.fuse = TR
 			sfx.tics = sfx.fuse
 			sfx.flags2 = $|MF2_DONTDRAW
 			S_StartSound(sfx, sfx_pb_sp0)
+			P_KillMobj(bomb)
 			return
 		end
 		
