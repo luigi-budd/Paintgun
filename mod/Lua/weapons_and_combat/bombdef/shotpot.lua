@@ -85,12 +85,12 @@ addHook("ShouldDamage",pain_func, MT_PAINT_BOMB)
 Paint:registerWeapon({
 	name = "shotpot_bullet",
 	hidden = true,
-	damage = 10*FU,
-	falloffdamage = 5*FU,
+	damage = 8*FU,
+	falloffdamage = 4*FU,
 	
-	str_tics = 8, -- straight state lasts this many tics
-	str2brk_maxspeed = FixedMul(tofixed("1.493"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
-	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
+	str_tics = 3, -- straight state lasts this many tics
+	str2brk_maxspeed = 56*FU, -- when ending straight state, cap xyspeed to this
+	brk_airresist = FU * 74/100, -- xy AND z moms are affected by air resistance
 	brk_gravity = FixedMul(tofixed("0.07"), Paint.DU2FU),
 	brk2fre_minz = FixedMul(tofixed("-0.15"), Paint.DU2FU), -- go to free when momz is below this
 	brk2fre_minxy = FixedMul(tofixed("0.2355"), Paint.DU2FU), -- or go to free when xyspeed is below this
@@ -202,9 +202,9 @@ Paint:registerSubWeapon({
 		local info = phasedata[bomb.phase]
 		
 		if not bomb.spraywait
-			bomb.spraywait = info.spraytic
+			bomb.spraywait = TR / 4
 			
-			local speed = info.speed_max
+			local speed = 90*FU
 			local ox,oy,oz = 0,0,0
 			if not bomb.ceilingmode
 				oz = 16*FU
@@ -240,6 +240,12 @@ Paint:registerSubWeapon({
 			local angle, aim = R_PointTo3DAngles(bomb.x,bomb.y,bomb.z + FixedMul(oz, bomb.scale),
 				targ.x, targ.y, targ.z + targ.height / 2
 			)
+			if (lastdist > speed * Paint.weapons["shotpot_bullet"].str_tics)
+				local work = lastdist - (speed * Paint.weapons["shotpot_bullet"].str_tics)
+				work = max($, 0)
+				aim = $ + FixedAngle(work / 16)
+			end
+			
 			local proj = Paint.spawnBulletDrop(bomb, bomb.tracer_player, bomb.color,
 				0,0, speed,
 				nil,nil,nil, ox,oy,oz

@@ -23,7 +23,7 @@ Paint:registerWeapon({
 	icon_scale = FU * 8/10,
 	
 	name = "fists",
-	subtype = "burstbomb",
+	subtype = "shotpot",
 	handoffset = 6*FU,
 	damage = 16*FU,
 	falloffdamage = 12*FU,
