@@ -641,6 +641,11 @@ BP.doSwimForm = function(p)
 					p.acceleration = 0
 				end
 				
+				-- squid rolls
+				if not wallclimb
+					
+				end
+				
 				me.friction = FixedMul($, FU*97/100)
 				if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
 					local fric = FU * 9/10
@@ -783,19 +788,7 @@ BP.doSwimForm = function(p)
 							end
 							
 							if (FixedHypot(FixedHypot(me.momx,me.momy), me.momz) >= 20*me.scale)
-								local range = 128
-								local wind = P_SpawnMobjFromMobj(me,
-									P_RandomRange(-range, range)*FU,
-									P_RandomRange(-range, range)*FU,
-									P_RandomRange(0, range)*FU,
-									MT_THOK
-								)
-								wind.blendmode = AST_ADD
-								wind.renderflags = RF_SEMIBRIGHT|RF_PAPERSPRITE
-								wind.sprite = SPR_RAIN
-								wind.rollangle = ANGLE_90
-								wind.angle = R_PointToAngle2(0,0,me.momx,me.momy)
-								wind.drawonlyforplayer = p
+								BP.spawnWindLine(p,me)
 							end
 						end
 					end
@@ -834,7 +827,7 @@ BP.doSwimForm = function(p)
 				local maxtime = cur_weapon:get(pt,"storagetime")
 				pt.store_time = $ + 1
 				if pt.store_time >= maxtime
-				or not ((p.cmd.buttons & BT_ATTACK) or waspressingattack)
+				or not ((p.cmd.buttons & BT_ATTACK) or me.waspressingattack)
 					pt.storedcharge = 0
 				end
 			else
@@ -950,6 +943,8 @@ BP.doSwimForm = function(p)
 		end
 		pt.inktank = min($, 100*FU)
 	end
+	
+	print(pt.storedcharge)
 end
 
 -- handles anglestanding and movement and stuff
@@ -1204,6 +1199,25 @@ BP.handleHealth = function(p)
 			pt.hitlist = {}
 		end
 	end
+end
+
+local WINDRANGE = 128*FU
+BP.spawnWindLine = function(p,me)
+	local range = FixedMul(WINDRANGE, me.scale)
+	local wind = P_SpawnMobjFromMobj(me,
+		P_RandomFixedRange(-range, range),
+		P_RandomFixedRange(-range, range),
+		P_RandomFixedRange(0, range),
+		MT_THOK
+	)
+	wind.blendmode = AST_ADD
+	wind.renderflags = RF_SEMIBRIGHT|RF_PAPERSPRITE
+	wind.sprite = SPR_RAIN
+	wind.rollangle = ANGLE_90
+	wind.angle = R_PointToAngle2(0,0,me.momx,me.momy)
+	wind.drawonlyforplayer = p
+	
+	P_Thrust(wind, wind.angle, P_RandomFixedRange(-6*me.scale, 0))
 end
 
 local cv_hidetime = CV.FindVar("hidetime")
@@ -1877,6 +1891,7 @@ addHook("PlayerThink",function(p)
 	end
 	
 	-- squid form / swim form
+	me.waspressingattack = waspressingattack
 	BP.doSwimForm(p)
 
 	if pt.store_lag
