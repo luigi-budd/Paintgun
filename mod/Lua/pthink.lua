@@ -9,6 +9,7 @@ local alphatrans = 0
 local weaponalpha = FU
 local function addalpha(p)
 	if p ~= displayplayer then return end
+	if (p.paint.squidtoggle) then return end
 	if not setalpha
 		alphatrans = min($ + 1, MAX_TRANSTIME)
 	end
