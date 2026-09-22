@@ -1240,6 +1240,9 @@ addHook("TouchSpecial",function(splat,mo)
 		Paint:damagePlayer(targp, splat, p, 0, nil, true)
 		Paint:setPlayerInInk(targp, Paint.ININK_ENEMY)
 	end
+	if CV.splatter_lifetime.value != -1
+		splat.fuse = CV.splatter_lifetime.value * TICRATE
+	end
 	return nope(splat,mo);
 end,MT_PAINT_SPLATTER)
 
@@ -1280,6 +1283,9 @@ addHook("TouchSpecial",function(splat,mo)
 	
 	if friendly
 		Paint:setPlayerWallInk(targp)
+	end
+	if CV.splatter_lifetime.value != -1
+		splat.fuse = CV.splatter_lifetime.value * TICRATE
 	end
 	return nope(splat,mo);
 end,MT_PAINT_WALLSPLAT)

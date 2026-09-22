@@ -466,6 +466,30 @@ local function makeBlob(p,me,pt, rad,hei)
 end
 
 local easing = ease.inquad
+local function rollvfx(p,me, angle,offangle,dist)
+	local dust = P_SpawnMobjFromMobj(me,
+		P_ReturnThrustX(nil, angle, FixedMul(cos(offangle), dist)),
+		P_ReturnThrustY(nil, angle, FixedMul(cos(offangle), dist)),
+		FixedDiv(me.height,me.scale)/2 + FixedMul(sin(offangle), dist),
+		MT_PARTICLE
+	)
+	P_SetMobjStateNF(dust, S_GOOP1)
+	dust.sprite = SPR_PAINT_MISC
+	dust.frame = 15
+	
+	dust.tics = -1
+	dust.fuse = TR / 4
+	
+	dust.color = Paint:getPlayerColor(p)
+	dust.renderflags = $|RF_NOCOLORMAPS|RF_SEMIBRIGHT
+	
+	dust.destscale = 0
+	dust.scalespeed = FixedDiv(dust.scale, dust.fuse*FU)
+	--dust.blendmode = AST_ADD
+	--dust.momx = $ + me.momx * 3/4
+	--dust.momy = $ + me.momy * 3/4
+	P_SetObjectMomZ(dust, FU)
+end
 BP.doSwimForm = function(p)
 	local pt = p.paint
 	local me = p.realmo
@@ -531,6 +555,8 @@ BP.doSwimForm = function(p)
 		and not (pt.disable.swimming)
 			if not pt.wasinsquid
 				S_StartSound(me,sfx_pt_tos)
+				pt.swimangle = R_PointToAngle2(0,0, me.momx,me.momy)
+				pt.swimoldspeed = FixedHypot(me.momx,me.momy)
 			end
 			
 			pt.squidtoggle = true
@@ -598,6 +624,8 @@ BP.doSwimForm = function(p)
 					end
 				end
 			end
+			me.wallangle = wallangle
+			me.touchingwall = touchingwall
 			local wallclimb = (pt.wallink and (p.powers[pw_pushing] or touchingwall))
 			
 			p.charflags = $|SF_NOSKID
@@ -641,11 +669,6 @@ BP.doSwimForm = function(p)
 					p.acceleration = 0
 				end
 				
-				-- squid rolls
-				if not wallclimb
-					
-				end
-				
 				me.friction = FixedMul($, FU*97/100)
 				if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
 					local fric = FU * 9/10
@@ -661,6 +684,12 @@ BP.doSwimForm = function(p)
 				S_StopSoundByID(me, sfx_pt_b3)
 				S_StopSoundByID(me, sfx_pt_b4)
 			end
+			pt.swimangle = P_Lerp(FU/8, $, R_PointToAngle2(0,0, me.momx,me.momy))
+			local speed = FixedHypot(me.momx,me.momy)
+			if (wallclimb)
+				speed = FixedHypot($, me.momz)
+			end
+			pt.swimoldspeed = P_Lerp(FU/3, $, speed)
 			
 			if wallclimb
 				if not (pt.wasclimbing) and me.last_speed
@@ -849,17 +878,23 @@ BP.doSwimForm = function(p)
 			S_StopSoundByID(me, sfx_pt_b3)
 			S_StopSoundByID(me, sfx_pt_b4)
 		end
-		if me.last_hidden ~= pt.hidden
+		if pt.hidden ~= me.last_hidden
 		and me.last_hidden ~= nil
 			if not ((pt.wasclimbing or pt.wallink) or oldclimbing)
+			and (pt.prevmomz ~= 0 or pt.hidden and not me.last_hidden)
 				local splash = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
 				P_SetOrigin(splash, splash.x,splash.y, me.floorz)
 				splash.state = S_PAINT_SPLASH
 				splash.color = Paint:getPlayerColor(p)
 				splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+				splash.spritexscale = $ + abs(FixedDiv(pt.prevmomz, me.scale) / 28)
+				splash.spriteyscale = $ + abs(FixedDiv(pt.prevmomz, me.scale) / 20)
 				P_SetScale(splash, splash.scale + P_RandomFixed()/2, true)
 			end
-			S_StartSound(me, sfx_splish)
+			if pt.hidden and not me.last_hidden
+			and pt.prevmomz ~= 0
+				S_StartSound(me, (abs(pt.prevmomz) >= 18*me.scale) and sfx_pt_i1 or sfx_pt_i0)
+			end
 		end
 		me.last_hidden = pt.hidden
 		me.last_speed = FixedHypot(me.momx,me.momy)
@@ -913,6 +948,7 @@ BP.doSwimForm = function(p)
 					blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
 				end
 				me.colorized = false
+				S_StartSound(me, sfx_pt_i2)
 			end
 		end
 	end
@@ -944,7 +980,28 @@ BP.doSwimForm = function(p)
 		pt.inktank = min($, 100*FU)
 	end
 	
-	print(pt.storedcharge)
+	if pt.squidrolled
+		me.momz = $ + P_GetMobjGravity(me) * 3/4
+		me.state = S_PLAY_ROLL
+		me.spriteyscale = FU
+		p.drawangle = pt.squidrollangle
+		
+		local angle = R_PointToAngle2(0,0, me.momx,me.momy) + ANGLE_90
+		local offangle = FixedAngle(leveltime * FU * 32)
+		
+		local dist = FixedDiv(me.radius, me.scale) + 3*FU
+		
+		rollvfx(p,me, angle,offangle,dist)
+		rollvfx(p,me, angle,offangle + ANGLE_180,dist)
+		
+		if P_IsObjectOnGround(me) or (not pt.squidtoggle) or (wallclimb or me.touchingwall)
+			pt.squidrolled = false
+			if not pt.squidtoggle
+				me.state = S_PLAY_FALL
+			end
+		end
+	end
+	pt.prevmomz = me.momz
 end
 
 -- handles anglestanding and movement and stuff
@@ -994,8 +1051,6 @@ BP.handleMovement = function(p)
 		me.momx = FixedMul(FixedDiv(me.momx,speed), newspeed)
 		me.momy = FixedMul(FixedDiv(me.momy,speed), newspeed)
 	end
-	
-
 end
 
 -- Danger!, inink behavior, and assist hitlist
@@ -2466,6 +2521,7 @@ addHook("PlayerThink",function(p)
 		end
 		p.normalspeed = FixedMul($, slowdown)
 		p.charflags = $|SF_NOJUMPSPIN
+		pt.squidrolled = false
 		
 		if me.state == S_PLAY_WAIT
 			me.state = S_PLAY_STND
@@ -2508,6 +2564,65 @@ addHook("JumpSpecial",function(p)
 		return true
 	end
 	return true
+end)
+
+-- squid rolls
+local SQUIDROLL_ANGLE = FixedAngle(80*FU)
+local SQUIDROLL_WALLANGLE = FixedAngle(98*FU)
+addHook("JumpSpecial",function(p)
+	local me = p.mo
+	if not (me and me.valid and me.health) return end
+	
+	local pt = p.paint
+	if not (pt) then return end
+	if not pt.active then return end
+	if not pt.squidtime then return end
+	
+	if (p.pflags & PF_JUMPDOWN) then return end
+	
+	local wallclimb = (pt.wallink and (p.powers[pw_pushing] or me.touchingwall))
+	if not wallclimb
+		if not (pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me)) then return end
+		if FixedDiv(pt.swimoldspeed, me.scale) < BP.SWIM_NSPEED / 2 then return end
+	end
+	
+	local mindelta = SQUIDROLL_ANGLE
+	local fromaway = true
+	local mang = pt.swimangle
+	if wallclimb
+		fromaway = false
+		mang = me.wallangle + ANGLE_90
+		mindelta = SQUIDROLL_WALLANGLE
+		
+		local tx = FixedMul(pt.forwardmove*FU, cos(mang))
+		local ty = FixedMul(pt.forwardmove*FU, sin(mang))
+		tx = $ + FixedMul(pt.sidemove*FU, cos(mang))
+		ty = $ + FixedMul(pt.sidemove*FU, sin(mang))
+		local ctrldir = R_PointToAngle2(0,0, tx,ty)
+		local dang = ctrldir - mang
+		if dang < 0 then dang = InvAngle($); end
+		if AngleFixed(dang) > 90*FU then fromaway = true; end
+	end
+	local iang = Paint:controlDir(p)
+	local delta = mang - iang
+	if delta < 0 then delta = InvAngle($); end
+	
+	if delta >= mindelta
+	and fromaway
+		S_StartSound(me, sfx_pt_r0)
+		S_StartSound(me, P_RandomRange(sfx_pt_r1, sfx_pt_r3))
+		
+		P_InstaThrust(me, iang, FixedMul(BP.SWIM_NSPEED * 3/4, me.scale))
+		p.jumpfactor = $ * 3/4
+		
+		pt.swimoldspeed = FixedHypot(me.momx,me.momy)
+		pt.swimangle = iang
+		pt.inink = 0
+		pt.inktime = 0
+		pt.squidrolled = true
+		pt.squidrollangle = iang
+		pt.wallink = 0
+	end
 end)
 
 addHook("PlayerSpawn",function(p)
@@ -2563,6 +2678,11 @@ addHook("PreThinkFrame",do setalpha = false; for p in players.iterate
 	end
 
 	if not pt.active then continue end
+	
+	if pt.squidrolled
+		p.pflags = $|PF_STARTJUMP|PF_JUMPDOWN
+		p.cmd.buttons = $|BT_JUMP
+	end
 	
 	if pt.inink == Paint.ININK_ENEMY
 		me.movefactor = FU/2

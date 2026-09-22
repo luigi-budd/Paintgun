@@ -60,6 +60,14 @@ sfxinfo[freeslot("sfx_pt_ag")].caption = "\x82".."Armor get!\x80"
 for i = 0,4
 	sfxinfo[freeslot("sfx_pt_b"..i)].caption = "/"
 end
+for i = 0,2
+	sfxinfo[freeslot("sfx_pt_i"..i)].caption = "/"
+end
+
+-- squid roll
+for i = 0,3
+	sfxinfo[freeslot("sfx_pt_r"..i)].caption = "/"
+end
 
 --sorry that these are all wavs
 for i = 0,12
@@ -252,6 +260,8 @@ function Paint:initPlayer(p)
 		forwardmove = 0, sidemove = 0,buttons = 0,
 		-- fixed varients of forward/sidemoves for sub stuff
 		fixed_fmove = 0, fixed_smove = 0,
+		swimangle = 0, -- for rolling
+		swimoldspeed = 0, -- ditto
 		
 		-- cant perform any of these actions if true
 		-- all reset the next tic
@@ -388,6 +398,9 @@ function Paint:initPlayer(p)
 		squididle = 0,
 		hidden = false,
 		wasinsquid = 0,
+		squidrolled = false,
+		squidrollangle = 0,
+		prevmomz = 0,
 		
 		signaltime = 0,
 		signaltype = 0,
