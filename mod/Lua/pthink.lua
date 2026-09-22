@@ -887,7 +887,7 @@ BP.doSwimForm = function(p)
 				splash.state = S_PAINT_SPLASH
 				splash.color = Paint:getPlayerColor(p)
 				splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
-				splash.spritexscale = $ + abs(FixedDiv(pt.prevmomz, me.scale) / 28)
+				splash.spritexscale = $ + abs(FixedDiv(pt.prevmomz, me.scale) / 38)
 				splash.spriteyscale = $ + abs(FixedDiv(pt.prevmomz, me.scale) / 20)
 				P_SetScale(splash, splash.scale + P_RandomFixed()/2, true)
 			end
