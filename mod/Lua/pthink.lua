@@ -2596,8 +2596,8 @@ addHook("JumpSpecial",function(p)
 		
 		local tx = FixedMul(pt.forwardmove*FU, cos(mang))
 		local ty = FixedMul(pt.forwardmove*FU, sin(mang))
-		tx = $ + FixedMul(pt.sidemove*FU, cos(mang))
-		ty = $ + FixedMul(pt.sidemove*FU, sin(mang))
+		tx = $ + FixedMul(-abs(pt.sidemove*FU), cos(mang))
+		ty = $ + FixedMul(-abs(pt.sidemove*FU), sin(mang))
 		local ctrldir = R_PointToAngle2(0,0, tx,ty)
 		local dang = ctrldir - mang
 		if dang < 0 then dang = InvAngle($); end
@@ -2613,7 +2613,11 @@ addHook("JumpSpecial",function(p)
 		S_StartSound(me, P_RandomRange(sfx_pt_r1, sfx_pt_r3))
 		
 		P_InstaThrust(me, iang, FixedMul(BP.SWIM_NSPEED * 3/4, me.scale))
-		p.jumpfactor = $ * 3/4
+		if not wallclimb
+			p.jumpfactor = $ * 3/4
+		else
+			P_SetObjectMomZ(me, 15*FU)
+		end
 		
 		pt.swimoldspeed = FixedHypot(me.momx,me.momy)
 		pt.swimangle = iang
