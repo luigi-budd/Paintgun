@@ -1234,7 +1234,7 @@ addHook("TouchSpecial",function(splat,mo)
 		if pnt.hp >= MIN_INK_HP
 		-- no passive damage, but the slowdown is still applied
 		and not (p and p.valid and p.powers[pw_flashing])
-			Paint:damagePlayer(targp, splat, p, FixedDiv(18*FU, TR*FU), nil, true)
+			Paint:damagePlayer(targp, splat, p, FixedDiv(18*FU, TR*FU), nil, true, true)
 			pnt.hp = max($, MIN_INK_HP)
 		end
 		Paint:damagePlayer(targp, splat, p, 0, nil, true)

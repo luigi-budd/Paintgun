@@ -40,6 +40,188 @@ local CLASS2ICON = {
 	[WPT_KATANA]  = "KATANA",
 }
 
+local menudrawer = function(v, ML, menu, props)
+	local x = props.corner_x + 6
+	local y = props.corner_y + 16
+	v.drawString(x,y + 2,"Filter:", V_ALLOWLOWERCASE, "thin")
+	
+	local ix = (x + 46)*FU
+	local iy = (y +  4)*FU
+	for wpt = WPT_SHOOTER, WPT_KATANA
+		local wy = iy + ((wpt % 2 == 0) and 2*FU or 0)
+		
+		local trans = V_80TRANS
+		local clr = SKINCOLOR_BONE
+		local hovered = false
+		if ML.mouseInZone(ix - 3*FU,wy - 3*FU, 6*FU,6*FU, true)
+			hovered = true
+			ML.client.canPressSomething = true
+			if (ML.client.mouseHeld == 1)
+				menu.filter = $^^CLASS2BIT[wpt]
+			end
+		end
+		if hovered
+		or (menu.filter & CLASS2BIT[wpt])
+			trans = V_40TRANS
+			if (menu.filter & CLASS2BIT[wpt])
+				trans = 0
+				clr = SKINCOLOR_YELLOW
+			end
+		end
+		
+		v.drawScaled(ix,wy,FU,
+			v.cachePatch("PAINT_BALL"),
+			trans,
+			v.getColormap(TC_DEFAULT,clr)
+		)
+		v.drawScaled(ix, wy,
+			FU/16,
+			v.cachePatch("PTCLASS_"..CLASS2ICON[wpt]),
+			0
+		)
+		
+		ix = $ + 8*FU
+	end
+	v.drawString(ix + 4*FU,(y + 2)*FU,"x", V_ALLOWLOWERCASE, "thin-fixed-center")
+	if ML.mouseInZone(ix, (y + 2)*FU, 6*FU,6*FU, true)
+		ML.client.canPressSomething = true
+		if (ML.client.mouseHeld == 1)
+			menu.filter = 0
+		end
+	end
+	
+	y = ($ + 14)
+	local startx = x
+	
+	local count = 0
+	local dimen = 30
+	local pad = 2
+	ML.interpolate(v, false)
+	
+	local hoveringname = ""
+	
+	local inv = menu.workinv
+	local curitems = menu.curitems
+	
+	for name, info in pairs(Paint.weapons)
+		if info.hidden then continue end
+		
+		if (menu.filter ~= 0)
+		and (menu.filter & CLASS2BIT[info.guntype] == 0)
+			continue
+		end
+		
+		if count == 5
+			count = 0
+			x = startx
+			y = $ + (dimen + pad)
+		end
+		count = $ + 1
+		
+		local itrans = 0
+		local clr = 24
+		if curitems[info.name]
+			clr = 26
+			itrans = V_30TRANS
+		end
+		if inv.items[menu.curslot] == info.name
+			clr = 18
+			itrans = 0
+		end
+		
+		v.drawFill(x, y, dimen,dimen, clr)
+		
+		v.drawScaled((x + dimen/2)*FU, (y + dimen/2)*FU,
+			info.icon_scale,
+			v.cachePatch(info.icon),
+			itrans
+		)
+		if CLASS2ICON[info.guntype] ~= nil
+			v.drawScaled((x + 4)*FU, (y + 4)*FU,
+				FU/16,
+				v.cachePatch("PTCLASS_"..CLASS2ICON[info.guntype]),
+				itrans
+			)
+		end
+		local sub_t = Paint.subs[info.subtype or ""]
+		if sub_t
+			v.drawScaled((x + (dimen - 4))*FU, (y + 4)*FU,
+				sub_t.icon_scale,
+				v.cachePatch(sub_t.icon),
+				itrans, v.getColormap(TC_DEFAULT, SKINCOLOR_PURPLE)
+			)
+		end
+		
+		if ML.mouseInZone(x*FU,y*FU, dimen*FU,dimen*FU, true)
+			hoveringname = info.realname
+			
+			ML.client.canPressSomething = true
+			if (ML.client.mouseHeld == 1)
+				inv.items[menu.curslot] = info.name
+			end
+		end
+		
+		x = $ + (dimen + pad)
+	end
+	
+	x = (props.corner_x + menu.width/2) - ((dimen * inv.slots) + (pad * inv.slots - 1))/2
+	y = (props.corner_y + menu.height) - (dimen + pad*2)
+	for i = 1, inv.slots
+		local item = inv.items[i]
+		local wep = Paint.weapons[item or ""]
+		
+		if i == menu.curslot
+			v.drawFill(x -1, y - 1, dimen+2,dimen+2, 73)
+		end
+		v.drawFill(x, y, dimen,dimen, 24)
+		
+		if wep
+			v.drawScaled((x + dimen/2)*FU, (y + dimen/2)*FU,
+				wep.icon_scale,
+				v.cachePatch(wep.icon),
+				0
+			)
+			if CLASS2ICON[wep.guntype] ~= nil
+				v.drawScaled((x + 4)*FU, (y + 4)*FU,
+					FU/16,
+					v.cachePatch("PTCLASS_"..CLASS2ICON[wep.guntype]),
+					0
+				)
+			end
+			local sub_t = Paint.subs[wep.subtype or ""]
+			if sub_t
+				v.drawScaled((x + (dimen - 4))*FU, (y + 4)*FU,
+					sub_t.icon_scale,
+					v.cachePatch(sub_t.icon),
+					0, v.getColormap(TC_DEFAULT, SKINCOLOR_PURPLE)
+				)
+			end
+		end
+		if ML.mouseInZone(x*FU,y*FU, dimen*FU,dimen*FU, true)
+			if wep
+				hoveringname = wep.realname
+			end
+			
+			ML.client.canPressSomething = true
+			if (ML.client.mouseHeld == 1)
+				menu.curslot = i
+			end
+		end
+		
+		x = $ + (dimen + pad)
+	end
+	
+	if hoveringname ~= ""
+		local x = (ML.client.mouse_x / FU) + 4
+		local y = (ML.client.mouse_y / FU) + 4
+		local wid = (v.stringWidth(hoveringname, 0, "thin")/2) + 4
+		ML.interpolate(v, 100000)
+		v.drawFill(x,y, wid, 8, 29)
+		v.drawFill(x+1,y+1, wid-2, 6, 27)
+		v.drawString(x+2,y+2, hoveringname, V_ALLOWLOWERCASE, "small-thin")
+	end
+end
+
 ML.addMenu({
 	stringId = "Paint_WeaponPicker",
 	title = "Inventory",
@@ -55,192 +237,9 @@ ML.addMenu({
 	
 	curslot = 1,
 	workinv = {},
+	curitems = {},
 	
-	drawer = function(v, ML, menu, props)
-		local x = props.corner_x + 6
-		local y = props.corner_y + 16
-		v.drawString(x,y + 2,"Filter:", V_ALLOWLOWERCASE, "thin")
-		
-		local ix = (x + 46)*FU
-		local iy = (y +  4)*FU
-		for wpt = WPT_SHOOTER, WPT_KATANA
-			local wy = iy + ((wpt % 2 == 0) and 2*FU or 0)
-			
-			local trans = V_80TRANS
-			local clr = SKINCOLOR_BONE
-			local hovered = false
-			if ML.mouseInZone(ix - 3*FU,wy - 3*FU, 6*FU,6*FU, true)
-				hovered = true
-				ML.client.canPressSomething = true
-				if (ML.client.mouseHeld == 1)
-					menu.filter = $^^CLASS2BIT[wpt]
-				end
-			end
-			if hovered
-			or (menu.filter & CLASS2BIT[wpt])
-				trans = V_40TRANS
-				if (menu.filter & CLASS2BIT[wpt])
-					trans = 0
-					clr = SKINCOLOR_YELLOW
-				end
-			end
-			
-			v.drawScaled(ix,wy,FU,
-				v.cachePatch("PAINT_BALL"),
-				trans,
-				v.getColormap(TC_DEFAULT,clr)
-			)
-			v.drawScaled(ix, wy,
-				FU/16,
-				v.cachePatch("PTCLASS_"..CLASS2ICON[wpt]),
-				0
-			)
-			
-			ix = $ + 8*FU
-		end
-		v.drawString(ix + 4*FU,(y + 2)*FU,"x", V_ALLOWLOWERCASE, "thin-fixed-center")
-		if ML.mouseInZone(ix, (y + 2)*FU, 6*FU,6*FU, true)
-			ML.client.canPressSomething = true
-			if (ML.client.mouseHeld == 1)
-				menu.filter = 0
-			end
-		end
-		
-		y = ($ + 14)
-		local startx = x
-		
-		local count = 0
-		local dimen = 30
-		local pad = 2
-		ML.interpolate(v, false)
-		
-		local hoveringname = ""
-		
-		local inv = menu.workinv
-		local curitems = {}
-		for i = 1, inv.slots
-			if inv.items[i] == nil then continue end
-			curitems[inv.items[i]] = true
-		end
-		
-		for name, info in pairs(Paint.weapons)
-			if info.hidden then continue end
-			
-			if (menu.filter ~= 0)
-			and (menu.filter & CLASS2BIT[info.guntype] == 0)
-				continue
-			end
-			
-			if count == 5
-				count = 0
-				x = startx
-				y = $ + (dimen + pad)
-			end
-			count = $ + 1
-			
-			local itrans = 0
-			local clr = 24
-			if curitems[info.name]
-				clr = 26
-				itrans = V_30TRANS
-			end
-			if inv.items[menu.curslot] == info.name
-				clr = 18
-				itrans = 0
-			end
-			
-			v.drawFill(x, y, dimen,dimen, clr)
-			
-			v.drawScaled((x + dimen/2)*FU, (y + dimen/2)*FU,
-				info.icon_scale,
-				v.cachePatch(info.icon),
-				itrans
-			)
-			if CLASS2ICON[info.guntype] ~= nil
-				v.drawScaled((x + 4)*FU, (y + 4)*FU,
-					FU/16,
-					v.cachePatch("PTCLASS_"..CLASS2ICON[info.guntype]),
-					itrans
-				)
-			end
-			local sub_t = Paint.subs[info.subtype or ""]
-			if sub_t
-				v.drawScaled((x + (dimen - 4))*FU, (y + 4)*FU,
-					sub_t.icon_scale,
-					v.cachePatch(sub_t.icon),
-					itrans, v.getColormap(TC_DEFAULT, SKINCOLOR_PURPLE)
-				)
-			end
-			
-			if ML.mouseInZone(x*FU,y*FU, dimen*FU,dimen*FU, true)
-				hoveringname = info.realname
-				
-				ML.client.canPressSomething = true
-				if (ML.client.mouseHeld == 1)
-					inv.items[menu.curslot] = info.name
-				end
-			end
-			
-			x = $ + (dimen + pad)
-		end
-		
-		x = (props.corner_x + menu.width/2) - ((dimen * inv.slots) + (pad * inv.slots - 1))/2
-		y = (props.corner_y + menu.height) - (dimen + pad*2)
-		for i = 1, inv.slots
-			local item = inv.items[i]
-			local wep = Paint.weapons[item or ""]
-			
-			if i == menu.curslot
-				v.drawFill(x -1, y - 1, dimen+2,dimen+2, 73)
-			end
-			v.drawFill(x, y, dimen,dimen, 24)
-			
-			if wep
-				v.drawScaled((x + dimen/2)*FU, (y + dimen/2)*FU,
-					wep.icon_scale,
-					v.cachePatch(wep.icon),
-					0
-				)
-				if CLASS2ICON[wep.guntype] ~= nil
-					v.drawScaled((x + 4)*FU, (y + 4)*FU,
-						FU/16,
-						v.cachePatch("PTCLASS_"..CLASS2ICON[wep.guntype]),
-						0
-					)
-				end
-				local sub_t = Paint.subs[wep.subtype or ""]
-				if sub_t
-					v.drawScaled((x + (dimen - 4))*FU, (y + 4)*FU,
-						sub_t.icon_scale,
-						v.cachePatch(sub_t.icon),
-						0, v.getColormap(TC_DEFAULT, SKINCOLOR_PURPLE)
-					)
-				end
-			end
-			if ML.mouseInZone(x*FU,y*FU, dimen*FU,dimen*FU, true)
-				if wep
-					hoveringname = wep.realname
-				end
-				
-				ML.client.canPressSomething = true
-				if (ML.client.mouseHeld == 1)
-					menu.curslot = i
-				end
-			end
-			
-			x = $ + (dimen + pad)
-		end
-		
-		if hoveringname ~= ""
-			local x = (ML.client.mouse_x / FU) + 4
-			local y = (ML.client.mouse_y / FU) + 4
-			local wid = (v.stringWidth(hoveringname, 0, "thin")/2) + 4
-			ML.interpolate(v, 100000)
-			v.drawFill(x,y, wid, 8, 29)
-			v.drawFill(x+1,y+1, wid-2, 6, 27)
-			v.drawString(x+2,y+2, hoveringname, V_ALLOWLOWERCASE, "small-thin")
-		end
-	end,
+	drawer = menudrawer,
 	init = function()
 		ML.client.mouse_x = 85*FU
 		ML.client.mouse_y = 130*FU
@@ -250,8 +249,11 @@ ML.addMenu({
 		local inv = pt.inventory
 		local menu = ML.menus[ML.findMenu("Paint_WeaponPicker")]
 		menu.workinv = {items = {}, slots = inv.slots}
+		menu.curitems = {}
 		for i = 1, inv.slots
 			menu.workinv.items[i] = inv.items[i]
+			if inv.items[i] == nil then continue end
+			menu.curitems[inv.items[i]] = true
 		end
 		menu.curslot = inv.curslot
 	end,

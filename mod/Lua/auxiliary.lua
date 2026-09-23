@@ -210,3 +210,12 @@ for i = 0, 2
 		tics = splash_frames
 	}
 end
+
+freeslot("S_PAINT_IASPRK")
+states[S_PAINT_IASPRK] = {
+	sprite = SPR_PAINT_MISC,
+	frame = 65|FF_FULLBRIGHT|FF_ANIMATE|FF_ADD,
+	var1 = 31,
+	var2 = 1,
+	tics = 32
+}

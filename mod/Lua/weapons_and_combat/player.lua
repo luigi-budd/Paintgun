@@ -296,12 +296,13 @@ function Paint:checkBulletParams(me, pt, shot, damage)
 	return damage
 end
 
-function Paint:damagePlayer(p, shot, source_player, damage, inf, noassists) -- mobj if no player
+function Paint:damagePlayer(p, shot, source_player, damage, inf, noassists, disallowparrying)
 	local weptype = Paint.weapons[shot.weapon_id]
 	if damage == nil
 		damage = weptype.damage
 	end
 	local pt = p.paint
+	local ia = pt.inkarmor
 	
 	if (pt.paintoverlay and pt.paintoverlay.valid)
 		pt.paintoverlay.color = ColorOpposite(Paint:getPlayerColor(p))
@@ -347,6 +348,22 @@ function Paint:damagePlayer(p, shot, source_player, damage, inf, noassists) -- m
 		weptype.callbacks.onhit(source_player,pt,Paint.weapons[source_player.paint.weapon_id], shot, inf, p.realmo, damage)
 	end
 	
+	if ia.tics and not disallowparrying
+		damage = max($ - ia.amount, 0)
+		
+		local bam = P_SpawnMobjFromMobj(p.realmo, 0,0,0, MT_THOK)
+		P_SetMobjStateNF(bam, S_TNTBARREL_EXPL3)
+		bam.spritexscale = $ / 2
+		bam.spriteyscale = bam.spritexscale
+		bam.blendmode = AST_ADD
+		bam.colorized = true
+		bam.color = pt.paintoverlay.color or ColorOpposite(p.realmo.color)
+		
+		ia.tics = 0
+		ia.brokethistic = leveltime
+		S_StartSound(me, sfx_pt_ab, p)
+	end
+	
 	pt.hp = $ - damage
 	if oldhp > 85*FU
 	and pt.hp <= 85*FU
@@ -364,6 +381,7 @@ end
 
 function Paint:playHurtSound(p)
 	if (p.paint.hurttic == leveltime) then return end
+	if (p.paint.inkarmor.brokethistic == leveltime) then return end
 	p.paint.hurttic = leveltime
 	
 	local sfx = sfx_pt_ow0 --P_RandomRange(sfx_pt_ow0,sfx_pt_ow2)
@@ -583,6 +601,18 @@ function Paint:doDodgeRoll(p)
 	
 	Paint.HUD:cameraLag(p, wep:get(pt,"dodgecamlag"))
 	return true
+end
+
+function Paint:setInkArmor(p, tics, amount)
+	local pt = p.paint
+	-- Brooooo
+	-- Inanimate Insanity
+	-- Wait
+	local ia = pt.inkarmor
+	
+	ia.tics = max($, tics)
+	-- remember, has to be fixed!
+	ia.amount = max($, amount)
 end
 
 dofile("weapons_and_combat/teams.lua")

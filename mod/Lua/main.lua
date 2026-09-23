@@ -56,6 +56,8 @@ sfxinfo[sfx_pt_ow1].flags = SF_X2AWAYSOUND|SF_TOTALLYSINGLE
 
 sfxinfo[freeslot("sfx_pt_al")].caption = "\x85".."Armor lost!\x80"
 sfxinfo[freeslot("sfx_pt_ag")].caption = "\x82".."Armor get!\x80"
+sfxinfo[freeslot("sfx_pt_af")].caption = "/" -- ink armor vanish
+sfxinfo[freeslot("sfx_pt_ab")].caption = "/" -- ink armor break
 
 for i = 0,4
 	sfxinfo[freeslot("sfx_pt_b"..i)].caption = "/"
@@ -401,6 +403,13 @@ function Paint:initPlayer(p)
 		squidrolled = false,
 		squidrollangle = 0,
 		prevmomz = 0,
+		
+		-- ink armor
+		inkarmor = {
+			tics = 0,
+			amount = 0,
+			brokethistic = -1,
+		},
 		
 		signaltime = 0,
 		signaltype = 0,

@@ -542,7 +542,7 @@ BP.doSwimForm = function(p)
 			pt.hidenseekon = false
 		end
 		
-		local maxsquish = (pt.inink == Paint.ININK_FRIENDLY and FU*4/100 or FU/2)
+		local maxsquish = ((pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me)) and FU*4/100 or FU/2)
 		local oldclimbing = (pt.hidden and pt.wallink)
 		pt.hidden = false
 		
@@ -1058,195 +1058,248 @@ end
 BP.handleHealth = function(p)
 	local me = p.realmo
 	local pt = p.paint
+	local ia = pt.inkarmor
 
-	do
-		local fastdanger = false
-		if pt.hp ~= 100*FU
-		and (pt.timetoheal <= 0)
-			local hpinc = 0
-			if pt.inink == Paint.ININK_FRIENDLY
-			and (FixedHypot(me.momx,me.momy) < 5*me.scale)
-			and pt.hidden
-				hpinc = 8*FU
-			elseif pt.inink ~= Paint.ININK_ENEMY
-				hpinc = FixedDiv(12*FU + FU/2, TR*FU)
-			end
-			if pt.brokenarmor
-				if hpinc == 8*FU
-					fastdanger = true
-				end
-				hpinc = 0
-			end
-			
-			pt.hp = min($ + hpinc, 100*FU)
+	local fastdanger = false
+	if pt.hp ~= 100*FU
+	and (pt.timetoheal <= 0)
+		local hpinc = 0
+		if pt.inink == Paint.ININK_FRIENDLY
+		and (FixedHypot(me.momx,me.momy) < 5*me.scale)
+		and pt.hidden
+			hpinc = 8*FU
+		elseif pt.inink ~= Paint.ININK_ENEMY
+			hpinc = FixedDiv(12*FU + FU/2, TR*FU)
 		end
-		
 		if pt.brokenarmor
-			if fastdanger
-				pt.armorregen = $ - FixedDiv(100*FU, Paint.DANGER_TIME_FAST*FU)
-			else
-				pt.armorregen = $ - FixedDiv(100*FU, Paint.DANGER_TIME*FU)
+			if hpinc == 8*FU
+				fastdanger = true
 			end
-			
-			-- insta-regen cases
-			if (p.powers[pw_shield])
-				p.powers[pw_shield] = 0
-				pt.armorregen = 0
-			end
-			if (p.last_starpostnum ~= nil)
-			and (p.starpostnum > p.last_starpostnum)
-				pt.armorregen = 0
-			end
-			
-			if (leveltime % 2)
-				local s = P_SpawnMobjFromMobj(me, 0,0,
-					P_RandomFixedRange(0, FixedDiv(me.height,me.scale)),
-					MT_PARTICLE
-				)
-				s.color = P_RandomRange(SKINCOLOR_SALMON, SKINCOLOR_KETCHUP)
-				s.blendmode = AST_ADD
-				s.spritexscale = $ / 8
-				s.spriteyscale = s.spritexscale
-				P_SetScale(s, s.scale * 4, true)
-				s.flags = $ &~(MF_NOCLIPTHING|MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT)
-				P_SetObjectMomZ(s, P_RandomFixedRange(1*FU, 5*FU))
-				s.angle = FixedAngle(P_RandomFixedRange(0,360*FU))
-				P_Thrust(s, s.angle, P_RandomFixedRange(1*FU, 10*FU))
-				s.angle = $ + ANGLE_90
-				
-				s.prevmomz = s.momz
-				s.fuse = TR / 2
-				s.rang = FixedAngle(P_RandomFixedRange(0,90*FU))
-				s.rroll = FixedAngle(P_RandomFixedRange(-30*FU,30*FU))
-				s.state = S_PAINT_BROKEARMOR
-			end
-			do
-				local rad = FixedDiv(me.radius, me.scale) * 3/4
-				local hei = FixedDiv(me.height,me.scale)
-				local s = P_SpawnMobjFromMobj(me,
-					P_RandomFixedRange(-rad, rad),
-					P_RandomFixedRange(-rad, rad),
-					hei/2 + P_RandomFixedRange(-hei/5, hei/5),
-					MT_PARTICLE
-				)
-				s.color = P_RandomRange(SKINCOLOR_SALMON, SKINCOLOR_KETCHUP)
-				s.blendmode = AST_ADD
-				s.spritexscale = $ / P_RandomRange(2,4)
-				s.spriteyscale = s.spritexscale
-				
-				s.fuse = 3
-				s.state = S_THOK
-			end
-			
-			if pt.armorregen <= 0
-				pt.brokenarmor = false
-				S_StartSound(me, sfx_pt_ag)
-				me.paint_barmor = 6
-				me.paint_barmor_hp = pt.hp
-				me.paint_overlayhp = pt.hp
-				pt.hp = 100*FU
-				
-				local ov = P_SpawnMobjFromMobj(me, 0,0,0, MT_PAINT_GUN)
-				ov.target = me
-				ov.state = mobjinfo[MT_MSSHIELD_FRONT].spawnstate
-				ov.colorized = true
-				ov.color = SKINCOLOR_GOLDENROD
-				ov.blendmode = AST_ADD
-				ov.scale = $ * 2
-				ov.fuse = TR / 2
-				ov.destscale = 0
-				ov.scalespeed = FixedDiv(ov.scale, ov.fuse*FU)
-			end
-			p.normalspeed = $ / 3
+			hpinc = 0
 		end
-		if me.paint_barmor ~= nil
-			me.paint_overlayhp = ease.outquad(
-				FU - ((FU/6) * me.paint_barmor),
-				me.paint_barmor_hp, pt.hp
+		
+		pt.hp = min($ + hpinc, 100*FU)
+	end
+	
+	if pt.brokenarmor
+		if fastdanger
+			pt.armorregen = $ - FixedDiv(100*FU, Paint.DANGER_TIME_FAST*FU)
+		else
+			pt.armorregen = $ - FixedDiv(100*FU, Paint.DANGER_TIME*FU)
+		end
+		
+		-- insta-regen cases
+		if (p.powers[pw_shield])
+			p.powers[pw_shield] = 0
+			pt.armorregen = 0
+		end
+		if (p.last_starpostnum ~= nil)
+		and (p.starpostnum > p.last_starpostnum)
+			pt.armorregen = 0
+		end
+		
+		if (leveltime % 2)
+			local s = P_SpawnMobjFromMobj(me, 0,0,
+				P_RandomFixedRange(0, FixedDiv(me.height,me.scale)),
+				MT_PARTICLE
 			)
-			me.paint_barmor = $ - 1
-			if me.paint_barmor <= 0
-				me.paint_barmor = nil
-				me.paint_overlayhp = nil
-			end
+			s.color = P_RandomRange(SKINCOLOR_SALMON, SKINCOLOR_KETCHUP)
+			s.blendmode = AST_ADD
+			s.spritexscale = $ / 8
+			s.spriteyscale = s.spritexscale
+			P_SetScale(s, s.scale * 4, true)
+			s.flags = $ &~(MF_NOCLIPTHING|MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT)
+			P_SetObjectMomZ(s, P_RandomFixedRange(1*FU, 5*FU))
+			s.angle = FixedAngle(P_RandomFixedRange(0,360*FU))
+			P_Thrust(s, s.angle, P_RandomFixedRange(1*FU, 10*FU))
+			s.angle = $ + ANGLE_90
+			
+			s.prevmomz = s.momz
+			s.fuse = TR / 2
+			s.rang = FixedAngle(P_RandomFixedRange(0,90*FU))
+			s.rroll = FixedAngle(P_RandomFixedRange(-30*FU,30*FU))
+			s.state = S_PAINT_BROKEARMOR
 		end
-		p.last_starpostnum = p.starpostnum
-		
-		pt.timetoheal = max($-1,0)
-		
-		if pt.inink ~= 0
-			me.spriteyoffset = ease.linear(FU/6, $, -(pt.inink == Paint.ININK_ENEMY and 9 or 4)*FU)
-		else
-			me.spriteyoffset = ease.linear(FU/6, $, 0)
+		do
+			local rad = FixedDiv(me.radius, me.scale) * 3/4
+			local hei = FixedDiv(me.height,me.scale)
+			local s = P_SpawnMobjFromMobj(me,
+				P_RandomFixedRange(-rad, rad),
+				P_RandomFixedRange(-rad, rad),
+				hei/2 + P_RandomFixedRange(-hei/5, hei/5),
+				MT_PARTICLE
+			)
+			s.color = P_RandomRange(SKINCOLOR_SALMON, SKINCOLOR_KETCHUP)
+			s.blendmode = AST_ADD
+			s.spritexscale = $ / P_RandomRange(2,4)
+			s.spriteyscale = s.spritexscale
+			
+			s.fuse = 3
+			s.state = S_THOK
 		end
 		
-		if pt.inink == Paint.ININK_ENEMY
-			if not S_SoundPlaying(me, sfx_pt_ow2)
-				S_StartSoundAtVolume(me, sfx_pt_ow2, (p == displayplayer) and 255 or 255/2)
-			end
-			if (p == displayplayer or p == secondarydisplayplayer)
-				P_StartQuake(FU*3/2, 2)
+		if pt.armorregen <= 0
+			pt.brokenarmor = false
+			S_StartSound(me, sfx_pt_ag)
+			me.paint_barmor = 6
+			me.paint_barmor_hp = pt.hp
+			me.paint_overlayhp = pt.hp
+			pt.hp = 100*FU
+			
+			local ov = P_SpawnMobjFromMobj(me, 0,0,0, MT_PAINT_GUN)
+			ov.target = me
+			ov.state = mobjinfo[MT_MSSHIELD_FRONT].spawnstate
+			ov.colorized = true
+			ov.color = SKINCOLOR_GOLDENROD
+			ov.blendmode = AST_ADD
+			ov.scale = $ * 2
+			ov.fuse = TR / 2
+			ov.destscale = 0
+			ov.scalespeed = FixedDiv(ov.scale, ov.fuse*FU)
+		end
+		p.normalspeed = $ / 3
+	end
+	if me.paint_barmor ~= nil
+		me.paint_overlayhp = ease.outquad(
+			FU - ((FU/6) * me.paint_barmor),
+			me.paint_barmor_hp, pt.hp
+		)
+		me.paint_barmor = $ - 1
+		if me.paint_barmor <= 0
+			me.paint_barmor = nil
+			me.paint_overlayhp = nil
+		end
+	end
+	p.last_starpostnum = p.starpostnum
+	
+	pt.timetoheal = max($-1,0)
+	
+	if pt.inink ~= 0
+		me.spriteyoffset = ease.linear(FU/6, $, -(pt.inink == Paint.ININK_ENEMY and 9 or 4)*FU)
+	else
+		me.spriteyoffset = ease.linear(FU/6, $, 0)
+	end
+	
+	if pt.inink == Paint.ININK_ENEMY
+		if not S_SoundPlaying(me, sfx_pt_ow2)
+			S_StartSoundAtVolume(me, sfx_pt_ow2, (p == displayplayer) and 255 or 255/2)
+		end
+		if (p == displayplayer or p == secondarydisplayplayer)
+			P_StartQuake(FU*3/2, 2)
+		end
+		
+		-- enemy ink vfx
+		if P_IsObjectOnGround(me)
+			local clr
+			if (pt.paintoverlay and pt.paintoverlay.valid)
+				clr = pt.paintoverlay.color
+			else
+				clr = ColorOpposite(Paint:getPlayerColor(p))
 			end
 			
-			-- enemy ink vfx
-			if P_IsObjectOnGround(me)
-				local clr
-				if (pt.paintoverlay and pt.paintoverlay.valid)
-					clr = pt.paintoverlay.color
-				else
-					clr = ColorOpposite(Paint:getPlayerColor(p))
+			local off = 8*FU
+			local blob = makeBlob(p,me,pt, 0,0)
+			blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
+			blob.color = clr
+			P_SetOrigin(blob, me.x, me.y, blob.z)
+			
+			P_SetOrigin(blob,
+				me.x + P_RandomFixedRange(-off, off),
+				me.y + P_RandomFixedRange(-off, off),
+				blob.z
+			)
+			
+			local ang = FixedAngle(360 * P_RandomFixed())
+			P_SetObjectMomZ(blob, P_RandomRange(1,4)*FU)
+			P_Thrust(blob,ang, P_RandomFixedRange(-me.scale, -2*me.scale))
+			
+			if (leveltime % 2 == 0)
+				local angstep = (360 / 12)*FU
+				local dist = FixedDiv(me.radius, me.scale) + 4*FU
+				for i = 0,11
+					local fa = ang + FixedAngle(angstep * i)
+					local splash = P_SpawnMobjFromMobj(me,
+						P_ReturnThrustX(nil, fa, dist),
+						P_ReturnThrustY(nil, fa, dist),
+						2*FU, MT_PARTICLE
+					)
+					P_SetOrigin(splash, splash.x,splash.y, me.floorz)
+					splash.state = S_PAINT_SPLASH2
+					splash.color = clr
+					splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
+					P_SetScale(splash, splash.scale / 2, true)
+					local rand = P_RandomRange(0,2)
+					splash.frame = $ + rand
+					splash.tics = $ - rand
+					P_Thrust(splash, fa, 2*me.scale)
 				end
-				
-				local off = 8*FU
-				local blob = makeBlob(p,me,pt, 0,0)
-				blob.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT &~(MF_NOGRAVITY)
-				blob.color = clr
-				P_SetOrigin(blob, me.x, me.y, blob.z)
-				
-				P_SetOrigin(blob,
-					me.x + P_RandomFixedRange(-off, off),
-					me.y + P_RandomFixedRange(-off, off),
-					blob.z
-				)
-				
-				local ang = FixedAngle(360 * P_RandomFixed())
-				P_SetObjectMomZ(blob, P_RandomRange(1,4)*FU)
-				P_Thrust(blob,ang, P_RandomFixedRange(-me.scale, -2*me.scale))
-				
-				if (leveltime % 2 == 0)
-					local angstep = (360 / 12)*FU
-					local dist = FixedDiv(me.radius, me.scale) + 4*FU
-					for i = 0,11
-						local fa = ang + FixedAngle(angstep * i)
-						local splash = P_SpawnMobjFromMobj(me,
-							P_ReturnThrustX(nil, fa, dist),
-							P_ReturnThrustY(nil, fa, dist),
-							2*FU, MT_PARTICLE
-						)
-						P_SetOrigin(splash, splash.x,splash.y, me.floorz)
-						splash.state = S_PAINT_SPLASH2
-						splash.color = clr
-						splash.renderflags = $|RF_SEMIBRIGHT|RF_NOCOLORMAPS
-						P_SetScale(splash, splash.scale / 2, true)
-						local rand = P_RandomRange(0,2)
-						splash.frame = $ + rand
-						splash.tics = $ - rand
-						P_Thrust(splash, fa, 2*me.scale)
-					end
-				end
-				
-				blob.destscale = 0
-				blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
+			end
+			
+			blob.destscale = 0
+			blob.scalespeed = FixedDiv(blob.scale, blob.fuse*FU)
+		end
+	else
+		S_StopSoundByID(me,sfx_pt_ow2)
+	end
+	
+	if pt.inktime
+		pt.inktime = $ - 1
+	else
+		pt.inink = 0
+	end
+	
+	if ia.tics
+		
+		ia.tics = $ - 1
+		if ia.tics == 0 or not pt.squidrolled
+			S_StartSound(me, sfx_pt_af, p)
+			ia.tics = 0
+			if not pt.squidanim
+				me.colorized = false
 			end
 		else
-			S_StopSoundByID(me,sfx_pt_ow2)
+			me.colorized = true
 		end
 		
-		if pt.inktime
-			pt.inktime = $ - 1
-		else
-			pt.inink = 0
+		local thisalpha = FU
+		if ia.tics < 8
+			thisalpha = (FU/8) * ia.tics
 		end
+		
+		local adjust = (leveltime % 32)
+		local sp = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
+		sp.color = Paint:getPlayerColor(p)
+		sp.state = S_PAINT_IASPRK
+		sp.frame = $ + adjust
+		sp.tics = 1
+		sp.anim_duration = -1
+		sp.spritexscale = $ * 3/2
+		sp.spriteyscale = sp.spritexscale
+		sp.dontdrawforviewmobj = me
+		
+		local half = FixedDiv(me.height, me.scale) / 2
+		sp = P_SpawnMobjFromMobj(me, 0,0,half, MT_PARTICLE)
+		sp.sprite = SPR_PAINT_MISC
+		sp.frame = 97|FF_ADD|FF_FULLBRIGHT
+		sp.alpha = thisalpha / 4
+		sp.tics = 1
+		sp.spritexscale = $ / 2
+		sp.spriteyscale = sp.spritexscale
+		sp.dispoffset = -300
+		sp.dontdrawforviewmobj = me
+		
+		sp = P_SpawnMobjFromMobj(me, 0,0,half, MT_PARTICLE)
+		sp.color = Paint:getPlayerColor(p)
+		sp.sprite = SPR_PAINT_MISC
+		sp.frame = 19|FF_ADD|FF_FULLBRIGHT
+		sp.alpha = thisalpha * 3/4
+		sp.tics = 1
+		sp.spritexscale = $ * 4/5
+		sp.spriteyscale = sp.spritexscale
+		sp.dispoffset = -150
+		sp.dontdrawforviewmobj = me
+	else
+		ia.amount = 0
 	end
 	
 	if (pt.hittime)
@@ -2380,6 +2433,8 @@ addHook("PlayerThink",function(p)
 	end
 
 	if pt.aimingsub
+		pt.squidrolled = false
+		
 		pt.aimingtime = $ + 1
 		local easefrac = 0
 		if (pt.aimingtime >= TR/2)
@@ -2568,6 +2623,13 @@ addHook("JumpSpecial",function(p)
 end)
 
 -- squid rolls
+-- squid rolls can block up to 100 damage I Think?
+/*
+	ink armor lasts about half a second or less from a grounded roll
+	ink armor seems to last 1 second when rolling from a wall?
+	ink armor will end when a squid roll is interrupted
+	i think ink armor also ends when it blocks a shot
+*/
 local SQUIDROLL_ANGLE = FixedAngle(80*FU)
 local SQUIDROLL_WALLANGLE = FixedAngle(98*FU)
 addHook("JumpSpecial",function(p)
@@ -2615,7 +2677,7 @@ addHook("JumpSpecial",function(p)
 		
 		P_InstaThrust(me, iang, FixedMul(BP.SWIM_NSPEED * 3/4, me.scale))
 		if not wallclimb
-			p.jumpfactor = $ * 3/4
+			p.jumpfactor = $ * 4/5
 		else
 			P_SetObjectMomZ(me, 15*FU)
 		end
@@ -2627,6 +2689,8 @@ addHook("JumpSpecial",function(p)
 		pt.squidrolled = true
 		pt.squidrollangle = iang
 		pt.wallink = 0
+		
+		Paint:setInkArmor(p, (wallclimb) and TR*3/4 or TR/2, 100*FU)
 	end
 end)
 
@@ -2872,7 +2936,7 @@ addHook("PostThinkFrame", do
 		if not me.paint_inactive
 			BP.handleHealth(p)
 			BP.handleMovement(p)
-
+			
 			if not pt.disable.inktank
 				BP.doInkTank(p)
 			end
