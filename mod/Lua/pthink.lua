@@ -2642,6 +2642,7 @@ addHook("JumpSpecial",function(p)
 	if not pt.squidtime then return end
 	
 	if (p.pflags & PF_JUMPDOWN) then return end
+	if (pt.forwardmove == 0 and pt.sidemove == 0) then return end
 	
 	local wallclimb = (pt.wallink and (p.powers[pw_pushing] or me.touchingwall))
 	if not wallclimb
