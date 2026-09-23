@@ -4,6 +4,7 @@
 -- if x,y, or z are nil, coordinates fall back to the mobj's position
 -- color falls back to source_player's color, mobj's color, or SKINCOLOR_GREEN
 -- returns the spawned droplet
+-- these dont deal damage by default
 function Paint.spawnDroplet(mobj, source_player, color, nosound, x,y,z, ox,oy,oz)
 	ox = $ or 0
 	oy = $ or 0
@@ -41,11 +42,7 @@ function Paint.spawnDroplet(mobj, source_player, color, nosound, x,y,z, ox,oy,oz
 	return drop
 end
 
--- spawns a bullet droplet at the given coordinates
--- if x,y, or z are nil, coordinates fall back to the mobj's position
--- color falls back to source_player's color, mobj's color, or SKINCOLOR_GREEN
--- returns the spawned bullet
--- These cant cause damage to anything!!
+-- Same as Paint.spawnDroplet, but the bullet can be moved in a direction
 function Paint.spawnBulletDrop(mobj, source_player, color, h_angle,v_angle,thrust, x,y,z, ox,oy,oz)
 	ox = $ or 0
 	oy = $ or 0

@@ -1,6 +1,8 @@
 local CV = Paint.CV
 local MAX_SQUIDTIME = 3
 local MAX_TRANSTIME = 6
+local SQUIDROLL_ANGLE = FixedAngle(80*FU)
+local SQUIDROLL_WALLANGLE = FixedAngle(98*FU)
 
 local clrstr_lut = {}
 
@@ -512,6 +514,10 @@ BP.doSwimForm = function(p)
 		Paint:setPlayerInInk(p, Paint.ININK_FRIENDLY)
 	end
 	
+	if pt.squidlenient
+		pt.squidlenient = $ - 1
+	end
+	
 	p.shieldscale = skin.shieldscale
 	pt.squidtoggle = false
 	do -- swim stuff
@@ -661,7 +667,7 @@ BP.doSwimForm = function(p)
 				end
 				
 				p.normalspeed = BP.SWIM_NSPEED
-				p.thrustfactor = $*6/4
+				p.thrustfactor = $*7/5
 				if pt.substrafe 
 					p.accelstart = $ * 4
 					p.acceleration = $ * 2
@@ -675,6 +681,16 @@ BP.doSwimForm = function(p)
 					local fric = FU * 9/10
 					me.momx = FixedMul($, fric)
 					me.momy = FixedMul($, fric)
+				end
+				
+				if not wallclimb
+					local mang = R_PointToAngle2(0,0, me.momx,me.momy)
+					local iang = Paint:controlDir(p)
+					local delta = mang - iang
+					if delta < 0 then delta = InvAngle($); end
+					if delta >= SQUIDROLL_ANGLE and FixedHypot(me.momx,me.momy) >= p.normalspeed / 2
+						pt.squidlenient = TR / 4
+					end
 				end
 			else
 				p.normalspeed = $/3
@@ -953,7 +969,7 @@ BP.doSwimForm = function(p)
 			end
 		end
 	end
-
+	
 	pt.fastrefill = false
 	if pt.inkdelay
 		if not pt.fireheld
@@ -1249,7 +1265,6 @@ BP.handleHealth = function(p)
 	end
 	
 	if ia.tics
-		
 		ia.tics = $ - 1
 		if ia.tics == 0 or not pt.squidrolled
 			S_StartSound(me, sfx_pt_af, p)
@@ -2630,8 +2645,6 @@ end)
 	ink armor will end when a squid roll is interrupted
 	i think ink armor also ends when it blocks a shot
 */
-local SQUIDROLL_ANGLE = FixedAngle(80*FU)
-local SQUIDROLL_WALLANGLE = FixedAngle(98*FU)
 addHook("JumpSpecial",function(p)
 	local me = p.mo
 	if not (me and me.valid and me.health) return end
@@ -2647,7 +2660,7 @@ addHook("JumpSpecial",function(p)
 	local wallclimb = (pt.wallink and (p.powers[pw_pushing] or me.touchingwall))
 	if not wallclimb
 		if not (pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me)) then return end
-		if FixedDiv(pt.swimoldspeed, me.scale) < BP.SWIM_NSPEED / 2 then return end
+		if FixedDiv(pt.swimoldspeed, me.scale) < BP.SWIM_NSPEED / 2 and not pt.squidlenient then return end
 	end
 	
 	local mindelta = SQUIDROLL_ANGLE
@@ -2671,8 +2684,7 @@ addHook("JumpSpecial",function(p)
 	local delta = mang - iang
 	if delta < 0 then delta = InvAngle($); end
 	
-	if delta >= mindelta
-	and fromaway
+	if (delta >= mindelta and fromaway) or pt.squidlenient
 		S_StartSound(me, sfx_pt_r0)
 		S_StartSound(me, P_RandomRange(sfx_pt_r1, sfx_pt_r3))
 		

@@ -402,6 +402,7 @@ function Paint:initPlayer(p)
 		wasinsquid = 0,
 		squidrolled = false,
 		squidrollangle = 0,
+		squidlenient = 0,
 		prevmomz = 0,
 		
 		-- ink armor

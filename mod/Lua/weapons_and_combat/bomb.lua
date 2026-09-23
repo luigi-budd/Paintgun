@@ -49,6 +49,7 @@ local function clattersound(mo)
 	Paint:teamSound(mo.tracer_player, mo, sfx, nil, sfx)
 end
 
+-- TODO: explosions need to be unified into a helper function
 local function splash_blockmap(ray, mo)
 	if not (ray and ray.valid) then return end
 	if not (mo and mo.valid) then return end
