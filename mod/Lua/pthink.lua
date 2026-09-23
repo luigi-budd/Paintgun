@@ -1261,9 +1261,9 @@ BP.handleHealth = function(p)
 			me.colorized = true
 		end
 		
-		local thisalpha = FU
+		local thisalpha = FU - 1
 		if ia.tics < 8
-			thisalpha = (FU/8) * ia.tics
+			thisalpha = max(((FU/8) * ia.tics) - 1, 0)
 		end
 		
 		local adjust = (leveltime % 32)
