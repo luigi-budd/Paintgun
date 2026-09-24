@@ -105,7 +105,11 @@ addHook("MobjDamage",function(me, inf,sor, damage, dmgt)
 	
 	if (inf.type == MT_TNTBARREL or inf.type == MT_DRAGONMINE or inf.type == MT_PROXIMITYTNT)
 		speed = 70*inf.scale
-		damage = $ * 7
+		if inf.type == MT_DRAGONMINE
+			damage = $ * 6
+		else
+			damage = $ * 12
+		end
 	end
 	
 	if (me.paint_hurttic == nil)
