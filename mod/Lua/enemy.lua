@@ -38,6 +38,7 @@ addHook("MobjDamage",function(mo, inf,sor, damage)
 	if (weptype and weptype.callbacks and weptype.callbacks.onhit ~= nil)
 		weptype.callbacks.onhit(inf.target.player,inf.target.player.paint, Paint.weapons[inf.target.player.paint.weapon_id], inf, inf, mo, damage)
 	end
+	damage = FixedDiv($, mo.scale)
 	
 	mo.paint_healdelay = TR*3/2
 	mo.paint_color = inf.color
@@ -64,7 +65,7 @@ addHook("MobjDamage",function(me, inf,sor, damage, dmgt)
 				Paint:setPlayerInInk(p, Paint.ININK_ENEMY)
 			end
 			me.paint_hurttic = leveltime
-		elseif dmgt == DMG_ELECTRIC or dmgt == DMG_SPIKE
+		else
 			if (me.paint_hurttic == nil)
 			or me.paint_hurttic < leveltime
 				Paint:damagePlayer(p,inf,nil,8*FU, sor)
@@ -81,7 +82,7 @@ addHook("MobjDamage",function(me, inf,sor, damage, dmgt)
 		return true
 	end
 	
-	if not (sor.flags & (MF_ENEMY|MF_BOSS|MF_MISSILE|MF_FIRE|MF_PAIN)) then return end
+	--if not (sor.flags & (MF_ENEMY|MF_BOSS|MF_MISSILE|MF_FIRE|MF_PAIN)) then return end
 	
 	if (inf.flags & (MF_ENEMY|MF_BOSS|MF_MISSILE|MF_FIRE|MF_PAIN))
 	and (inf.paint_touchpain ~= nil)
@@ -90,6 +91,9 @@ addHook("MobjDamage",function(me, inf,sor, damage, dmgt)
 		end
 	end
 	
+	print(inf.info.typename)
+	print(sor.info.typename)
+	
 	local baseinfo = mobjinfo[basetype]
 	local speed = FixedHypot(FixedHypot(inf.momx,inf.momy), inf.momz) / 3
 	damage = ($ * FU * 8) + speed
@@ -97,6 +101,14 @@ addHook("MobjDamage",function(me, inf,sor, damage, dmgt)
 		damage = $ + 8*FU
 	else
 		damage = $ + max((FixedDiv(inf.info.radius + inf.info.height, baseinfo.height + baseinfo.radius) - FU) * 20, 0)
+	end
+	if inf.scale > FU
+		damage = FixedMul($, inf.scale * 3/4)
+	end
+	
+	if (inf.type == MT_TNTBARREL or inf.type == MT_DRAGONMINE or inf.type == MT_PROXIMITYTNT)
+		speed = 70*inf.scale
+		damage = $ * 7
 	end
 	
 	if (me.paint_hurttic == nil)
