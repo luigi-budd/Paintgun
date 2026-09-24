@@ -1,3 +1,5 @@
+local CV = Paint.CV
+
 Paint.teams = {}
 local team_meta = {
 	id = "baseteam",
