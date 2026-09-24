@@ -33,11 +33,12 @@ addHook("HUD",function(v,p,cam)
 	-- draw the stuff
 	local fadeprogress = ease.linear(FixedDiv(hp, 100*FU), FU, 0)
 	local scale = FU
-	if fadeprogress <= FU/2
-		scale = $ + ease.outquad(fadeprogress*2, FU/3, 0)
+	do --if fadeprogress <= FU/2
+		scale = $ + ease.outquad(fadeprogress, FU/3, 0)
 	end
-	local patch_progress = (FixedMul(11*FU, fadeprogress)/FU)
-	patch_progress = clamp(0,$,11)
+	local patch_progress = (FixedMul(13*FU, fadeprogress)/FU)
+	patch_progress = clamp(0,$,13)
+	if patch_progress < 10 then patch_progress = "0" .. $; end
 	local patch = v.cachePatch("PAINT_OVERLAY" .. patch_progress)
 	local wid = (v.width() / v.dupx()) + 1
 	local hei = (v.height() / v.dupy()) + 1
@@ -45,8 +46,8 @@ addHook("HUD",function(v,p,cam)
 	local p_h = patch.height
 	local nudge = FU/2
 	
-	local X_STR = FixedMul(FixedDiv(wid * FU, p_w * FU), scale) + FU/7
-	local Y_STR = FixedMul(FixedDiv(hei * FU, p_h * FU), scale) + FU/7
+	local X_STR = FixedMul(FixedDiv(wid * FU, p_w * FU), scale) + FU/16
+	local Y_STR = FixedMul(FixedDiv(hei * FU, p_h * FU), scale) + FU/16
 	
 	local color = ColorOpposite(Paint:getPlayerColor(p))
 	if pt.paintoverlay and pt.paintoverlay.valid

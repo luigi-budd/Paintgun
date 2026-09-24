@@ -733,9 +733,9 @@ addHook("MobjThinker",function(shot)
 	end
 	
 	-- only works on trails but whatever
-	if (shot.eflags & MFE_GOOWATER)
+	if (shot.eflags & (MFE_GOOWATER|MFE_TOUCHLAVA))
 	or P_IsObjectInGoop(shot)
-		P_SpawnMobj(shot.x,shot.y,shot.watertop,MT_SPLISH)
+		P_SpawnMobj(shot.x,shot.y,shot.watertop, (shot.eflags & MFE_TOUCHLAVA) and MT_LAVASPLISH or MT_SPLISH)
 		splattersound(shot)
 		P_RemoveMobj(shot); return
 	end
