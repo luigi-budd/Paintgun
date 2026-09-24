@@ -91,9 +91,6 @@ addHook("MobjDamage",function(me, inf,sor, damage, dmgt)
 		end
 	end
 	
-	print(inf.info.typename)
-	print(sor.info.typename)
-	
 	local baseinfo = mobjinfo[basetype]
 	local speed = FixedHypot(FixedHypot(inf.momx,inf.momy), inf.momz) / 3
 	damage = ($ * FU * 8) + speed
