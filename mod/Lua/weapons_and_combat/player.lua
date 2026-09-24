@@ -297,9 +297,12 @@ function Paint:checkBulletParams(me, pt, shot, damage)
 end
 
 function Paint:damagePlayer(p, shot, source_player, damage, inf, noassists, disallowparrying)
-	local weptype = Paint.weapons[shot.weapon_id]
+	local weptype
+	if (shot and shot.valid)
+		weptype = Paint.weapons[shot.weapon_id]
+	end
 	if damage == nil
-		damage = weptype.damage
+		damage = (weptype ~= nil) and weptype.damage or 10*FU
 	end
 	local pt = p.paint
 	local ia = pt.inkarmor

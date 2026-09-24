@@ -1415,7 +1415,7 @@ addHook("PlayerThink",function(p)
 			end
 			
 			Paint:resetPlayer(p)
-			p.charflags = $|(skin.flags & SF_DASHMODE)
+			p.charflags = skin.flags
 			p.charability = skin.ability
 			p.charability2 = skin.ability2
 			p.normalspeed = skin.normalspeed
@@ -1482,12 +1482,12 @@ addHook("PlayerThink",function(p)
 	or (Paint.CV.paintnerfs.value == 1)
 	and (not (p.pflags & PF_TAGIT))
 		p.dashmode = 0
-		p.charflags = $|SF_NOSHIELDABILITY &~SF_DASHMODE
+		p.charflags = $|SF_NOSHIELDABILITY|SF_NOJUMPDAMAGE &~(SF_DASHMODE)
 		p.charability = CA_NONE
 		p.charability2 = CA2_SQUIDFORM
 		p.wasmode = true
 	elseif p.wasmode
-		p.charflags = $|(skin.flags & SF_DASHMODE)
+		p.charflags = skin.flags
 		p.charability = skin.ability
 		p.charability2 = skin.ability2
 		p.wasmode = nil

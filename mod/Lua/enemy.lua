@@ -51,12 +51,36 @@ addHook("MobjDamage",function(mo, inf,sor, damage)
 	return true
 end)
 
-addHook("MobjDamage",function(me, inf,sor, damage)
+addHook("MobjDamage",function(me, inf,sor, damage, dmgt)
 	local p = me.player
 	local pt = p.paint
 	if not (pt and pt.active) then return end
-	if not (sor and sor.valid) then return end
-	if not (inf and inf.valid) then return end
+	
+	-- probably sector damage
+	if not (inf and inf.valid and sor and sor.valid)
+		if dmgt == DMG_WATER or dmgt == DMG_FIRE
+			if me.paint_hurttic ~= leveltime
+				Paint:damagePlayer(p,nil,nil,FU * 3/4, nil)
+				Paint:setPlayerInInk(p, Paint.ININK_ENEMY)
+			end
+			me.paint_hurttic = leveltime
+		elseif dmgt == DMG_ELECTRIC or dmgt == DMG_SPIKE
+			if (me.paint_hurttic == nil)
+			or me.paint_hurttic < leveltime
+				Paint:damagePlayer(p,inf,nil,8*FU, sor)
+				Paint:playHurtSound(p)
+				Knockback.addKnockback(me,
+					TR / 2,
+					R_PointToAngle2(0,0, me.momx,me.momy),
+					-40*me.scale
+				)
+				me.paint_hurttic = leveltime + 4
+			end
+		end
+		
+		return true
+	end
+	
 	if not (sor.flags & (MF_ENEMY|MF_BOSS|MF_MISSILE|MF_FIRE|MF_PAIN)) then return end
 	
 	if (inf.flags & (MF_ENEMY|MF_BOSS|MF_MISSILE|MF_FIRE|MF_PAIN))
@@ -66,16 +90,23 @@ addHook("MobjDamage",function(me, inf,sor, damage)
 		end
 	end
 	
+	local baseinfo = mobjinfo[basetype]
+	local speed = FixedHypot(FixedHypot(inf.momx,inf.momy), inf.momz) / 3
+	damage = ($ * FU * 8) + speed
 	if (inf.flags & MF_MISSILE)
-		damage = $ * 3
+		damage = $ + 8*FU
+	else
+		damage = $ + max((FixedDiv(inf.info.radius + inf.info.height, baseinfo.height + baseinfo.radius) - FU) * 20, 0)
 	end
-	if me.paint_hurttic ~= leveltime
-		Paint:damagePlayer(p,inf,nil,damage*FU*15, sor)
+	
+	if (me.paint_hurttic == nil)
+	or me.paint_hurttic < leveltime
+		Paint:damagePlayer(p,inf,nil,damage, sor)
 		Paint:playHurtSound(p)
 		
-		Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y,inf.x,inf.y), -16*inf.scale)
+		Knockback.addKnockback(me, TR*3/4 + (speed / FU / 2), R_PointToAngle2(me.x,me.y,inf.x,inf.y), -(16*inf.scale + speed))
+		me.paint_hurttic = leveltime + 5
 	end
-	me.paint_hurttic = leveltime
 	return true
 end,MT_PLAYER)
 

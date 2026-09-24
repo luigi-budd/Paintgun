@@ -112,14 +112,15 @@ addHook("ThinkFrame", function()
 			-- Don't get stuck on a wall!
 			if not moved then
 				-- give momentum so slidemove can work
+				local oldmx = mo.momx
+				local oldmy = mo.momy
 				mo.momx = thrust.x
 				mo.momy = thrust.y
 
 				P_SlideMove(mo)
 
-				-- we dont need momentum anymore since we werent already moving
-				mo.momx = 0
-				mo.momy = 0
+				mo.momx = oldmx
+				mo.momy = oldmy
 			end
 
 			local cap = 25*FU
