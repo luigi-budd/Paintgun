@@ -231,6 +231,7 @@ local weapon_meta = {
 	maxdamage = 160*FU, -- fully charged
 	partialdamage = 80*FU, -- max partial charge damage (regular damage is minimum uncharged damage)
 	pierces = -1,
+	forcepierces = false,
 	maxfirerate = 4, -- (firerate -> maxfirerate) * chargeprogress
 	shineoffset = -12*FU, --offset the shine vfx this much from fireangle
 	muzzleoffset = 40*FU, --for the max-charge effect
@@ -819,6 +820,7 @@ function Paint:fireWeapon(p, cur_weapon, angle, aiming, dospread, doaiming, hspr
 	proj.damage = wep_damage
 	proj.charge = pt.charge
 	proj.pierces = cur_weapon.pierces
+	proj.forcepierces = cur_weapon.forcepierces
 	proj.powerful = false
 	proj.init = true
 	-- charger progress

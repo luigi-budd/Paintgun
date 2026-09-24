@@ -27,14 +27,15 @@ Paint:registerWeapon({
 	name = "accel_ring",
 	subtype = "burstbomb",
 	handoffset = 6*FU,
-	damage = 16*FU,
-	falloffdamage = 12*FU,
+	damage = 25*FU,
+	falloffdamage = 18*FU,
 	fallofftime = 8,
 	shotscale = FU,
 	shotstretch = false,
 	shotstate = S_ZE2_ACCEL_FIRED,
 	tapfire = true,
 	weightclass = WEI_MID,
+	forcepierces = true,
 	
 	startlag = 7,
 	endlag = 14,
@@ -47,7 +48,7 @@ Paint:registerWeapon({
 	shotsforcrit = 9,
 	
 	spawnspeed = 14*FU,
-	crs_guideframe = 16,
+	crs_guideframe = 18,
 	str_tics = 9999, -- straight state lasts this many tics
 	str2brk_maxspeed = FixedMul(tofixed("1.652"), Paint.DU2FU), -- when ending straight state, cap xyspeed to this
 	brk_airresist = FU * 64/100, -- xy AND z moms are affected by air resistance
@@ -63,7 +64,7 @@ Paint:registerWeapon({
 	v_spread = {3*FU, 3*FU},
 	neverspreadatall = true,
 	
-	inkcost = 100*FU / 16,
+	inkcost = 100*FU / 32,
 	inkdelay = TR / 2,
 	
 	spread_base = (FU * 6), -- chance to spread, similar to accelstart

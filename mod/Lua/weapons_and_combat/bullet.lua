@@ -971,7 +971,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 		end
 		
 		if ((wep.guntype == WPT_CHARGER and shot.pierces) or (wep.pierces == -1))
-		and shot.powerful
+		and (shot.powerful or shot.forcepierces)
 		and (not mo.paint_shield)
 			shot.pierces = $ - 1
 		else
@@ -1003,7 +1003,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 			end
 			
 			if ((wep.guntype == WPT_CHARGER and shot.pierces) or (wep.pierces == -1))
-			and shot.powerful
+			and (shot.powerful or shot.forcepierces)
 			and (not mo.paint_shield)
 				shot.pierces = $ - 1
 				return
