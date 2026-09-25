@@ -2,10 +2,10 @@ local HUD = Paint.HUD
 local MAXANIM = 5
 local anim = 0
 
-addHook("HUD",function(v,p,cam)
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	local me = p.mo
 	if not (me and me.valid) then return end
-	if not Paint:playerIsActive(p) then return end
 	local pt = p.paint
 	
 	if pt.disable.inktank then return end
@@ -142,4 +142,6 @@ addHook("HUD",function(v,p,cam)
 		fast
 	)*/
 	v.dointerp(false)
-end,"game")
+end
+hudinfo.type = "game"
+return hudinfo

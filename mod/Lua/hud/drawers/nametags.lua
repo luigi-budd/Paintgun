@@ -4,11 +4,6 @@ local ANIM = 14
 
 HUD.memory.killtags = {}
 
-local byteLUT = {}
-for i = 26, 126
-	byteLUT[i] = ("%.3d"):format(i)
-end
-
 function HUD:killNotice(target)
 	if not (CV.nametags.value) then return end
 	local mo = target.realmo
@@ -27,13 +22,12 @@ function HUD:killNotice(target)
 	})
 end
 
-addHook("HUD",function(v,p,cam)
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	local me = p.realmo
 	if not (me and me.valid) then return end
-	--if not Paint:playerIsActive(p) then return end
-	local pt = p.paint
-	if not pt then return end
 	if not (CV.nametags.value) then return end
+	local pt = p.paint
 	
 	for k,v in ipairs(HUD.memory.killtags)
 		if v.tics <= 0
@@ -161,4 +155,7 @@ addHook("HUD",function(v,p,cam)
 		end
 		v.dointerp(false)
 	end
-end,"game")
+end
+hudinfo.type = "game"
+hudinfo.allowinactive = true
+return hudinfo

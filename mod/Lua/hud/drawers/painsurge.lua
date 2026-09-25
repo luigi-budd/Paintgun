@@ -7,9 +7,8 @@ function HUD:painSurge(p)
 	paintics = 6
 end
 
-addHook("HUD",function(v,p,cam)
-	if p.paint == nil then return end
-	if not Paint:playerIsActive(p) then return end
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	if not paintics then return end
 	
 	local frame = (7 - paintics)
@@ -28,4 +27,6 @@ addHook("HUD",function(v,p,cam)
 	if not paused
 		paintics = $ - 1
 	end
-end,"game")
+end
+hudinfo.type = "game"
+return hudinfo

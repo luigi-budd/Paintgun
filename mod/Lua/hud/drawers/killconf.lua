@@ -44,7 +44,8 @@ local function Icon(v,p,cam, info)
 	v.drawScaled(result.x,result.y, finalscale, v.cachePatch(iconname), 0, v.getColormap(nil, Paint:getPlayerColor(p)))
 end
 
-addHook("HUD",function(v,p,cam)
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	local feed = HUD.memory.killfeed
 	if feed == nil then return end
 	
@@ -93,4 +94,6 @@ addHook("HUD",function(v,p,cam)
 			info.tag_tics = $ - 1
 		end
 	end
-end,"game")
+end
+hudinfo.type = "game"
+return hudinfo

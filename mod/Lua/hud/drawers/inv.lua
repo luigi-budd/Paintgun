@@ -14,9 +14,8 @@ local CLASStoICON = {
 	[WPT_KATANA]  = "KATANA",
 }
 
-addHook("HUD",function(v,p,cam)
-	if p.paint == nil then return end
-	if not Paint:playerIsActive(p) then return end
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	local pt = p.paint
 	local inv = pt.inventory
 	
@@ -69,4 +68,6 @@ addHook("HUD",function(v,p,cam)
 		end
 		x = $ + (6 + 2)*FU
 	end
-end,"game")
+end
+hudinfo.type = "game"
+return hudinfo

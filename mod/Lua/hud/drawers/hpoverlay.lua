@@ -2,12 +2,12 @@ local HUD = Paint.HUD
 local FRAMETIME = 0
 local DEATHFRAC = 0
 
-addHook("HUD",function(v,p,cam)
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	local me = p.mo
 	FRAMETIME = $ + 1
 
 	if not (me and me.valid) then return end
-	if not Paint:playerIsActive(p) then return end
 	local pt = p.paint
 	
 	if (me.paint_nopainoverlay) then return end
@@ -31,7 +31,7 @@ addHook("HUD",function(v,p,cam)
 	end
 
 	-- draw the stuff
-	local fadeprogress = ease.linear(FixedDiv(hp, 100*FU), FU, 0)
+	local fadeprogress = P_Lerp(FixedDiv(hp, 100*FU), FU, 0)
 	local scale = FU
 	do --if fadeprogress <= FU/2
 		scale = $ + ease.outquad(fadeprogress, FU/3, 0)
@@ -44,7 +44,6 @@ addHook("HUD",function(v,p,cam)
 	local hei = (v.height() / v.dupy()) + 1
 	local p_w = patch.width
 	local p_h = patch.height
-	local nudge = FU/2
 	
 	local X_STR = FixedMul(FixedDiv(wid * FU, p_w * FU), scale) + FU/16
 	local Y_STR = FixedMul(FixedDiv(hei * FU, p_h * FU), scale) + FU/16
@@ -77,4 +76,6 @@ addHook("HUD",function(v,p,cam)
 	v.dointerp(false)
 	
 	--v.drawString(160,150, ("%.2f hp"):format(pt.hp), V_ALLOWLOWERCASE,"thin")
-end,"game")
+end
+hudinfo.type = "game"
+return hudinfo

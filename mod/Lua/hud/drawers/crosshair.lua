@@ -502,6 +502,7 @@ addHook("PostThinkFrame",do
 	if not (me and me.valid and me.health) then return end
 	local cur_weapon = Paint.weapons[pt.weapon_id]
 	if cur_weapon == nil then return end
+	if true then return end
 	
 	if (p ~= consoleplayer)
 		CMD_ANGLE = p.cmd.angleturn << 16

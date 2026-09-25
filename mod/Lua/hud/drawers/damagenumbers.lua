@@ -79,7 +79,8 @@ local function Icon(v,p,cam, info)
 	
 end
 
-addHook("HUD",function(v,p,cam)
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	local feed = HUD.memory.damagenumbers
 	if feed == nil then return end
 	
@@ -102,4 +103,6 @@ addHook("HUD",function(v,p,cam)
 			info.tics = $ - 1
 		end
 	end
-end,"game")
+end
+hudinfo.type = "game"
+return hudinfo

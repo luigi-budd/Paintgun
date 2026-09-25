@@ -33,3 +33,5 @@ addHook("ThinkFrame",do
 	camera.aiming = oldaiming
 	lagtics = $ - 1
 end)
+
+return {}

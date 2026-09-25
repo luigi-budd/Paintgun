@@ -25,11 +25,10 @@ function HUD:cantUseWarning(p, cooldown)
 	cantusemode = true
 end
 
-addHook("HUD",function(v,p,cam)
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	local me = p.mo
 	if not (me and me.valid) then return end
-	if not Paint:playerIsActive(p) then return end
-	local pt = p.paint
 	
 	/*
 	-- proof-of-concept wavy "ink meter"
@@ -99,4 +98,6 @@ addHook("HUD",function(v,p,cam)
 			tics = $ - 1
 		end
 	end
-end,"game")
+end
+hudinfo.type = "game"
+return hudinfo

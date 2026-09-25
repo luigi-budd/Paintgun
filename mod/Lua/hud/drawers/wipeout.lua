@@ -1,3 +1,6 @@
+-- this file doesnt return a hudinfo table cause
+-- it needs to run at all times
+
 local HUD = Paint.HUD
 local wipeteam = 0
 local wipetics = 0

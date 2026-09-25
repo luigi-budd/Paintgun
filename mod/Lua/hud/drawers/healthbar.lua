@@ -60,7 +60,8 @@ end
 local SLIDEIN = TR/2
 local ANIM = 5
 local cv_respawndelay
-addHook("HUD",function(v,p,cam)
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	if not CV.healthbar.value
 		if wasactive then hud.enable("lives") end
 		return
@@ -187,4 +188,6 @@ addHook("HUD",function(v,p,cam)
 	end
 	
 	v.dointerp(false)
-end,"game")
+end
+hudinfo.type = "game"
+return hudinfo

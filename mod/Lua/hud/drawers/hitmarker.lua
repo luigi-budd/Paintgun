@@ -86,7 +86,8 @@ local function Icon(v,p,cam, info)
 	)
 end
 
-addHook("HUD",function(v,p,cam)
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	local feed = HUD.memory.hitmarkers
 	if feed == nil then return end
 	
@@ -106,4 +107,6 @@ addHook("HUD",function(v,p,cam)
 		end
 	end
 	offset = 0
-end,"game")
+end
+hudinfo.type = "game"
+return hudinfo

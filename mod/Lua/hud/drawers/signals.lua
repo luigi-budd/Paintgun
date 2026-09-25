@@ -28,10 +28,10 @@ local texts = {
 	[Paint.SIGNAL_HELP]		= "Help!",
 }
 
-addHook("HUD",function(v,p,cam)
+local hudinfo = {}
+hudinfo.func = function(v,p,cam)
 	local me = p.realmo
 	if not (me and me.valid) then return end
-	--if not Paint:playerIsActive(p) then return end
 	local pt = p.paint
 	
 	if not (CV.nametags.value) then return end
@@ -119,4 +119,7 @@ addHook("HUD",function(v,p,cam)
 		end
 		v.dointerp(false)
 	end
-end,"game")
+end
+hudinfo.type = "game"
+hudinfo.allowinactive = true
+return hudinfo
