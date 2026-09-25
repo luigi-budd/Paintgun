@@ -2660,7 +2660,7 @@ addHook("JumpSpecial",function(p)
 	local wallclimb = (pt.wallink and (p.powers[pw_pushing] or me.touchingwall))
 	if not wallclimb
 		if not (pt.inink == Paint.ININK_FRIENDLY and P_IsObjectOnGround(me)) then return end
-		if FixedDiv(pt.swimoldspeed, me.scale) < BP.SWIM_NSPEED / 2 and not pt.squidlenient then return end
+		if FixedDiv(max(FixedHypot(me.momx,me.momy), pt.swimoldspeed), me.scale) < BP.SWIM_NSPEED / 2 and not pt.squidlenient then return end
 	end
 	
 	local mindelta = SQUIDROLL_ANGLE
