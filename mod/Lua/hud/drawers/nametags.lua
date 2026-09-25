@@ -29,10 +29,11 @@ hudinfo.func = function(v,p,cam)
 	if not (CV.nametags.value) then return end
 	local pt = p.paint
 	
-	for k,v in ipairs(HUD.memory.killtags)
-		if v.tics <= 0
-		or not (v.play and v.play.valid)
-			table.remove(HUD.memory.killtags, k)
+	for i = #HUD.memory.killtags, 1, -1
+		local v = HUD.memory.killtags[i]
+		
+		if v.tics <= 0 or not (v.play and v.play.valid)
+			table.remove(HUD.memory.killtags, i)
 			continue
 		end
 		v.tics = $ - 1

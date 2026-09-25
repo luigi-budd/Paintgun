@@ -53,16 +53,12 @@ hudinfo.func = function(v,p,cam)
 	local scnwid = (v.width()/v.dupx())/2
 	offset = 0
 	
-	--for k, info in ipairs(feed)
-	for k = 1, #feed
+	for k = #feed, 1, -1
 		local info = feed[k]
 		if not (info and info.tag_tics > 0)
 			table.remove(feed, k)
+			continue
 		end
-	end
-	
-	for k = 1, #feed
-		local info = feed[k]
 		
 		v.dointerp(info.id)
 		Icon(v,p,cam, info)

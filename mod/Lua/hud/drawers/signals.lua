@@ -37,16 +37,13 @@ hudinfo.func = function(v,p,cam)
 	if not (CV.nametags.value) then return end
 	
 	local toremove = {}
-	for k,v in ipairs(HUD.memory.signals)
-		if v.tics <= 0
-		or not (v.from and v.from.valid)
-			table.insert(toremove, {key = k})
+	for i = #HUD.memory.signals, 1, -1
+		local v = HUD.memory.signals[i]
+		if v.tics <= 0 or not (v.from and v.from.valid)
+			table.remove(HUD.memory.signals, i)
 			continue
 		end
 		v.tics = $ - 1
-	end
-	for k,v in ipairs(toremove)
-		table.remove(HUD.memory.signals, v.key)
 	end
 	
 	local tmp = {}
