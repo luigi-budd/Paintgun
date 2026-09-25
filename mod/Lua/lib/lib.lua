@@ -73,3 +73,43 @@ dofile("lib/ExactoCam/LUA_math.lua")
 dofile("lib/ExactoCam/Vec3.lua")
 dofile("lib/ExactoCam/Vec2.lua")
 dofile("lib/ExactoCam/main.lua")
+
+-- p is a vec3 of the point
+rawset(_G, "Vec3_ClosestPointOnLine", function(p, lstart, lend)
+	local t,d
+	local V = Vec3.Sub(lend, lstart)
+	local c = Vec3.Sub(p, lstart)
+	
+	-- d = R_PointToDist2(0, lend.z, R_PointToDist2(lend.x, lend.y, lstart.x, lstart.y), lstart.z)
+	d = R_PointTo3DDist(lstart.x,lstart.y,lstart.z, lend.x,lend.y,lend.z)
+	if d == 0 then return lstart; end
+	
+	local n = Vec3.Div(Vec3.New(V.x, V.y, V.z), d)
+	t = Vec3.Dot(n, c)
+	
+	if t <= 0
+		return lstart
+	elseif t >= d
+		return lend
+	end
+	
+	n = $ * t
+	return Vec3.Add(lstart, n)
+end)
+
+rawset(_G, "Vec3_BoxInterceptsBox", function(point, pradius, pheight, against, aradius, aheight)
+	local blockrad = pradius + aradius
+	
+	if abs(point.x - against.x) > blockrad
+	or abs(point.y - against.y) > blockrad
+		return false
+	end
+	if (against.z > point.z + pheight) -- check overhead
+		return false
+	end
+	if (against.z + aheight < point.z) -- check underneath
+		return false
+	end
+	
+	return true
+end)
