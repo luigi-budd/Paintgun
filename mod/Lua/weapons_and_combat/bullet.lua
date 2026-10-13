@@ -249,6 +249,7 @@ local function splash_blockmap(ray, mo)
 		P_DamageMobj(mo, ray, ray.target, damage)
 		Paint:doProjHitmarker(ray, mo, false, false, true)
 		Paint.HUD:damageNumber(ray.target.player, mo, damage)
+		Paint.HUD:damageBar(ray.target.player, mo)
 		return
 	end
 	
@@ -262,6 +263,7 @@ local function splash_blockmap(ray, mo)
 			Paint:playHurtSound(mo.player)
 			Paint:doProjHitmarker(ray, mo, false)
 			Paint.HUD:damageNumber(ray.target.player, mo, newdamage)
+			Paint.HUD:damageBar(ray.target.player, mo)
 		elseif Paint_canHurtPlayer(p, mo.player, true, true)
 		and not Paint:isFriendlyFire(p,mo.player)
 			Paint:doProjHitmarker(ray, mo, false, true, true)
@@ -962,6 +964,7 @@ addHook("MobjMoveCollide",function(shot,mo)
 		HitSplat(shot)
 		Paint:doProjHitmarker(shot, mo, true)
 		Paint.HUD:damageNumber(p, mo, shot.damage)
+		Paint.HUD:damageBar(p, mo)
 		
 		if shot.blastertype
 			shot.donthit = mo
@@ -994,7 +997,8 @@ addHook("MobjMoveCollide",function(shot,mo)
 			HitSplat(shot)
 			Paint:doProjHitmarker(shot, mo, true)
 			Paint.HUD:damageNumber(p, mo, newdamage)
-			
+			Paint.HUD:damageBar(p, mo)
+
 			if shot.blastertype
 				shot.donthit = mo
 				ExplodeShot(shot)
@@ -1366,7 +1370,8 @@ addHook("MobjMoveCollide",function(sh,mo)
 			--P_DamageMobj(sh,mo,mo, damage*5) --debug
 			Paint:doProjHitmarker(sh, mo, true)
 			Paint.HUD:damageNumber(p, mo, damage)
-			
+			Paint.HUD:damageBar(p, mo)
+
 			sh.cooldown = cooldown
 			if not sh.paint_released
 				Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)
@@ -1386,6 +1391,7 @@ addHook("MobjMoveCollide",function(sh,mo)
 				Paint:playHurtSound(play)
 				Paint:doProjHitmarker(sh, mo, true)
 				Paint.HUD:damageNumber(p, mo, damage)
+				Paint.HUD:damageBar(p, mo)
 				sh.cooldown = cooldown
 				if not sh.paint_released
 					Knockback.addKnockback(me, TR, R_PointToAngle2(me.x,me.y, mo.x,mo.y), -16*mo.scale)

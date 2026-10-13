@@ -78,6 +78,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 			P_DamageMobj(found, melee, me, mdamage)
 			Paint:doProjHitmarker(melee, found, false, false, true)
 			Paint.HUD:damageNumber(p, found, mdamage)
+			Paint.HUD:damageBar(p, found)
 			found.hitbymelee = true
 			found.hitmeleetic = leveltime
 		elseif (found.type == MT_PLAYER)
@@ -86,6 +87,7 @@ function Paint.wcallback_splatana_onfire(p,pt,wep, baseproj, mom_vec, angle, aim
 				Paint:playHurtSound(found.player)
 				Paint:doProjHitmarker(melee, found, false, false, true)
 				Paint.HUD:damageNumber(p, found, newdamage)
+				Paint.HUD:damageBar(p, found)
 				found.hitbymelee = true
 				found.hitmeleetic = leveltime
 			elseif Paint_canHurtPlayer(p, found.player, true, true)

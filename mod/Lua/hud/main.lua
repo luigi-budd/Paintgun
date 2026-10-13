@@ -28,6 +28,7 @@ end
 dofiles("drawers/",{
 	"signals.lua",
 	"nametags.lua",
+	"damagebars.lua",
 	"inktank.lua",
 	"hpoverlay.lua",
 	"painsurge.lua",

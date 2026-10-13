@@ -2782,7 +2782,7 @@ addHook("ThinkFrame", do
 		-- does NOTHING since playerthinks are ran
 		-- too early for it to even have an effect
 		-- (p.bob is set in P_PlayerAfterThink)
-		local viewheight = 41*me.height/48
+		local viewheight = 47*me.height/48
 		p.viewz = me.z + viewheight
 		if P_MobjFlip(me) == -1
 			p.viewz = me.z + me.height - viewheight
